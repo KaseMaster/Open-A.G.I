@@ -1,0 +1,66 @@
+name: "Reporte de bug"
+description: "Informa de un error o comportamiento inesperado"
+title: "[Bug]: "
+labels: ["bug"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por tomarte el tiempo de reportar un bug.
+        Por favor, completa la información para que podamos reproducir y solucionar el problema.
+  - type: input
+    id: resumen
+    attributes:
+      label: Resumen breve
+      description: Describe brevemente el problema.
+      placeholder: Ej. "El nodo P2P se desconecta tras 5 minutos"
+    validations:
+      required: true
+  - type: textarea
+    id: pasos
+    attributes:
+      label: Pasos para reproducir
+      description: Lista detallada de pasos para reproducir el error.
+      placeholder: |
+        1. Ejecutar ...
+        2. Conectar ...
+        3. Observar ...
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Comportamiento esperado
+      description: ¿Qué debería ocurrir?
+      placeholder: Debería permanecer conectado sin errores.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Comportamiento actual
+      description: ¿Qué ocurre realmente?
+      placeholder: Se desconecta y muestra el error XYZ.
+    validations:
+      required: true
+  - type: textarea
+    id: entorno
+    attributes:
+      label: Entorno
+      description: Detalles del entorno donde ocurre el bug.
+      placeholder: |
+        SO: Windows 11 / Ubuntu 22.04
+        Python: 3.11
+        Docker: 24.x
+        Versión del proyecto: commit/etiqueta
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs y capturas
+      description: Adjunta logs relevantes, stack traces o capturas de pantalla.
+      render: shell
+    validations:
+      required: false

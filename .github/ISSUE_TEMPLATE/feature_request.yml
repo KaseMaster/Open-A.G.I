@@ -1,0 +1,42 @@
+name: "Solicitud de mejora"
+description: "Propón una nueva funcionalidad o mejora"
+title: "[Feature]: "
+labels: ["enhancement"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ¡Gracias por tu propuesta! Cuéntanos qué problema resolverá y cómo debería funcionar.
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto y problema
+      description: ¿Qué problema quieres resolver y por qué?
+      placeholder: La configuración de nodos PBFT es manual y propensa a errores...
+    validations:
+      required: true
+  - type: textarea
+    id: propuesta
+    attributes:
+      label: Descripción de la solución
+      description: ¿Cómo debería funcionar la mejora?
+      placeholder: Implementar auto-descubrimiento y bootstrap de nodos...
+    validations:
+      required: true
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: Alternativas consideradas
+      description: ¿Qué otras soluciones consideraste?
+      placeholder: Scripts manuales, configuración por archivo, etc.
+    validations:
+      required: false
+  - type: textarea
+    id: impactos
+    attributes:
+      label: Impactos y riesgos
+      description: ¿Hay riesgos de seguridad, rendimiento o compatibilidad?
+      placeholder: Requiere validaciones y límites de recursos...
+    validations:
+      required: false
