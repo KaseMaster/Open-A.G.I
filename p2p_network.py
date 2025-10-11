@@ -26,14 +26,44 @@ from enum import Enum
 from collections import defaultdict, deque
 import ipaddress
 from datetime import datetime, timedelta
-import aiohttp
-import websockets
-from zeroconf import ServiceInfo, Zeroconf, ServiceBrowser, ServiceListener
-import netifaces
-
-# Configuración de logging
+ 
+# Configuración de logging temprana para permitir avisos durante imports opcionales
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+# Dependencias opcionales: algunas pueden no estar disponibles en CI/Windows
+try:
+    import aiohttp  # type: ignore
+    HAS_AIOHTTP = True
+except Exception:
+    aiohttp = None  # type: ignore
+    HAS_AIOHTTP = False
+    logger.warning("aiohttp no disponible; funcionalidades HTTP quedarán deshabilitadas en este entorno.")
+
+try:
+    import websockets  # type: ignore
+    HAS_WEBSOCKETS = True
+except Exception:
+    websockets = None  # type: ignore
+    HAS_WEBSOCKETS = False
+    logger.warning("websockets no disponible; funcionalidades WS quedarán deshabilitadas en este entorno.")
+
+try:
+    from zeroconf import ServiceInfo, Zeroconf, ServiceBrowser, ServiceListener  # type: ignore
+    HAS_ZEROCONF = True
+except Exception:
+    ServiceInfo = Zeroconf = ServiceBrowser = ServiceListener = None  # type: ignore
+    HAS_ZEROCONF = False
+    logger.warning("zeroconf no disponible; descubrimiento mDNS se omitirá en este entorno.")
+
+try:
+    import netifaces  # type: ignore
+    HAS_NETIFACES = True
+except Exception:
+    netifaces = None  # type: ignore
+    HAS_NETIFACES = False
+    logger.warning("netifaces no disponible; detección de IP local puede ser limitada en este entorno.")
+
+# (logger ya configurado arriba)
 
 class NodeType(Enum):
     """Tipos de nodos en la red"""
@@ -131,16 +161,21 @@ class PeerDiscoveryService:
             self.discovery_active = True
             logger.info(f"🔍 Iniciando descubrimiento de peers para nodo {self.node_id}")
             
-            # Configurar Zeroconf
-            await self._setup_zeroconf()
+            # Configurar Zeroconf si disponible
+            if HAS_ZEROCONF and HAS_NETIFACES:
+                await self._setup_zeroconf()
+            else:
+                logger.warning("mDNS/Zeroconf no disponible; se usarán métodos alternativos.")
             
             # Iniciar tareas de descubrimiento
-            tasks = [
-                asyncio.create_task(self._mdns_discovery()),
+            tasks = []
+            if HAS_ZEROCONF:
+                tasks.append(asyncio.create_task(self._mdns_discovery()))
+            tasks.extend([
                 asyncio.create_task(self._bootstrap_discovery()),
                 asyncio.create_task(self._peer_maintenance()),
                 asyncio.create_task(self._network_scanning())
-            ]
+            ])
             
             await asyncio.gather(*tasks)
             
@@ -150,6 +185,9 @@ class PeerDiscoveryService:
     async def _setup_zeroconf(self):
         """Configura el servicio Zeroconf/mDNS"""
         try:
+            if not (HAS_ZEROCONF and HAS_NETIFACES):
+                logger.warning("Saltando configuración Zeroconf: dependencias no disponibles.")
+                return
             # Obtener IP local
             local_ip = self._get_local_ip()
             
@@ -185,16 +223,17 @@ class PeerDiscoveryService:
     def _get_local_ip(self) -> str:
         """Obtiene la IP local del nodo"""
         try:
-            # Intentar obtener IP de interfaces de red
-            interfaces = netifaces.interfaces()
-            
-            for interface in interfaces:
-                addresses = netifaces.ifaddresses(interface)
-                if netifaces.AF_INET in addresses:
-                    for addr_info in addresses[netifaces.AF_INET]:
-                        ip = addr_info['addr']
-                        if not ip.startswith('127.') and not ip.startswith('169.254.'):
-                            return ip
+            if HAS_NETIFACES:
+                # Intentar obtener IP de interfaces de red
+                interfaces = netifaces.interfaces()
+                
+                for interface in interfaces:
+                    addresses = netifaces.ifaddresses(interface)
+                    if netifaces.AF_INET in addresses:
+                        for addr_info in addresses[netifaces.AF_INET]:
+                            ip = addr_info['addr']
+                            if not ip.startswith('127.') and not ip.startswith('169.254.'):
+                                return ip
             
             # Fallback: usar socket para conectar a servidor externo
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:

@@ -254,7 +254,7 @@ def allocate_resources(task, available_nodes):
 **Pipeline de entrega**
 - Orquestación: GitHub Actions / GitLab CI
 - Etapas: build → tests (unit/integration) → SAST/DAST → package → deploy (testnet/prod)
-- Artefactos: imágenes Docker firmadas (cosign) + SBOM (CycloneDX)
+ - Artefactos: imágenes Docker multi-arch firmadas (cosign) + SBOM (SPDX)
 
 **Infraestructura como Código (IaC)**
 - Terraform: provisión de redes, balanceadores y storage
@@ -267,15 +267,22 @@ def allocate_resources(task, available_nodes):
 - Firmado y verificación de artefactos antes de producción
 
 ### Estado actual del pipeline (CI/CD)
-- Workflows activos en GitHub Actions:
-  - lint-and-test (Windows, Python 3.11–3.13): flake8, pytest (tests/), pip-audit, bandit.
-  - linux-lint-and-test (Ubuntu, Python 3.11–3.13): flake8, pytest (tests/), cache de pip, pip-audit, bandit.
-  - docker-smoke-test (Ubuntu): build de imagen Docker y smoke test en contenedor ejecutando `python main.py --dry-run`.
-- Configuración de estilo: `.flake8` con reglas comunes (max-line-length=120, ignore E203/W503, excludes y per-file-ignores para tests).
-- Próximos incrementos del pipeline:
-  - Cache de capas Docker (Buildx + registry cache) y publicación en GHCR.
-  - Generación de SBOM (CycloneDX/Syft) y firma/verificación de artefactos (cosign).
-  - Badge de estado CI en README y PR automático para cambios de pipeline.
+ - Workflows activos en GitHub Actions:
+   - lint-and-test (Windows, Python 3.11–3.13): flake8, pytest (tests/), pip-audit, bandit.
+   - linux-lint-and-test (Ubuntu, Python 3.11–3.13): flake8, pytest (tests/), cache de pip, pip-audit, bandit.
+   - docker-smoke-test (Ubuntu): build local con caché (Buildx) y smoke test ejecutando `python main.py --dry-run`. En `main` y `release`: build y push multi-arch (linux/amd64, linux/arm64) a GHCR con tags `sha`, `ref`, `latest` y semver desde releases; generación de SBOM (SPDX) y firma keyless con Cosign para todos los tags.
+ - Triggers y permisos:
+   - Eventos: `push` (main), `pull_request` y `release`.
+   - Permisos del workflow: `contents`, `packages`, `id-token` para publicación a GHCR y firma OIDC (Cosign keyless).
+- Publicación y seguridad de supply chain:
+  - Imágenes publicadas en GHCR con tags versionados; SBOM disponible como artefacto en CI.
+  - Firma de imágenes con Cosign (keyless) usando OIDC; sin secretos adicionales.
+  - Verificación automática de firma (cosign verify) post push/release.
+  - SBOM publicado como asset en releases con checksum (sha256).
+ - Configuración de estilo: `.flake8` (max-line-length=120, ignore E203/W503, excludes y per-file-ignores para tests).
+ - Mantenimiento:
+   - Badge de estado de CI en `README.md`.
+   - Dependabot semanal para `pip` y `github-actions`.
 
 ---
 
@@ -302,14 +309,18 @@ def allocate_resources(task, available_nodes):
    - Heartbeat multi-path, replicación 3x y migración automática de tareas.
 
 3) CI/CD, testing y performance
-   - [x] GitHub Actions (lint + tests + seguridad básica).
-   - [x] Tests de integración rápidos y smoke tests (Docker: `python main.py --dry-run`).
-   - [x] Runner Linux (ubuntu-latest) y cache de pip.
-   - [ ] Cache de capas Docker (Buildx + registry cache) y multi-arch opcional.
-   - [ ] Publicación de imagen en GHCR con tags versionados y SBOM (Syft/CycloneDX).
-   - [ ] Firma de imagen con cosign y verificación en deploy.
-   - [ ] Badge de estado CI en README y PR automático para pipeline.
-   - [ ] Batching/compresión y métricas de rendimiento en el dashboard.
+- [x] GitHub Actions (lint + tests + seguridad básica).
+- [x] Tests de integración rápidos y smoke tests (Docker: `python main.py --dry-run`).
+- [x] Runner Linux (ubuntu-latest) y cache de pip.
+ - [x] Cache de capas Docker (Buildx + registry cache) y multi-arch (amd64/arm64).
+ - [x] Publicación de imagen en GHCR con tags versionados (semver en releases) y SBOM (SPDX).
+ - [x] Firma de imagen con Cosign (keyless) en `main` y `release`.
+ - [x] Badge de estado CI en README.
+ - [ ] PR automático para cambios del pipeline.
+ - [x] Verificación de firma (cosign verify) y política de cumplimiento antes de deploy (job añadido; pendiente aplicar política en deploy).
+ - [x] Publicar SBOM como asset de release y verificación de integridad (checksum sha256 creado y publicado en releases).
+- [ ] Batching/compresión y métricas de rendimiento en el dashboard.
+ - [x] Secret scanning (Gitleaks) en CI; pendientes validaciones estrictas de entrada.
 
 ## 📈 Validación de Rendimiento y Escalabilidad
 

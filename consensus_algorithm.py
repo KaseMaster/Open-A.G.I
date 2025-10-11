@@ -20,13 +20,23 @@ from typing import Dict, List, Set, Optional, Tuple, Any, Callable
 from dataclasses import dataclass, asdict
 from enum import Enum
 from collections import defaultdict, Counter
-import aiohttp
+
+# Configuración de logging temprana para usar logger en imports opcionales
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+# aiohttp es opcional para permitir pruebas en entornos mínimos (p.ej. Windows CI)
+try:
+    import aiohttp  # type: ignore
+    HAS_AIOHTTP = True
+except Exception:
+    aiohttp = None  # type: ignore
+    HAS_AIOHTTP = False
+    logger.warning("aiohttp no disponible; algunas características de red se deshabilitarán en este entorno.")
 from datetime import datetime, timedelta
 import random
 
-# Configuración de logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+# (ya configurado arriba)
 
 class ConsensusPhase(Enum):
     """Fases del algoritmo de consenso"""

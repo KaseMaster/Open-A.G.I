@@ -359,9 +359,7 @@ Este proyecto está licenciado bajo la **Licencia MIT con Cláusulas de Uso Éti
 *Desarrollado por AEGIS - Analista Experto en Gestión de Información y Seguridad*  
 *Versión 1.0 - Para uso ético únicamente*
 <p align="center">
-  <a href="https://github.com/aegis-framework/distributed-ai/actions/workflows/ci.yml">
-    <img src="https://github.com/aegis-framework/distributed-ai/actions/workflows/ci.yml/badge.svg" alt="CI Status" />
+  <a href="https://github.com/KaseMaster/Open-A.G.I/actions/workflows/ci.yml">
+    <img src="https://github.com/KaseMaster/Open-A.G.I/actions/workflows/ci.yml/badge.svg" alt="CI Status" />
   </a>
 </p>
-
-<!-- Nota: Si el repositorio final no es aegis-framework/distributed-ai, actualiza la URL del badge arriba al owner/repo correcto. -->
