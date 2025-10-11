@@ -1,0 +1,19 @@
+{
+  "project_id": "3be97fb2-933c-4284-9990-eff927ea6a06",
+  "project_title": "IA Distribuida y Colaborativa - AEGIS Framework",
+  "total_tasks": 10,
+  "completed_tasks": 10,
+  "in_progress_tasks": 0,
+  "pending_tasks": 0,
+  "total_hours": 130,
+  "completed_hours": 130,
+  "features": {
+    "Seguridad y Criptografía": 2,
+    "Red TOR y Anonimato": 1,
+    "Consenso Distribuido": 2,
+    "Gestión de Recursos": 1,
+    "Tolerancia a Fallos": 1,
+    "Monitoreo y Métricas": 1,
+    "Testing y Validación": 2
+  }
+}

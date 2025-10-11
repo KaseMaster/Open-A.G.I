@@ -1,0 +1,8 @@
+{
+  "title": "Análisis de Seguridad P2P - Vectores de Ataque",
+  "description": "Análisis exhaustivo de vectores de ataque en arquitecturas P2P distribuidas: Sybil, Eclipse, Data Poisoning, Timing attacks. Implementación de mitigaciones específicas.",
+  "feature": "Seguridad y Criptografía",
+  "task_order": 10,
+  "estimated_hours": 8,
+  "status": "done"
+}

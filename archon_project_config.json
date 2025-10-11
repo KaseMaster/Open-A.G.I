@@ -1,0 +1,331 @@
+{
+  "project_data": {
+    "title": "IA Distribuida y Colaborativa - AEGIS Framework",
+    "description": "Sistema P2P de inteligencia artificial distribuida con comunicaciones anónimas vía TOR, consenso bizantino y gestión de recursos computacionales",
+    "github_repo": "https://github.com/aegis-framework/distributed-ai",
+    "features": [
+      "Seguridad y Criptografía",
+      "Red TOR y Anonimato",
+      "Consenso Distribuido",
+      "Gestión de Recursos",
+      "Tolerancia a Fallos",
+      "Monitoreo y Métricas",
+      "Testing y Validación"
+    ],
+    "tech_stack": [
+      "Python 3.12+",
+      "AsyncIO",
+      "Cryptography",
+      "TOR Network",
+      "P2P Networking",
+      "Machine Learning",
+      "Distributed Systems"
+    ]
+  },
+  "tasks": [
+    {
+      "title": "Análisis de Seguridad P2P - Vectores de Ataque",
+      "description": "Análisis exhaustivo de vectores de ataque en arquitecturas P2P distribuidas: Sybil, Eclipse, Data Poisoning, Timing attacks. Implementación de mitigaciones específicas.",
+      "feature": "Seguridad y Criptografía",
+      "priority": 10,
+      "estimated_hours": 8,
+      "status": "done",
+      "dependencies": [],
+      "deliverables": [
+        "Documento de análisis de seguridad",
+        "Matriz de riesgos y mitigaciones",
+        "Especificaciones de contramedidas"
+      ]
+    },
+    {
+      "title": "Framework Criptográfico - Autenticación y Cifrado",
+      "description": "Implementación completa del sistema criptográfico: Ed25519 para autenticación, ChaCha20-Poly1305 para cifrado, X25519 para intercambio de claves, Double Ratchet para forward secrecy.",
+      "feature": "Seguridad y Criptografía",
+      "priority": 10,
+      "estimated_hours": 12,
+      "status": "done",
+      "dependencies": [
+        "Análisis de Seguridad P2P"
+      ],
+      "deliverables": [
+        "crypto_framework.py",
+        "Tests unitarios de criptografía",
+        "Documentación de APIs criptográficas"
+      ]
+    },
+    {
+      "title": "Integración TOR - Gateway Anónimo",
+      "description": "Implementación del gateway TOR para comunicaciones anónimas: gestión de circuitos, selección de nodos, rotación automática, resistencia a ataques de correlación.",
+      "feature": "Red TOR y Anonimato",
+      "priority": 10,
+      "estimated_hours": 10,
+      "status": "done",
+      "dependencies": [
+        "Framework Criptográfico"
+      ],
+      "deliverables": [
+        "tor_integration.py",
+        "Configuración de circuitos seguros",
+        "Sistema de rotación automática"
+      ]
+    },
+    {
+      "title": "Protocolo de Consenso Híbrido - PoC + PBFT",
+      "description": "Desarrollo del protocolo de consenso híbrido combinando Proof of Computation y Practical Byzantine Fault Tolerance para sincronización de conocimiento distribuido.",
+      "feature": "Consenso Distribuido",
+      "priority": 10,
+      "estimated_hours": 16,
+      "status": "done",
+      "dependencies": [
+        "Framework Criptográfico"
+      ],
+      "deliverables": [
+        "consensus_protocol.py",
+        "Algoritmos de validación PoC",
+        "Implementación PBFT optimizada"
+      ]
+    },
+    {
+      "title": "Sistema de Recursos Computacionales",
+      "description": "Implementación del gestor de recursos distribuidos: monitoreo en tiempo real, balanceador de carga inteligente, asignación dinámica de tareas, métricas de rendimiento.",
+      "feature": "Gestión de Recursos",
+      "priority": 10,
+      "estimated_hours": 14,
+      "status": "done",
+      "dependencies": [
+        "Protocolo de Consenso"
+      ],
+      "deliverables": [
+        "resource_manager.py",
+        "Algoritmos de balanceado",
+        "Sistema de métricas"
+      ]
+    },
+    {
+      "title": "Mecanismos de Tolerancia a Fallos",
+      "description": "Implementación de sistemas de detección y recuperación de fallos: heartbeat distribuido, replicación de datos, migración automática de tareas, reconstitución de red.",
+      "feature": "Tolerancia a Fallos",
+      "priority": 9,
+      "estimated_hours": 12,
+      "status": "in_progress",
+      "dependencies": [
+        "Sistema de Recursos Computacionales"
+      ],
+      "deliverables": [
+        "fault_tolerance.py",
+        "Sistema de detección de fallos",
+        "Algoritmos de recuperación automática"
+      ]
+    },
+    {
+      "title": "Replicación y Sincronización de Datos",
+      "description": "Sistema de replicación distribuida con factor 3x para datos críticos, sincronización eventual, resolución de conflictos, integridad criptográfica.",
+      "feature": "Tolerancia a Fallos",
+      "priority": 8,
+      "estimated_hours": 10,
+      "status": "todo",
+      "dependencies": [
+        "Mecanismos de Tolerancia a Fallos"
+      ],
+      "deliverables": [
+        "data_replication.py",
+        "Algoritmos de sincronización",
+        "Sistema de resolución de conflictos"
+      ]
+    },
+    {
+      "title": "Recuperación Automática de Nodos",
+      "description": "Implementación de mecanismos de auto-recuperación: detección de desconexiones, búsqueda inteligente de peers, reconstitución de estado, migración de tareas activas.",
+      "feature": "Tolerancia a Fallos",
+      "priority": 8,
+      "estimated_hours": 8,
+      "status": "todo",
+      "dependencies": [
+        "Replicación y Sincronización"
+      ],
+      "deliverables": [
+        "node_recovery.py",
+        "Algoritmos de reconexión",
+        "Sistema de migración de estado"
+      ]
+    },
+    {
+      "title": "Optimización de Comunicaciones P2P",
+      "description": "Optimización del rendimiento de red: compresión LZ4, batching de mensajes, pipelining, cache distribuido, prefetching inteligente.",
+      "feature": "Gestión de Recursos",
+      "priority": 7,
+      "estimated_hours": 10,
+      "status": "todo",
+      "dependencies": [
+        "Recuperación Automática de Nodos"
+      ],
+      "deliverables": [
+        "network_optimization.py",
+        "Sistema de compresión",
+        "Cache distribuido inteligente"
+      ]
+    },
+    {
+      "title": "Balanceador de Carga Avanzado",
+      "description": "Implementación de algoritmos avanzados de balanceado: predicción de carga, asignación basada en ML, optimización energética, distribución geográfica.",
+      "feature": "Gestión de Recursos",
+      "priority": 7,
+      "estimated_hours": 12,
+      "status": "todo",
+      "dependencies": [
+        "Optimización de Comunicaciones"
+      ],
+      "deliverables": [
+        "advanced_load_balancer.py",
+        "Algoritmos predictivos",
+        "Optimización energética"
+      ]
+    },
+    {
+      "title": "Sistema de Monitoreo Distribuido",
+      "description": "Implementación de sistema de monitoreo completo: métricas de red, salud de nodos, detección de anomalías, alertas automáticas, dashboards en tiempo real.",
+      "feature": "Monitoreo y Métricas",
+      "priority": 6,
+      "estimated_hours": 14,
+      "status": "todo",
+      "dependencies": [
+        "Balanceador de Carga Avanzado"
+      ],
+      "deliverables": [
+        "monitoring_system.py",
+        "Dashboard de métricas",
+        "Sistema de alertas"
+      ]
+    },
+    {
+      "title": "Detección de Anomalías con ML",
+      "description": "Sistema de detección de comportamientos anómalos usando machine learning: detección de nodos maliciosos, patrones de ataque, predicción de fallos.",
+      "feature": "Monitoreo y Métricas",
+      "priority": 6,
+      "estimated_hours": 16,
+      "status": "todo",
+      "dependencies": [
+        "Sistema de Monitoreo Distribuido"
+      ],
+      "deliverables": [
+        "anomaly_detection.py",
+        "Modelos de ML entrenados",
+        "Sistema de scoring de reputación"
+      ]
+    },
+    {
+      "title": "Métricas de Seguridad y Auditoría",
+      "description": "Sistema de auditoría de seguridad: logs de eventos críticos, métricas de ataques, análisis forense, reportes de seguridad automatizados.",
+      "feature": "Seguridad y Criptografía",
+      "priority": 6,
+      "estimated_hours": 8,
+      "status": "todo",
+      "dependencies": [
+        "Detección de Anomalías"
+      ],
+      "deliverables": [
+        "security_audit.py",
+        "Sistema de logging seguro",
+        "Reportes automatizados"
+      ]
+    },
+    {
+      "title": "Suite de Tests de Integración",
+      "description": "Desarrollo de tests completos de integración: simulación de red P2P, tests de consenso, validación de tolerancia a fallos, benchmarks de rendimiento.",
+      "feature": "Testing y Validación",
+      "priority": 5,
+      "estimated_hours": 20,
+      "status": "todo",
+      "dependencies": [
+        "Métricas de Seguridad"
+      ],
+      "deliverables": [
+        "tests/integration/",
+        "Simulador de red P2P",
+        "Benchmarks automatizados"
+      ]
+    },
+    {
+      "title": "Simulación de Ataques de Seguridad",
+      "description": "Implementación de simuladores de ataques: Sybil attack simulator, Eclipse attack tester, Data poisoning scenarios, Timing correlation attacks.",
+      "feature": "Testing y Validación",
+      "priority": 5,
+      "estimated_hours": 18,
+      "status": "todo",
+      "dependencies": [
+        "Suite de Tests de Integración"
+      ],
+      "deliverables": [
+        "tests/security_attacks/",
+        "Simuladores de ataques",
+        "Reportes de vulnerabilidades"
+      ]
+    },
+    {
+      "title": "Validación de Rendimiento y Escalabilidad",
+      "description": "Tests de escalabilidad: simulación de 1000+ nodos, tests de throughput, latencia bajo carga, degradación elegante, límites del sistema.",
+      "feature": "Testing y Validación",
+      "priority": 5,
+      "estimated_hours": 16,
+      "status": "todo",
+      "dependencies": [
+        "Simulación de Ataques"
+      ],
+      "deliverables": [
+        "tests/performance/",
+        "Reportes de escalabilidad",
+        "Métricas de límites"
+      ]
+    },
+    {
+      "title": "Documentación Técnica Completa",
+      "description": "Documentación exhaustiva: arquitectura del sistema, APIs, protocolos de seguridad, guías de despliegue, troubleshooting, best practices.",
+      "feature": "Testing y Validación",
+      "priority": 4,
+      "estimated_hours": 12,
+      "status": "todo",
+      "dependencies": [
+        "Validación de Rendimiento"
+      ],
+      "deliverables": [
+        "docs/architecture.md",
+        "docs/api_reference.md",
+        "docs/deployment_guide.md"
+      ]
+    },
+    {
+      "title": "Guías de Seguridad y Compliance",
+      "description": "Documentación de seguridad: threat model, security checklist, compliance guidelines, incident response procedures, ethical usage policies.",
+      "feature": "Seguridad y Criptografía",
+      "priority": 4,
+      "estimated_hours": 8,
+      "status": "todo",
+      "dependencies": [
+        "Documentación Técnica"
+      ],
+      "deliverables": [
+        "docs/security_guide.md",
+        "docs/threat_model.md",
+        "docs/ethical_usage.md"
+      ]
+    },
+    {
+      "title": "Sistema de Despliegue Automatizado",
+      "description": "Automatización de despliegue: Docker containers, Kubernetes manifests, CI/CD pipelines, monitoring setup, backup procedures.",
+      "feature": "Testing y Validación",
+      "priority": 3,
+      "estimated_hours": 10,
+      "status": "todo",
+      "dependencies": [
+        "Guías de Seguridad"
+      ],
+      "deliverables": [
+        "docker/",
+        "k8s/",
+        ".github/workflows/"
+      ]
+    }
+  ],
+  "generated_at": "2025-10-11T17:07:58.100118",
+  "total_estimated_hours": 234
+}

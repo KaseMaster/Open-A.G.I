@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.coverage
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Logs and artifacts
+*.log
+*.tmp
+*.swp
+sbom.spdx.json
+
+# Build outputs
+build/
+dist/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment and secrets
+.env
+*.auth_private
+*.auth
+archonadmin.auth_private
+archonops.auth_private
+archonviewer.auth_private
+
+# TOR data and onion service
+tor_data/
+onion_service/authorized_clients/
+onion_service/hs_ed25519_secret_key
+onion_service/hs_ed25519_public_key
+onion_service/hostname
+
+# Project-specific logs
+crypto_security.log
+tor_integration.log

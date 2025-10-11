@@ -1,0 +1,453 @@
+{
+  "project_config": {
+    "title": "IA Distribuida y Colaborativa - AEGIS Framework",
+    "description": "Sistema P2P de inteligencia artificial distribuida con comunicaciones anónimas vía TOR, consenso bizantino y gestión de recursos computacionales",
+    "github_repo": "https://github.com/aegis-framework/distributed-ai",
+    "features": [
+      "Seguridad y Criptografía",
+      "Red TOR y Anonimato",
+      "Consenso Distribuido",
+      "Gestión de Recursos",
+      "Tolerancia a Fallos",
+      "Monitoreo y Métricas",
+      "Testing y Validación"
+    ],
+    "tech_stack": [
+      "Python 3.12+",
+      "AsyncIO",
+      "Cryptography",
+      "TOR Network",
+      "P2P Networking",
+      "Machine Learning",
+      "Docker",
+      "Kubernetes"
+    ]
+  },
+  "statistics": {
+    "total_tasks": 19,
+    "completed_tasks": 5,
+    "in_progress_tasks": 1,
+    "pending_tasks": 13,
+    "total_hours": 234,
+    "completed_hours": 60,
+    "completion_percentage": 26.3,
+    "hours_percentage": 25.6
+  },
+  "tasks_by_feature": {
+    "Seguridad y Criptografía": {
+      "total": 4,
+      "completed": 2,
+      "hours": 36
+    },
+    "Red TOR y Anonimato": {
+      "total": 1,
+      "completed": 1,
+      "hours": 10
+    },
+    "Consenso Distribuido": {
+      "total": 1,
+      "completed": 1,
+      "hours": 16
+    },
+    "Gestión de Recursos": {
+      "total": 3,
+      "completed": 1,
+      "hours": 36
+    },
+    "Tolerancia a Fallos": {
+      "total": 3,
+      "completed": 0,
+      "hours": 30
+    },
+    "Monitoreo y Métricas": {
+      "total": 2,
+      "completed": 0,
+      "hours": 30
+    },
+    "Testing y Validación": {
+      "total": 5,
+      "completed": 0,
+      "hours": 76
+    }
+  },
+  "all_tasks": [
+    {
+      "tool": "archon:manage_task",
+      "action": "create",
+      "project_id": "[PROJECT_ID]",
+      "title": "Análisis de Seguridad P2P - Vectores de Ataque",
+      "description": "Análisis exhaustivo de vectores de ataque en arquitecturas P2P distribuidas: Sybil, Eclipse, Data Poisoning, Timing attacks. Implementación de mitigaciones específicas.",
+      "feature": "Seguridad y Criptografía",
+      "task_order": 10,
+      "estimated_hours": 8,
+      "status": "done",
+      "deliverables": [
+        "ARQUITECTURA_IA_DISTRIBUIDA.md",
+        "Análisis de vectores de ataque",
+        "Mitigaciones implementadas"
+      ],
+      "dependencies": []
+    },
+    {
+      "tool": "archon:manage_task",
+      "action": "create",
+      "project_id": "[PROJECT_ID]",
+      "title": "Framework Criptográfico - Autenticación y Cifrado",
+      "description": "Implementación completa del sistema criptográfico: Ed25519 para autenticación, ChaCha20-Poly1305 para cifrado, X25519 para intercambio de claves, Double Ratchet para forward secrecy.",
+      "feature": "Seguridad y Criptografía",
+      "task_order": 10,
+      "estimated_hours": 12,
+      "status": "done",
+      "deliverables": [
+        "crypto_framework.py",
+        "Sistema de autenticación",
+        "Cifrado E2E",
+        "Double Ratchet"
+      ],
+      "dependencies": [
+        "Análisis de Seguridad P2P"
+      ]
+    },
+    {
+      "tool": "archon:manage_task",
+      "action": "create",
+      "project_id": "[PROJECT_ID]",
+      "title": "Integración TOR - Gateway Anónimo",
+      "description": "Implementación del gateway TOR para comunicaciones anónimas: gestión de circuitos, selección de nodos, rotación automática, resistencia a ataques de correlación.",
+      "feature": "Red TOR y Anonimato",
+      "task_order": 10,
+      "estimated_hours": 10,
+      "status": "done",
+      "deliverables": [
+        "tor_integration.py",
+        "Gateway TOR",
+        "Gestión de circuitos",
+        "Rotación automática"
+      ],
+      "dependencies": [
+        "Framework Criptográfico"
+      ]
+    },
+    {
+      "tool": "archon:manage_task",
+      "action": "create",
+      "project_id": "[PROJECT_ID]",
+      "title": "Protocolo de Consenso Híbrido - PoC + PBFT",
+      "description": "Desarrollo del protocolo de consenso híbrido combinando Proof of Computation y Practical Byzantine Fault Tolerance para sincronización de conocimiento distribuido.",
+      "feature": "Consenso Distribuido",
+      "task_order": 10,
+      "estimated_hours": 16,
+      "status": "done",
+      "deliverables": [
+        "consensus_protocol.py",
+        "Protocolo PoC",
+        "PBFT Implementation",
+        "Sincronización distribuida"
+      ],
+      "dependencies": [
+        "Framework Criptográfico",
+        "Integración TOR"
+      ]
+    },
+    {
+      "tool": "archon:manage_task",
+      "action": "create",
+      "project_id": "[PROJECT_ID]",
+      "title": "Sistema de Recursos Computacionales",
+      "description": "Implementación del gestor de recursos distribuidos: monitoreo en tiempo real, balanceador de carga inteligente, asignación dinámica de tareas, métricas de rendimiento.",
+      "feature": "Gestión de Recursos",
+      "task_order": 10,
+      "estimated_hours": 14,
+      "status": "done",
+      "deliverables": [
+        "resource_manager.py",
+        "Monitor de recursos",
+        "Balanceador inteligente",
+        "Asignación dinámica"
+      ],
+      "dependencies": [
+        "Protocolo de Consenso"
+      ]
+    },
+    {
+      "tool": "archon:manage_task",
+      "action": "create",
+      "project_id": "[PROJECT_ID]",
+      "title": "Mecanismos de Tolerancia a Fallos",
+      "description": "Implementación de sistemas de detección y recuperación de fallos: heartbeat distribuido, replicación de datos, migración automática de tareas, reconstitución de red.",
+      "feature": "Tolerancia a Fallos",
+      "task_order": 9,
+      "estimated_hours": 12,
+      "status": "in_progress",
+      "deliverables": [
+        "fault_tolerance.py",
+        "Sistema de heartbeat",
+        "Detección de fallos",
+        "Migración de tareas"
+      ],
+      "dependencies": [
+        "Sistema de Recursos Computacionales"
+      ]
+    },
+    {
+      "tool": "archon:manage_task",
+      "action": "create",
+      "project_id": "[PROJECT_ID]",
+      "title": "Replicación y Sincronización de Datos",
+      "description": "Sistema de replicación distribuida con factor 3x para datos críticos, sincronización eventual, resolución de conflictos, integridad criptográfica.",
+      "feature": "Tolerancia a Fallos",
+      "task_order": 8,
+      "estimated_hours": 10,
+      "status": "todo",
+      "deliverables": [
+        "data_replication.py",
+        "Replicación 3x",
+        "Sincronización eventual",
+        "Resolución de conflictos"
+      ],
+      "dependencies": [
+        "Mecanismos de Tolerancia a Fallos"
+      ]
+    },
+    {
+      "tool": "archon:manage_task",
+      "action": "create",
+      "project_id": "[PROJECT_ID]",
+      "title": "Recuperación Automática de Nodos",
+      "description": "Implementación de mecanismos de auto-recuperación: detección de desconexiones, búsqueda inteligente de peers, reconstitución de estado, migración de tareas activas.",
+      "feature": "Tolerancia a Fallos",
+      "task_order": 8,
+      "estimated_hours": 8,
+      "status": "todo",
+      "deliverables": [
+        "node_recovery.py",
+        "Auto-recuperación",
+        "Búsqueda de peers",
+        "Reconstitución de estado"
+      ],
+      "dependencies": [
+        "Replicación y Sincronización"
+      ]
+    },
+    {
+      "tool": "archon:manage_task",
+      "action": "create",
+      "project_id": "[PROJECT_ID]",
+      "title": "Optimización de Comunicaciones P2P",
+      "description": "Optimización del rendimiento de red: compresión LZ4, batching de mensajes, pipelining, cache distribuido, prefetching inteligente.",
+      "feature": "Gestión de Recursos",
+      "task_order": 7,
+      "estimated_hours": 10,
+      "status": "todo",
+      "deliverables": [
+        "network_optimization.py",
+        "Compresión LZ4",
+        "Message batching",
+        "Cache distribuido"
+      ],
+      "dependencies": [
+        "Recuperación Automática de Nodos"
+      ]
+    },
+    {
+      "tool": "archon:manage_task",
+      "action": "create",
+      "project_id": "[PROJECT_ID]",
+      "title": "Balanceador de Carga Avanzado",
+      "description": "Implementación de algoritmos avanzados de balanceado: predicción de carga, asignación basada en ML, optimización energética, distribución geográfica.",
+      "feature": "Gestión de Recursos",
+      "task_order": 7,
+      "estimated_hours": 12,
+      "status": "todo",
+      "deliverables": [
+        "advanced_load_balancer.py",
+        "Predicción ML",
+        "Optimización energética",
+        "Distribución geográfica"
+      ],
+      "dependencies": [
+        "Optimización de Comunicaciones P2P"
+      ]
+    },
+    {
+      "tool": "archon:manage_task",
+      "action": "create",
+      "project_id": "[PROJECT_ID]",
+      "title": "Sistema de Monitoreo Distribuido",
+      "description": "Implementación de sistema de monitoreo completo: métricas de red, salud de nodos, detección de anomalías, alertas automáticas, dashboards en tiempo real.",
+      "feature": "Monitoreo y Métricas",
+      "task_order": 6,
+      "estimated_hours": 14,
+      "status": "todo",
+      "deliverables": [
+        "monitoring_system.py",
+        "Métricas de red",
+        "Dashboard real-time",
+        "Sistema de alertas"
+      ],
+      "dependencies": [
+        "Balanceador de Carga Avanzado"
+      ]
+    },
+    {
+      "tool": "archon:manage_task",
+      "action": "create",
+      "project_id": "[PROJECT_ID]",
+      "title": "Detección de Anomalías con ML",
+      "description": "Sistema de detección de comportamientos anómalos usando machine learning: detección de nodos maliciosos, patrones de ataque, predicción de fallos.",
+      "feature": "Monitoreo y Métricas",
+      "task_order": 6,
+      "estimated_hours": 16,
+      "status": "todo",
+      "deliverables": [
+        "anomaly_detection.py",
+        "ML para anomalías",
+        "Detección de ataques",
+        "Predicción de fallos"
+      ],
+      "dependencies": [
+        "Sistema de Monitoreo Distribuido"
+      ]
+    },
+    {
+      "tool": "archon:manage_task",
+      "action": "create",
+      "project_id": "[PROJECT_ID]",
+      "title": "Métricas de Seguridad y Auditoría",
+      "description": "Sistema de auditoría de seguridad: logs de eventos críticos, métricas de ataques, análisis forense, reportes de seguridad automatizados.",
+      "feature": "Seguridad y Criptografía",
+      "task_order": 6,
+      "estimated_hours": 8,
+      "status": "todo",
+      "deliverables": [
+        "security_audit.py",
+        "Logs de seguridad",
+        "Análisis forense",
+        "Reportes automatizados"
+      ],
+      "dependencies": [
+        "Detección de Anomalías con ML"
+      ]
+    },
+    {
+      "tool": "archon:manage_task",
+      "action": "create",
+      "project_id": "[PROJECT_ID]",
+      "title": "Suite de Tests de Integración",
+      "description": "Desarrollo de tests completos de integración: simulación de red P2P, tests de consenso, validación de tolerancia a fallos, benchmarks de rendimiento.",
+      "feature": "Testing y Validación",
+      "task_order": 5,
+      "estimated_hours": 20,
+      "status": "todo",
+      "deliverables": [
+        "tests/integration/",
+        "Simulación P2P",
+        "Tests de consenso",
+        "Benchmarks"
+      ],
+      "dependencies": [
+        "Métricas de Seguridad y Auditoría"
+      ]
+    },
+    {
+      "tool": "archon:manage_task",
+      "action": "create",
+      "project_id": "[PROJECT_ID]",
+      "title": "Simulación de Ataques de Seguridad",
+      "description": "Implementación de simuladores de ataques: Sybil attack simulator, Eclipse attack tester, Data poisoning scenarios, Timing correlation attacks.",
+      "feature": "Testing y Validación",
+      "task_order": 5,
+      "estimated_hours": 18,
+      "status": "todo",
+      "deliverables": [
+        "tests/security_attacks/",
+        "Sybil simulator",
+        "Eclipse tester",
+        "Data poisoning tests"
+      ],
+      "dependencies": [
+        "Suite de Tests de Integración"
+      ]
+    },
+    {
+      "tool": "archon:manage_task",
+      "action": "create",
+      "project_id": "[PROJECT_ID]",
+      "title": "Validación de Rendimiento y Escalabilidad",
+      "description": "Tests de escalabilidad: simulación de 1000+ nodos, tests de throughput, latencia bajo carga, degradación elegante, límites del sistema.",
+      "feature": "Testing y Validación",
+      "task_order": 5,
+      "estimated_hours": 16,
+      "status": "todo",
+      "deliverables": [
+        "tests/performance/",
+        "Simulación 1000+ nodos",
+        "Tests de throughput",
+        "Análisis de límites"
+      ],
+      "dependencies": [
+        "Simulación de Ataques de Seguridad"
+      ]
+    },
+    {
+      "tool": "archon:manage_task",
+      "action": "create",
+      "project_id": "[PROJECT_ID]",
+      "title": "Documentación Técnica Completa",
+      "description": "Documentación exhaustiva: arquitectura del sistema, APIs, protocolos de seguridad, guías de despliegue, troubleshooting, best practices.",
+      "feature": "Testing y Validación",
+      "task_order": 4,
+      "estimated_hours": 12,
+      "status": "todo",
+      "deliverables": [
+        "docs/architecture.md",
+        "docs/api.md",
+        "docs/deployment.md",
+        "docs/troubleshooting.md"
+      ],
+      "dependencies": [
+        "Validación de Rendimiento y Escalabilidad"
+      ]
+    },
+    {
+      "tool": "archon:manage_task",
+      "action": "create",
+      "project_id": "[PROJECT_ID]",
+      "title": "Guías de Seguridad y Compliance",
+      "description": "Documentación de seguridad: threat model, security checklist, compliance guidelines, incident response procedures, ethical usage policies.",
+      "feature": "Seguridad y Criptografía",
+      "task_order": 4,
+      "estimated_hours": 8,
+      "status": "todo",
+      "deliverables": [
+        "docs/security_guide.md",
+        "docs/threat_model.md",
+        "docs/compliance.md",
+        "docs/incident_response.md"
+      ],
+      "dependencies": [
+        "Documentación Técnica Completa"
+      ]
+    },
+    {
+      "tool": "archon:manage_task",
+      "action": "create",
+      "project_id": "[PROJECT_ID]",
+      "title": "Sistema de Despliegue Automatizado",
+      "description": "Automatización de despliegue: Docker containers, Kubernetes manifests, CI/CD pipelines, monitoring setup, backup procedures.",
+      "feature": "Testing y Validación",
+      "task_order": 3,
+      "estimated_hours": 10,
+      "status": "todo",
+      "deliverables": [
+        "docker/",
+        "k8s/",
+        ".github/workflows/",
+        "scripts/backup.sh"
+      ],
+      "dependencies": [
+        "Guías de Seguridad y Compliance"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "action": "create",
+  "title": "IA Distribuida y Colaborativa - AEGIS Framework",
+  "description": "Sistema P2P de inteligencia artificial distribuida con comunicaciones anónimas vía TOR, consenso bizantino y gestión de recursos computacionales",
+  "github_repo": "https://github.com/aegis-framework/distributed-ai"
+}

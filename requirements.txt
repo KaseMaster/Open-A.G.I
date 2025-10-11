@@ -1,0 +1,62 @@
+# Dependencias para IA Distribuida y Colaborativa
+# AEGIS Security Framework - Uso Ético Únicamente
+
+# Criptografía y Seguridad
+cryptography>=41.0.0
+pycryptodome>=3.19.0
+pyotp>=2.9.0
+
+# Red TOR
+stem>=1.8.2
+pysocks>=1.7.1
+aiohttp>=3.9.0
+aiohttp-socks>=0.8.4
+
+# Computación Distribuida y P2P
+asyncio-mqtt>=0.16.0
+websockets>=12.0
+uvloop>=0.19.0; platform_system!="Windows"  # Solo para Linux/macOS
+
+# Machine Learning y Computación Científica
+numpy>=1.24.0
+scipy>=1.11.0
+scikit-learn>=1.3.0
+torch>=2.1.0
+transformers>=4.35.0
+
+# Base de Datos y Almacenamiento
+aiosqlite>=0.19.0
+redis>=5.0.0
+leveldb>=0.201; platform_system!="Windows"
+
+# Monitoreo y Logging
+loguru>=0.7.2
+prometheus-client>=0.19.0
+psutil>=5.9.6
+pandas>=2.2.2
+flask>=3.0.0
+zeroconf>=0.132.2
+Flask-SocketIO>=5.3.6
+netifaces>=0.11.0
+
+# Utilidades
+pydantic>=2.5.0
+click>=8.1.7
+rich>=13.7.0
+tqdm>=4.66.0
+python-dotenv>=1.0.0
+
+# Testing y Desarrollo
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+black>=23.11.0
+flake8>=6.1.0
+mypy>=1.7.0
+
+# Opcional: Aceleración GPU
+# torch-audio>=2.1.0
+# torch-vision>=0.16.0
+
+# Opcional: Visualización
+plotly>=5.17.0

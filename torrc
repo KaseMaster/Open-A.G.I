@@ -1,0 +1,38 @@
+# Tor configuration for Archon node (Windows)
+# Hardened settings for local privacy and stability
+
+# SOCKS proxy restricted to localhost with circuit isolation
+SocksPort 127.0.0.1:9050 OnionTrafficOnly IsolateDestAddr IsolateSOCKSAuth
+SafeSocks 1
+SocksPolicy accept 127.0.0.1
+SocksPolicy reject *
+
+# ControlPort restricted to localhost with cookie auth
+ControlPort 127.0.0.1:9051
+CookieAuthentication 1
+# Only cookie-based auth (password disabled to minimize brute-force surface)
+
+# Explicit absolute paths (quoted) to avoid relative path warnings
+DataDirectory "G:\\Open A.G.I\\tor_data"
+
+# Reduce disk writes in dev environments
+AvoidDiskWrites 1
+ClientOnly 1
+Log notice file G:\\OpenAGI_logs\\tor.log
+UseEntryGuards 1
+ConnectionPadding 1
+
+# Bridges/obfs4 support (prepared; disabled until you provide bridge lines)
+# UseBridges 1
+# ClientTransportPlugin obfs4 exec C:\Program Files\Tor Browser\Browser\TorBrowser\Tor\obfs4proxy.exe
+# Example Bridge lines (replace with real bridges from https://bridges.torproject.org/):
+# Bridge obfs4 <FINGERPRINT> <IP>:<PORT> cert=<CERT> iat-mode=0
+
+# GeoIP databases (Chocolatey Tor package paths)
+GeoIPFile "C:\\ProgramData\\chocolatey\\lib\\tor\\tools\\data\\geoip"
+GeoIPv6File "C:\\ProgramData\\chocolatey\\lib\\tor\\tools\\data\\geoip6"
+
+# Onion service to expose the monitoring dashboard (v3)
+HiddenServiceDir "G:\\Open A.G.I\\onion_service"
+HiddenServiceVersion 3
+HiddenServicePort 80 127.0.0.1:8090

@@ -1,0 +1,18 @@
+[flake8]
+max-line-length = 120
+max-complexity = 15
+extend-ignore = E203, W503
+select = E, F, W, C90
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    build,
+    dist,
+    onion_service,
+    tor_data,
+    .pytest_cache
+
+# Allow non-top-level imports in tests where sys.path adjustments are needed
+per-file-ignores =
+    tests/*: E402

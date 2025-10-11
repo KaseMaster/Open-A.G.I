@@ -1,0 +1,295 @@
+{
+  "timestamp": 1760221732.104975,
+  "test_environment": {
+    "temp_dir": "C:\\Users\\damep\\AppData\\Local\\Temp\\aegis_test_voho_dw2",
+    "python_version": "3.12+",
+    "framework_version": "1.0.0"
+  },
+  "summary": {
+    "execution_summary": {
+      "total_time": 4.64103627204895,
+      "total_tests": 16,
+      "success_rate": 100.0,
+      "result_counts": {
+        "passed": 16,
+        "failed": 0,
+        "skipped": 0,
+        "error": 0
+      }
+    },
+    "category_breakdown": {
+      "integration": {
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0,
+        "error": 0
+      },
+      "performance": {
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "error": 0
+      },
+      "security": {
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "error": 0
+      }
+    },
+    "performance_metrics": {
+      "avg_test_duration": 0.28990423679351807,
+      "slowest_tests": [
+        {
+          "test_id": "PF002",
+          "name": "Latencia del Sistema",
+          "duration": 3.0871920585632324
+        },
+        {
+          "test_id": "PF001",
+          "name": "Throughput del Sistema",
+          "duration": 1.0060527324676514
+        },
+        {
+          "test_id": "CS002",
+          "name": "Rendimiento de Consenso",
+          "duration": 0.3534548282623291
+        },
+        {
+          "test_id": "FT002",
+          "name": "Recuperación Automática",
+          "duration": 0.10017585754394531
+        },
+        {
+          "test_id": "SC002",
+          "name": "Autenticación",
+          "duration": 0.0819101333618164
+        }
+      ]
+    },
+    "failed_tests": [],
+    "detailed_results": [
+      {
+        "test_id": "FT001",
+        "name": "Detección de Fallos de Nodos",
+        "category": "integration",
+        "result": "passed",
+        "duration": 5.53131103515625e-05,
+        "metrics": {
+          "total_nodes": 3,
+          "active_nodes": 2,
+          "detected_failures": 1,
+          "detection_accuracy": 1.0
+        }
+      },
+      {
+        "test_id": "FT002",
+        "name": "Recuperación Automática",
+        "category": "integration",
+        "result": "passed",
+        "duration": 0.10017585754394531,
+        "metrics": {
+          "recovery_time": 2.318896016000844,
+          "recovery_success": true,
+          "recovery_method": "automatic_restart"
+        }
+      },
+      {
+        "test_id": "FT003",
+        "name": "Replicación de Datos",
+        "category": "integration",
+        "result": "passed",
+        "duration": 0.0002071857452392578,
+        "metrics": {
+          "replication_factor": 3,
+          "successful_replicas": 3,
+          "consistency_ratio": 1.0
+        }
+      },
+      {
+        "test_id": "CS001",
+        "name": "Tolerancia Bizantina",
+        "category": "integration",
+        "result": "passed",
+        "duration": 0.00019860267639160156,
+        "metrics": {
+          "total_nodes": 7,
+          "byzantine_nodes": 2,
+          "consensus_reached": true,
+          "winning_proposal": "proposal_A",
+          "vote_distribution": {
+            "proposal_A": 6,
+            "proposal_B": 1
+          }
+        }
+      },
+      {
+        "test_id": "CS002",
+        "name": "Rendimiento de Consenso",
+        "category": "performance",
+        "result": "passed",
+        "duration": 0.3534548282623291,
+        "metrics": {
+          "total_time": 0.3532729148864746,
+          "rounds": 5,
+          "avg_round_time": 0.07065458297729492,
+          "throughput": 14.153363559181338
+        }
+      },
+      {
+        "test_id": "DL001",
+        "name": "Agregación Federada",
+        "category": "integration",
+        "result": "passed",
+        "duration": 0.006550788879394531,
+        "metrics": {
+          "num_nodes": 5,
+          "total_samples": 547,
+          "gradient_norm": 0.4867411652226679,
+          "aggregation_method": "weighted_average"
+        }
+      },
+      {
+        "test_id": "DL002",
+        "name": "Preservación de Privacidad",
+        "category": "security",
+        "result": "passed",
+        "duration": 0.00029850006103515625,
+        "metrics": {
+          "epsilon": 1.0,
+          "noise_scale": 1.0,
+          "data_difference": 1.058585323304489,
+          "correlation": 0.5451195752519497,
+          "privacy_preserved": true
+        }
+      },
+      {
+        "test_id": "SC001",
+        "name": "Cifrado/Descifrado",
+        "category": "security",
+        "result": "passed",
+        "duration": 0.0014719963073730469,
+        "metrics": {
+          "original_length": 50,
+          "encrypted_length": 164,
+          "encryption_successful": true,
+          "decryption_successful": true
+        }
+      },
+      {
+        "test_id": "SC002",
+        "name": "Autenticación",
+        "category": "security",
+        "result": "passed",
+        "duration": 0.0819101333618164,
+        "metrics": {
+          "username": "test_user",
+          "auth_success": true,
+          "auth_failure": true,
+          "hash_algorithm": "pbkdf2_hmac_sha256"
+        }
+      },
+      {
+        "test_id": "SC003",
+        "name": "Detección de Intrusiones",
+        "category": "security",
+        "result": "passed",
+        "duration": 0.0001690387725830078,
+        "metrics": {
+          "total_requests": 5,
+          "detected_threats": 4,
+          "detection_accuracy": 1.0,
+          "threat_types": [
+            "suspicious_user_agent",
+            "rate_limit_exceeded"
+          ]
+        }
+      },
+      {
+        "test_id": "NW001",
+        "name": "Descubrimiento de Peers",
+        "category": "integration",
+        "result": "passed",
+        "duration": 0.0001964569091796875,
+        "metrics": {
+          "total_peers": 5,
+          "discovered_peers": 4,
+          "discovery_ratio": 1.0,
+          "bootstrap_peer": "node_0"
+        }
+      },
+      {
+        "test_id": "NW002",
+        "name": "Enrutamiento de Mensajes",
+        "category": "integration",
+        "result": "passed",
+        "duration": 0.0001010894775390625,
+        "metrics": {
+          "source": "node_0",
+          "destination": "node_4",
+          "path_length": 3,
+          "path": [
+            "node_0",
+            "node_2",
+            "node_4"
+          ],
+          "routing_successful": true
+        }
+      },
+      {
+        "test_id": "BC001",
+        "name": "Creación de Bloques",
+        "category": "integration",
+        "result": "passed",
+        "duration": 0.00020051002502441406,
+        "metrics": {
+          "block_hash": "10dd3e6474d370a094d5e0e54b3ead68ee611c1086c810e2b96292d84115ab9a",
+          "transaction_count": 10,
+          "block_size": 777,
+          "creation_successful": true
+        }
+      },
+      {
+        "test_id": "BC002",
+        "name": "Validación de Cadena",
+        "category": "integration",
+        "result": "passed",
+        "duration": 0.000232696533203125,
+        "metrics": {
+          "chain_length": 5,
+          "validation_result": true,
+          "validation_message": "Cadena válida",
+          "total_transactions": 18
+        }
+      },
+      {
+        "test_id": "PF001",
+        "name": "Throughput del Sistema",
+        "category": "performance",
+        "result": "passed",
+        "duration": 1.0060527324676514,
+        "metrics": {
+          "total_transactions": 1000,
+          "processing_time": 1.0058791637420654,
+          "throughput": 994.155198801222,
+          "batch_size": 50
+        }
+      },
+      {
+        "test_id": "PF002",
+        "name": "Latencia del Sistema",
+        "category": "performance",
+        "result": "passed",
+        "duration": 3.0871920585632324,
+        "metrics": {
+          "num_requests": 100,
+          "avg_latency": 0.03086291790008545,
+          "p95_latency": 0.04889155626296997,
+          "p99_latency": 0.04969812631607056,
+          "min_latency": 0.010423898696899414,
+          "max_latency": 0.0501713752746582
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "project_id": "4d3b57fc-9629-46ab-b507-050fb4d74dbf",
+  "title": "Análisis de Seguridad P2P - Vectores de Ataque",
+  "description": "Análisis exhaustivo de vectores de ataque en redes P2P: Sybil attacks, Eclipse attacks, Man-in-the-middle, DDoS distribuidos, y ataques de routing. Implementación de contramedidas y protocolos de detección.",
+  "feature": "Seguridad y Criptografía",
+  "status": "done",
+  "task_order": 10,
+  "estimated_hours": 12,
+  "dependencies": [],
+  "deliverables": ["Documento de análisis de vectores de ataque", "Implementación de contramedidas", "Protocolos de detección de ataques"]
+}

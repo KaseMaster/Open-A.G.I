@@ -1,0 +1,39 @@
+{
+  "app": {
+    "log_level": "INFO",
+    "enable": {
+      "tor": true,
+      "p2p": true,
+      "crypto": true,
+      "consensus": true,
+      "monitoring": true,
+      "resource_manager": true
+    }
+  },
+  "tor": {
+    "enabled": true,
+    "socks_port": 9050,
+    "control_port": 9051,
+    "onion_routing": true
+  },
+  "p2p": {
+    "discovery": "zeroconf",
+    "heartbeat_interval_sec": 30
+  },
+  "crypto": {
+    "rotate_interval_hours": 24,
+    "hash": "blake3",
+    "symmetric": "chacha20-poly1305"
+  },
+  "consensus": {
+    "algorithm": "PoC+PBFT"
+  },
+  "monitoring": {
+    "dashboard_port": 8090,
+    "enable_socketio": true
+  },
+  "security": {
+    "rate_limit_per_minute": 120,
+    "validate_peer_input": true
+  }
+}
