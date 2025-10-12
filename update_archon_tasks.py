@@ -183,8 +183,11 @@ def create_update_script():
     task_commands = generate_curl_commands(completed_tasks)
     project_command = generate_project_update()
     
-    # Crear archivo de comandos
-    with open("archon_update_commands.sh", "w", encoding="utf-8") as f:
+    # Crear archivo de comandos en scripts/
+    from pathlib import Path
+    script_path = Path("scripts/archon_update_commands.sh")
+    script_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(script_path, "w", encoding="utf-8") as f:
         f.write("#!/bin/bash\n")
         f.write("# Script de actualización del proyecto AEGIS Framework en Archon MCP\n")
         f.write(f"# Generado el: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
@@ -233,12 +236,15 @@ def create_update_script():
         ]
     }
     
-    with open("archon_update_summary.json", "w", encoding="utf-8") as f:
+    # Guardar resumen en config/
+    summary_path = Path("config/archon_update_summary.json")
+    summary_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(summary_path, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2, ensure_ascii=False)
     
     print(f"✅ Archivos generados:")
-    print(f"   - archon_update_commands.sh ({len(task_commands)} comandos de actualización)")
-    print(f"   - archon_update_summary.json (resumen de la actualización)")
+    print(f"   - {script_path} ({len(task_commands)} comandos de actualización)")
+    print(f"   - {summary_path} (resumen de la actualización)")
     print(f"📊 Estadísticas:")
     print(f"   - Tareas actualizadas: {len(completed_tasks)}")
     print(f"   - Horas completadas: {sum(task['actual_hours'] for task in completed_tasks)}")

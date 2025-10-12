@@ -2,13 +2,17 @@ Param(
   [switch]$WithoutTor,
   [int]$Port = 8090,
   [string]$TorExe = "C:\\ProgramData\\chocolatey\\bin\\tor.exe",
-  [string]$TorrcPath = "$PSScriptRoot\\torrc"
+  [string]$TorrcPath = $null
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 Write-Host "== Iniciando ARCHON (Dashboard puerto $Port) ==" -ForegroundColor Cyan
+
+# Directorios del repositorio
+$RepoRoot = Split-Path $PSScriptRoot -Parent
+if (-not $TorrcPath) { $TorrcPath = Join-Path $RepoRoot 'config/torrc' }
 
 # 1) Verificar puerto del dashboard
 function Test-PortFree([int]$p){
@@ -24,7 +28,7 @@ if(-not (Test-PortFree -p $Port)){
 }
 
 # 2) Actualizar app_config.json con nuevo puerto
-$configPath = Join-Path $PSScriptRoot 'app_config.json'
+$configPath = Join-Path $RepoRoot 'config/app_config.json'
 if(Test-Path $configPath){
   $cfg = Get-Content $configPath -Raw | ConvertFrom-Json
   if(-not $cfg.monitoring){ $cfg | Add-Member -NotePropertyName monitoring -NotePropertyValue (@{}) }
@@ -71,5 +75,5 @@ if(-not $WithoutTor){
 
 # 4) Lanzar el nodo (dashboard)
 Write-Host "Lanzando nodo ARCHON..." -ForegroundColor Cyan
-Start-Process -FilePath "python" -ArgumentList "main.py start-node" -WorkingDirectory $PSScriptRoot
+Start-Process -FilePath "python" -ArgumentList "main.py start-node" -WorkingDirectory $RepoRoot
 Write-Host "Nodo iniciado. Abre http://127.0.0.1:$Port" -ForegroundColor Green

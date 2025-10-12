@@ -1044,7 +1044,7 @@ class IntegrationTestSuite:
         # Guardar el reporte en un lugar estable del proyecto, ya que el temp_dir
         # se limpia en teardown dentro de run_all_tests().
         if output_file is None:
-            output_file = os.path.join(os.getcwd(), "integration_report.json")
+            output_file = os.path.join(os.getcwd(), "reports", "integration_report.json")
 
         # Asegurar que el directorio destino existe
         out_dir = os.path.dirname(output_file)

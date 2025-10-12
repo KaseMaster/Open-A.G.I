@@ -450,17 +450,22 @@ def main():
     # Generar comandos de Archon
     commands_script = setup.generate_archon_commands_script()
     
-    # Guardar configuración completa
-    with open('archon_project_complete.json', 'w', encoding='utf-8') as f:
+    # Guardar configuración completa en config/
+    from pathlib import Path
+    complete_path = Path('config/archon_project_complete.json')
+    complete_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(complete_path, 'w', encoding='utf-8') as f:
         json.dump(summary, f, indent=2, ensure_ascii=False)
     
-    # Guardar script de comandos
-    with open('archon_commands.txt', 'w', encoding='utf-8') as f:
+    # Guardar script de comandos en scripts/
+    commands_path = Path('scripts/archon_commands.txt')
+    commands_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(commands_path, 'w', encoding='utf-8') as f:
         f.write(commands_script)
     
     print("✅ ARCHIVOS GENERADOS:")
-    print("   • archon_project_complete.json - Configuración completa del proyecto")
-    print("   • archon_commands.txt - Script con todos los comandos de Archon MCP")
+    print(f"   • {complete_path} - Configuración completa del proyecto")
+    print(f"   • {commands_path} - Script con todos los comandos de Archon MCP")
     print()
     
     print("🔧 PRÓXIMOS PASOS:")

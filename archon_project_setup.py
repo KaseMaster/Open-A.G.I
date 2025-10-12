@@ -459,10 +459,13 @@ archon:manage_task(
             "total_estimated_hours": sum(t['estimated_hours'] for t in self.tasks_structure)
         }
         
-        with open('archon_project_config.json', 'w', encoding='utf-8') as f:
+        # Guardar en config/
+        out_path = Path('config/archon_project_config.json')
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(out_path, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
         
-        logger.info("Configuración del proyecto guardada en archon_project_config.json")
+        logger.info(f"Configuración del proyecto guardada en {out_path}")
 
 def main():
     """Función principal para configurar el proyecto"""
@@ -492,7 +495,7 @@ def main():
     
     print("\n" + "=" * 60)
     print("✅ Configuración completada")
-    print("📁 Archivo generado: archon_project_config.json")
+    print("📁 Archivo generado: config/archon_project_config.json")
     print("🔗 Usar comandos anteriores en Archon MCP para crear el proyecto")
 
 if __name__ == "__main__":

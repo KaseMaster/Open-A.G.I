@@ -88,7 +88,17 @@ def load_config(config_path: Optional[str]) -> Dict[str, Any]:
     """Carga configuración desde JSON y aplica overrides desde .env."""
     load_dotenv()
     cfg: Dict[str, Any] = DEFAULT_CONFIG.copy()
-    path = config_path or os.environ.get("AEGIS_CONFIG", "app_config.json")
+    # Resolver ruta de configuración: prioridad -> parámetro, env, config/app_config.json, app_config.json
+    if config_path:
+        path = config_path
+    else:
+        env_path = os.environ.get("AEGIS_CONFIG")
+        if env_path:
+            path = env_path
+        else:
+            candidates = [os.path.join("config", "app_config.json"), "app_config.json"]
+            path = next((p for p in candidates if os.path.exists(p)), candidates[0])
+
     if os.path.exists(path):
         try:
             with open(path, "r", encoding="utf-8") as f:

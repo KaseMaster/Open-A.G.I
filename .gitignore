@@ -42,3 +42,12 @@ onion_service/hostname
 # Project-specific logs
 crypto_security.log
 tor_integration.log
+# CI artifacts and reports
+pip-audit.json
+bandit.json
+gitleaks.json
+sbom.spdx.json
+ci_run_*.log
+
+# Local lint logs
+flake8*.txt

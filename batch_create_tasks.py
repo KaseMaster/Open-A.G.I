@@ -132,8 +132,9 @@ def main():
     
     commands = create_task_commands()
     
-    # Guardar comandos en archivo
-    commands_file = Path("archon_task_commands.sh")
+    # Guardar comandos en archivo (scripts/)
+    commands_file = Path("scripts/archon_task_commands.sh")
+    commands_file.parent.mkdir(parents=True, exist_ok=True)
     with open(commands_file, "w", encoding="utf-8") as f:
         f.write("#!/bin/bash\n")
         f.write("# Comandos para crear todas las tareas del proyecto AEGIS Framework\n\n")
@@ -167,10 +168,13 @@ def main():
         }
     }
     
-    with open("archon_project_summary.json", "w", encoding="utf-8") as f:
+    # Guardar resumen en config/
+    summary_file = Path("config/archon_project_summary.json")
+    summary_file.parent.mkdir(parents=True, exist_ok=True)
+    with open(summary_file, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2, ensure_ascii=False)
     
-    print(f"📋 Resumen del proyecto guardado en: archon_project_summary.json")
+    print(f"📋 Resumen del proyecto guardado en: {summary_file}")
     
     return commands
 
