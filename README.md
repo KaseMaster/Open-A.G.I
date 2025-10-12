@@ -200,6 +200,16 @@ async def query_network(consensus, query):
 
 ---
 
+## 📁 Repository Structure
+
+- config/ — JSON configuration and templates (app_config.json, torrc, project/task configs)
+- scripts/ — helper scripts for starting/stopping Archon, Tor utilities, and generated command scripts
+- reports/ — generated reports and analysis outputs (integration_report.json, task_security_analysis.json)
+- docs/ — project documentation
+- tests/ — integration tests
+
+---
+
 ## 🔒 Consideraciones de Seguridad
 
 ### Amenazas Mitigadas
