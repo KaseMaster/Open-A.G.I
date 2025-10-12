@@ -22,7 +22,7 @@ import threading
 from typing import Dict, List, Optional, Tuple, Any, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
 import logging
 from collections import defaultdict, deque
@@ -103,7 +103,7 @@ class ResourceUtilization:
     storage_percent: float
     network_io: float  # MB/s
     gpu_percent: float = 0.0
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     
     def get_availability_score(self) -> float:
         """Calcular puntuación de disponibilidad (0-1)"""
@@ -125,7 +125,7 @@ class ComputeTask:
     estimated_duration: float  # segundos
     deadline: Optional[datetime] = None
     data_size: int = 0  # MB
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     assigned_node: Optional[str] = None
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
@@ -135,14 +135,14 @@ class ComputeTask:
         """Verificar si la tarea ha expirado"""
         if self.deadline is None:
             return False
-        return datetime.utcnow() > self.deadline
+        return datetime.now(timezone.utc) > self.deadline
     
     def get_urgency_score(self) -> float:
         """Calcular puntuación de urgencia"""
         base_urgency = 6 - self.priority.value  # Invertir prioridad
         
         if self.deadline:
-            time_left = (self.deadline - datetime.utcnow()).total_seconds()
+        time_left = (self.deadline - datetime.now(timezone.utc)).total_seconds()
             if time_left <= 0:
                 return 10.0  # Máxima urgencia
             
@@ -161,7 +161,7 @@ class NodeProfile:
     status: NodeStatus
     specializations: List[TaskType] = field(default_factory=list)
     reputation_score: float = 1.0
-    last_seen: datetime = field(default_factory=datetime.utcnow)
+    last_seen: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     performance_history: deque = field(default_factory=lambda: deque(maxlen=100))
     task_completion_rate: float = 1.0
     average_response_time: float = 0.0
@@ -169,7 +169,7 @@ class NodeProfile:
     def update_utilization(self, utilization: ResourceUtilization):
         """Actualizar utilización de recursos"""
         self.current_utilization = utilization
-        self.last_seen = datetime.utcnow()
+        self.last_seen = datetime.now(timezone.utc)
         
         # Actualizar estado basado en utilización
         availability = utilization.get_availability_score()
@@ -372,13 +372,13 @@ class LoadBalancer:
         
         if assigned_node:
             task.assigned_node = assigned_node
-            task.started_at = datetime.utcnow()
+        task.started_at = datetime.now(timezone.utc)
             
             # Registrar asignación
             self.assignment_history.append({
                 'task_id': task.task_id,
                 'node_id': assigned_node,
-                'timestamp': datetime.utcnow(),
+            'timestamp': datetime.now(timezone.utc),
                 'strategy': self.current_strategy
             })
             
@@ -553,7 +553,7 @@ class ResourceManager:
         
         # Completar tareas activas
         for task in self.active_tasks.values():
-            task.completed_at = datetime.utcnow()
+        task.completed_at = datetime.now(timezone.utc)
             self.completed_tasks.append(task)
         
         self.active_tasks.clear()
@@ -638,14 +638,14 @@ class ResourceManager:
                 result = await self.task_executor(task)
                 task.result_data = result
             
-            task.completed_at = datetime.utcnow()
+        task.completed_at = datetime.now(timezone.utc)
             self.completed_tasks.append(task)
             
             logger.info(f"Tarea {task.task_id} completada localmente")
             
         except Exception as e:
             logger.error(f"Error ejecutando tarea {task.task_id}: {e}")
-            task.completed_at = datetime.utcnow()
+        task.completed_at = datetime.now(timezone.utc)
             
         finally:
             self.active_tasks.pop(task.task_id, None)
@@ -655,7 +655,7 @@ class ResourceManager:
         while self.running:
             try:
                 # Limpiar tareas expiradas
-                current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
                 expired_tasks = [
                     task_id for task_id, task in self.active_tasks.items()
                     if task.is_expired()

@@ -24,7 +24,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # Dependencias criptográficas
 from cryptography.hazmat.primitives import hashes, serialization
@@ -87,7 +87,7 @@ class NodeIdentity:
     encryption_key: x25519.X25519PrivateKey
     public_signing_key: ed25519.Ed25519PublicKey = field(init=False)
     public_encryption_key: x25519.X25519PublicKey = field(init=False)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     
     def __post_init__(self):
         """Derivar claves públicas"""
@@ -130,7 +130,7 @@ class PublicNodeIdentity:
     public_signing_key: ed25519.Ed25519PublicKey
     public_encryption_key: x25519.X25519PublicKey
     created_at: datetime
-    last_seen: datetime = field(default_factory=datetime.utcnow)
+    last_seen: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     trust_score: float = 0.5  # Puntuación de confianza inicial
 
 @dataclass
@@ -408,7 +408,7 @@ class CryptoEngine:
             plaintext = cipher.decrypt(message.nonce, message.ciphertext, None)
             
             # Actualizar última actividad del peer
-            peer_identity.last_seen = datetime.utcnow()
+            peer_identity.last_seen = datetime.now(timezone.utc)
             
             logger.debug(f"Mensaje descifrado de {message.sender_id}")
             return plaintext
@@ -466,17 +466,17 @@ class CryptoEngine:
             'known_peers': len(self.peer_identities),
             'key_rotation_interval': self.config.key_rotation_interval,
             'identity_age': (
-                datetime.utcnow() - self.identity.created_at
+                datetime.now(timezone.utc) - self.identity.created_at
             ).total_seconds() if self.identity else 0,
             'oldest_peer': min([
-                (datetime.utcnow() - peer.created_at).total_seconds()
+                (datetime.now(timezone.utc) - peer.created_at).total_seconds()
                 for peer in self.peer_identities.values()
             ]) if self.peer_identities else 0
         }
     
     def cleanup_expired_sessions(self):
         """Limpiar sesiones expiradas"""
-        current_time = datetime.utcnow()
+        current_time = datetime.now(timezone.utc)
         expired_peers = []
         
         for peer_id, peer_identity in self.peer_identities.items():
