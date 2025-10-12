@@ -125,7 +125,7 @@ g:\Open A.G.I\
 ├── deployment_orchestrator.py   # Orquestador de despliegue
 ├── performance_optimizer.py     # Optimizador de rendimiento
 ├── update_archon_tasks.py       # Script de actualización Archon
-├── archon_update_commands.sh    # Comandos de actualización
+├── scripts/archon_update_commands.sh    # Comandos de actualización
 └── archon_update_summary.json   # Resumen de actualización
 ```
 
@@ -149,7 +149,7 @@ g:\Open A.G.I\
 #### Archivos de Configuración Generados
 
 1. **`archon_project_summary.json`** - Resumen estadístico del proyecto
-2. **`archon_task_commands.sh`** - Comandos para crear tareas (pendiente de ejecución)
+2. **`scripts/archon_task_commands.sh`** - Comandos para crear tareas (pendiente de ejecución)
 3. **`batch_create_tasks.py`** - Script de automatización
 4. **`PROYECTO_ARCHON_DETALLADO.md`** - Documentación técnica completa
 5. **`archon_commands_batch.py`** - Configuración completa del proyecto

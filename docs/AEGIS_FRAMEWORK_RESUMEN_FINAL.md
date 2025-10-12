@@ -284,7 +284,7 @@ g:\Open A.G.I\
 ├── README.md                         # Guía de instalación y uso
 ├── requirements.txt                  # Dependencias Python
 ├── update_archon_tasks.py           # Script de actualización Archon
-├── archon_update_commands.sh        # Comandos de actualización
+├── scripts/archon_update_commands.sh        # Comandos de actualización
 └── archon_update_summary.json       # Resumen de actualización
 ```
 

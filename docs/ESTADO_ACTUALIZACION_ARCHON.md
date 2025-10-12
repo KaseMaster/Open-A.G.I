@@ -72,7 +72,7 @@
 
 ### ✅ Scripts de Actualización
 - **`update_archon_tasks.py`** - Script principal de actualización
-- **`archon_update_commands.sh`** - Comandos curl para Archon MCP
+- **`scripts/archon_update_commands.sh`** - Comandos curl para Archon MCP
 - **`archon_update_summary.json`** - Resumen de la actualización
 
 ### ✅ Documentación Actualizada
@@ -108,7 +108,7 @@
 
 ### ✅ Generación de Scripts
 1. **Script de Actualización Python** - `update_archon_tasks.py`
-2. **Comandos de Actualización** - `archon_update_commands.sh`
+2. **Comandos de Actualización** - `scripts/archon_update_commands.sh`
 3. **Resumen JSON** - `archon_update_summary.json`
 
 ### ✅ Validación de Estado

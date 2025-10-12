@@ -201,7 +201,7 @@ def allocate_resources(task, available_nodes):
 
 #### Fase 1: Infraestructura Base (Semanas 1-4)
 - [x] Implementación del TOR Gateway (completado)
-  - Referencias: `torrc`, `tor_control.ps1`, `client_auth_manager.py`, `rotate_tor_logs.ps1`, `onion_service/authorized_clients/*`
+- Referencias: `config/torrc`, `scripts/tor_control.ps1`, `client_auth_manager.py`, `scripts/rotate_tor_logs.ps1`, `onion_service/authorized_clients/*`
   - Estado: Tor en ejecución con Onion Service v3, client authorization cargada, SocksPort sólo .onion, ControlPort con CookieAuthentication, firewall aplicado y rotación de logs programada.
 - [ ] Sistema básico de P2P networking (en progreso alto)
   - Referencias: `p2p_network.py`
