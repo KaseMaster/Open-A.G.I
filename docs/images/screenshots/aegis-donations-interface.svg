@@ -1,0 +1,164 @@
+<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e293b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#334155;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="800" fill="url(#bgGradient)"/>
+  
+  <!-- Header -->
+  <rect x="0" y="0" width="1200" height="80" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+  <text x="40" y="35" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#f59e0b" filter="url(#glow)">🪙 AEGIS Donations</text>
+  <text x="40" y="55" font-family="Arial, sans-serif" font-size="12" fill="#64748b">Sistema de Donaciones Blockchain</text>
+  
+  <!-- MetaMask Connection Status -->
+  <rect x="900" y="15" width="280" height="50" fill="#1e293b" rx="8" stroke="#10b981" stroke-width="2"/>
+  <circle cx="920" cy="40" r="8" fill="#10b981"/>
+  <text x="940" y="35" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#10b981">MetaMask Conectado</text>
+  <text x="940" y="50" font-family="Arial, sans-serif" font-size="10" fill="#64748b">0xf39f...2266</text>
+  
+  <!-- Main Container -->
+  <rect x="20" y="100" width="1160" height="680" fill="url(#cardGradient)" rx="10" stroke="#475569" stroke-width="1"/>
+  
+  <!-- Balance Cards -->
+  <rect x="40" y="120" width="360" height="140" fill="#1e293b" rx="8" stroke="#475569" stroke-width="1"/>
+  <text x="60" y="145" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#e2e8f0">💰 Balance ETH</text>
+  <text x="60" y="180" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#06b6d4">9.8547</text>
+  <text x="60" y="205" font-family="Arial, sans-serif" font-size="14" fill="#64748b">Ethereum (ETH)</text>
+  <text x="60" y="225" font-family="Arial, sans-serif" font-size="12" fill="#06b6d4">≈ $18,247.32 USD</text>
+  <text x="60" y="245" font-family="Arial, sans-serif" font-size="11" fill="#64748b">Red: Localhost (Chain ID: 31337)</text>
+  
+  <rect x="420" y="120" width="360" height="140" fill="#1e293b" rx="8" stroke="#475569" stroke-width="1"/>
+  <text x="440" y="145" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#e2e8f0">🏆 Balance AEGIS</text>
+  <text x="440" y="180" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#f59e0b">1,247</text>
+  <text x="440" y="205" font-family="Arial, sans-serif" font-size="14" fill="#64748b">Tokens AEGIS</text>
+  <text x="440" y="225" font-family="Arial, sans-serif" font-size="12" fill="#f59e0b">Token Nativo del Ecosistema</text>
+  <text x="440" y="245" font-family="Arial, sans-serif" font-size="11" fill="#64748b">Contrato: 0xcf7e...0fc9</text>
+  
+  <!-- Faucet Section -->
+  <rect x="800" y="120" width="360" height="140" fill="#1e293b" rx="8" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="820" y="145" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#e2e8f0">🚰 Faucet AEGIS</text>
+  <text x="820" y="170" font-family="Arial, sans-serif" font-size="14" fill="#64748b">Obtén tokens gratuitos para pruebas</text>
+  <rect x="820" y="185" width="320" height="35" fill="#8b5cf6" rx="6" cursor="pointer"/>
+  <text x="940" y="207" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff">Solicitar 100 AEGIS</text>
+  <text x="820" y="235" font-family="Arial, sans-serif" font-size="11" fill="#64748b">Cooldown: 24 horas | Último uso: Hace 2h</text>
+  <text x="820" y="250" font-family="Arial, sans-serif" font-size="11" fill="#8b5cf6">✓ Disponible para solicitar</text>
+  
+  <!-- Donation Section -->
+  <rect x="40" y="280" width="560" height="320" fill="#1e293b" rx="8" stroke="#475569" stroke-width="1"/>
+  <text x="60" y="305" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#e2e8f0">💝 Realizar Donación</text>
+  
+  <!-- ETH Donation -->
+  <rect x="60" y="325" width="520" height="120" fill="#374151" rx="6" stroke="#06b6d4" stroke-width="1"/>
+  <text x="80" y="350" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#06b6d4">Donación en ETH</text>
+  <rect x="80" y="360" width="200" height="30" fill="#1e293b" rx="4" stroke="#475569" stroke-width="1"/>
+  <text x="90" y="380" font-family="Arial, sans-serif" font-size="12" fill="#e2e8f0">0.1</text>
+  <text x="290" y="380" font-family="Arial, sans-serif" font-size="12" fill="#64748b">ETH</text>
+  
+  <rect x="350" y="360" width="120" height="30" fill="#06b6d4" rx="4" cursor="pointer"/>
+  <text x="385" y="380" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff">Donar ETH</text>
+  
+  <text x="80" y="410" font-family="Arial, sans-serif" font-size="11" fill="#64748b">Dirección: 0x70997970C51812dc3A010C7d01b50e0d17dc79C8</text>
+  <text x="80" y="425" font-family="Arial, sans-serif" font-size="11" fill="#06b6d4">Gas estimado: ~21,000 | Costo: ~0.0003 ETH</text>
+  
+  <!-- AEGIS Donation -->
+  <rect x="60" y="460" width="520" height="120" fill="#374151" rx="6" stroke="#f59e0b" stroke-width="1"/>
+  <text x="80" y="485" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#f59e0b">Donación en AEGIS</text>
+  <rect x="80" y="495" width="200" height="30" fill="#1e293b" rx="4" stroke="#475569" stroke-width="1"/>
+  <text x="90" y="515" font-family="Arial, sans-serif" font-size="12" fill="#e2e8f0">50</text>
+  <text x="290" y="515" font-family="Arial, sans-serif" font-size="12" fill="#64748b">AEGIS</text>
+  
+  <rect x="350" y="495" width="120" height="30" fill="#f59e0b" rx="4" cursor="pointer"/>
+  <text x="375" y="515" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#ffffff">Donar AEGIS</text>
+  
+  <text x="80" y="545" font-family="Arial, sans-serif" font-size="11" fill="#64748b">Registro de Usuarios: 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC</text>
+  <text x="80" y="560" font-family="Arial, sans-serif" font-size="11" fill="#f59e0b">Gas estimado: ~45,000 | Costo: ~0.0007 ETH</text>
+  
+  <!-- Transaction History -->
+  <rect x="620" y="280" width="540" height="320" fill="#1e293b" rx="8" stroke="#475569" stroke-width="1"/>
+  <text x="640" y="305" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#e2e8f0">📋 Historial de Transacciones</text>
+  
+  <!-- Transaction items -->
+  <rect x="640" y="325" width="500" height="50" fill="#374151" rx="4"/>
+  <circle cx="660" cy="350" r="6" fill="#10b981"/>
+  <text x="680" y="340" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#10b981">Donación ETH Exitosa</text>
+  <text x="680" y="355" font-family="Arial, sans-serif" font-size="11" fill="#d1d5db">0.1 ETH → 0x7099...79C8</text>
+  <text x="680" y="368" font-family="Arial, sans-serif" font-size="10" fill="#64748b">Hash: 0x1a2b3c... | Hace 5 min</text>
+  <text x="1050" y="350" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#10b981">✓</text>
+  
+  <rect x="640" y="385" width="500" height="50" fill="#374151" rx="4"/>
+  <circle cx="660" cy="410" r="6" fill="#f59e0b"/>
+  <text x="680" y="400" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#f59e0b">Faucet AEGIS</text>
+  <text x="680" y="415" font-family="Arial, sans-serif" font-size="11" fill="#d1d5db">+100 AEGIS tokens</text>
+  <text x="680" y="428" font-family="Arial, sans-serif" font-size="10" fill="#64748b">Hash: 0x4d5e6f... | Hace 2 horas</text>
+  <text x="1050" y="410" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#f59e0b">✓</text>
+  
+  <rect x="640" y="445" width="500" height="50" fill="#374151" rx="4"/>
+  <circle cx="660" cy="470" r="6" fill="#10b981"/>
+  <text x="680" y="460" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#10b981">Donación AEGIS Exitosa</text>
+  <text x="680" y="475" font-family="Arial, sans-serif" font-size="11" fill="#d1d5db">25 AEGIS → UserRegistry</text>
+  <text x="680" y="488" font-family="Arial, sans-serif" font-size="10" fill="#64748b">Hash: 0x7g8h9i... | Hace 1 día</text>
+  <text x="1050" y="470" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#10b981">✓</text>
+  
+  <rect x="640" y="505" width="500" height="50" fill="#374151" rx="4"/>
+  <circle cx="660" cy="530" r="6" fill="#06b6d4"/>
+  <text x="680" y="520" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#06b6d4">Aprobación Token</text>
+  <text x="680" y="535" font-family="Arial, sans-serif" font-size="11" fill="#d1d5db">Approve AEGIS para UserRegistry</text>
+  <text x="680" y="548" font-family="Arial, sans-serif" font-size="10" fill="#64748b">Hash: 0xjklmno... | Hace 1 día</text>
+  <text x="1050" y="530" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#06b6d4">✓</text>
+  
+  <!-- Network Info -->
+  <rect x="40" y="620" width="1120" height="140" fill="#1e293b" rx="8" stroke="#475569" stroke-width="1"/>
+  <text x="60" y="645" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#e2e8f0">🌐 Información de Red</text>
+  
+  <!-- Network details grid -->
+  <rect x="60" y="660" width="180" height="80" fill="#374151" rx="4"/>
+  <text x="80" y="680" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#e2e8f0">Red Blockchain</text>
+  <text x="80" y="700" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#06b6d4">Localhost</text>
+  <text x="80" y="715" font-family="Arial, sans-serif" font-size="10" fill="#64748b">Chain ID: 31337</text>
+  <text x="80" y="730" font-family="Arial, sans-serif" font-size="10" fill="#64748b">RPC: 127.0.0.1:8545</text>
+  
+  <rect x="260" y="660" width="180" height="80" fill="#374151" rx="4"/>
+  <text x="280" y="680" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#e2e8f0">Bloque Actual</text>
+  <text x="280" y="700" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#10b981">#12,847</text>
+  <text x="280" y="715" font-family="Arial, sans-serif" font-size="10" fill="#64748b">Gas Price: 20 Gwei</text>
+  <text x="280" y="730" font-family="Arial, sans-serif" font-size="10" fill="#64748b">Tiempo: ~2s/bloque</text>
+  
+  <rect x="460" y="660" width="180" height="80" fill="#374151" rx="4"/>
+  <text x="480" y="680" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#e2e8f0">Contratos</text>
+  <text x="480" y="700" font-family="Arial, sans-serif" font-size="10" fill="#f59e0b">AEGIS Token</text>
+  <text x="480" y="715" font-family="Arial, sans-serif" font-size="10" fill="#06b6d4">AEGIS Faucet</text>
+  <text x="480" y="730" font-family="Arial, sans-serif" font-size="10" fill="#8b5cf6">User Registry</text>
+  
+  <rect x="660" y="660" width="180" height="80" fill="#374151" rx="4"/>
+  <text x="680" y="680" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#e2e8f0">Estadísticas</text>
+  <text x="680" y="700" font-family="Arial, sans-serif" font-size="10" fill="#64748b">Total Supply: 1M AEGIS</text>
+  <text x="680" y="715" font-family="Arial, sans-serif" font-size="10" fill="#64748b">Donaciones: 1,247 AEGIS</text>
+  <text x="680" y="730" font-family="Arial, sans-serif" font-size="10" fill="#64748b">Usuarios: 24 activos</text>
+  
+  <rect x="860" y="660" width="180" height="80" fill="#374151" rx="4"/>
+  <text x="880" y="680" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#e2e8f0">Seguridad</text>
+  <text x="880" y="700" font-family="Arial, sans-serif" font-size="10" fill="#10b981">✓ Contratos Verificados</text>
+  <text x="880" y="715" font-family="Arial, sans-serif" font-size="10" fill="#10b981">✓ Auditoría Interna</text>
+  <text x="880" y="730" font-family="Arial, sans-serif" font-size="10" fill="#10b981">✓ Tests 100% Pass</text>
+  
+  <rect x="1060" y="660" width="100" height="80" fill="#374151" rx="4"/>
+  <text x="1080" y="680" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#e2e8f0">Estado</text>
+  <circle cx="1110" cy="700" r="8" fill="#10b981"/>
+  <text x="1080" y="720" font-family="Arial, sans-serif" font-size="10" fill="#10b981">Operacional</text>
+  <text x="1080" y="735" font-family="Arial, sans-serif" font-size="9" fill="#64748b">99.9% Uptime</text>
+</svg>

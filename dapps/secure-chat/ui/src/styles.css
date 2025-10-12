@@ -1,0 +1,351 @@
+/* Donation sections styling */
+.donation-section {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 8px;
+  background: var(--card-bg, #fafafa);
+}
+
+.donation-section h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.donation-section input {
+  width: 100%;
+  max-width: 200px;
+  margin: 8px 0;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.donation-section button {
+  margin: 8px 8px 8px 0;
+  padding: 8px 16px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.donation-section button:hover:not(:disabled) {
+  background: #0056b3;
+}
+
+.donation-section button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.donation-status {
+  margin-top: 12px;
+  padding: 8px;
+  font-size: 14px;
+  color: #666;
+}
+
+/* UI/UX improvements: grid, cards, badges, skeletons */
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.card {
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 10px;
+  padding: 12px;
+  background: var(--card-bg, #fafafa);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.card-title {
+  font-weight: 600;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.badge.message {
+  background: #e7f0ff;
+  color: #1346a2;
+  border: 1px solid #c7dcff;
+}
+
+.badge.file {
+  background: #fff3e7;
+  color: #8a4f00;
+  border: 1px solid #ffd7b0;
+}
+
+.meta {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Botones de acción */
+.feed-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.feed-actions button {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  background: #f8f9fa;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+  position: relative;
+  min-width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.feed-actions button:hover:not(:disabled) {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  transform: translateY(-1px);
+}
+
+.feed-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.feed-actions button.loading {
+  opacity: 0.8;
+  cursor: wait;
+}
+
+/* Botones por tipo de acción */
+.btn-decrypt {
+  background: #e3f2fd;
+  border-color: #2196f3;
+  color: #1976d2;
+}
+
+.btn-decrypt:hover:not(:disabled) {
+  background: #bbdefb;
+}
+
+.btn-verify {
+  background: #f3e5f5;
+  border-color: #9c27b0;
+  color: #7b1fa2;
+}
+
+.btn-verify:hover:not(:disabled) {
+  background: #e1bee7;
+}
+
+.btn-pin {
+  background: #e8f5e8;
+  border-color: #4caf50;
+  color: #388e3c;
+}
+
+.btn-pin:hover:not(:disabled) {
+  background: #c8e6c9;
+}
+
+.btn-unpin {
+  background: #fff3e0;
+  border-color: #ff9800;
+  color: #f57c00;
+}
+
+.btn-unpin:hover:not(:disabled) {
+  background: #ffe0b2;
+}
+
+.btn-copy {
+  background: #f1f8e9;
+  border-color: #8bc34a;
+  color: #689f38;
+}
+
+.btn-copy:hover:not(:disabled) {
+  background: #dcedc8;
+}
+
+.btn-gateway {
+  background: #fce4ec;
+  border-color: #e91e63;
+  color: #c2185b;
+}
+
+.btn-gateway:hover:not(:disabled) {
+  background: #f8bbd9;
+}
+
+/* Spinner de carga */
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Estados de éxito/error */
+.status-icon {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.status-success {
+  color: #4caf50;
+}
+
+.status-error {
+  color: #f44336;
+}
+
+/* Modo oscuro para botones */
+.dark .feed-actions button {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+.dark .feed-actions button:hover:not(:disabled) {
+  background: #4b5563;
+  border-color: #6b7280;
+}
+
+.dark .btn-decrypt {
+  background: #1e3a8a;
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
+
+.dark .btn-decrypt:hover:not(:disabled) {
+  background: #1e40af;
+}
+
+.dark .btn-verify {
+  background: #581c87;
+  border-color: #a855f7;
+  color: #c4b5fd;
+}
+
+.dark .btn-verify:hover:not(:disabled) {
+  background: #6b21a8;
+}
+
+.dark .btn-pin {
+  background: #14532d;
+  border-color: #22c55e;
+  color: #86efac;
+}
+
+.dark .btn-pin:hover:not(:disabled) {
+  background: #166534;
+}
+
+.dark .btn-unpin {
+  background: #9a3412;
+  border-color: #f97316;
+  color: #fed7aa;
+}
+
+.dark .btn-unpin:hover:not(:disabled) {
+  background: #c2410c;
+}
+
+.dark .btn-copy {
+  background: #365314;
+  border-color: #65a30d;
+  color: #bef264;
+}
+
+.dark .btn-copy:hover:not(:disabled) {
+  background: #4d7c0f;
+}
+
+.dark .btn-gateway {
+  background: #881337;
+  border-color: #e11d48;
+  color: #fda4af;
+}
+
+.dark .btn-gateway:hover:not(:disabled) {
+  background: #9f1239;
+}
+
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.skeleton-card {
+  border-radius: 10px;
+  background: linear-gradient(90deg, #eee 25%, #f5f5f5 37%, #eee 63%);
+  background-size: 400% 100%;
+  height: 140px;
+  animation: shimmer 1.4s ease infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Dark mode helpers */
+.dark .card {
+  border-color: rgba(255,255,255,0.12);
+  background: #1e1e1e;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.dark .meta { color: #aaa; }
+
+.dark .badge.message {
+  background: #0f2347;
+  color: #cfe0ff;
+  border-color: #1a3a6a;
+}
+
+.dark .badge.file {
+  background: #3a2a14;
+  color: #ffdfb8;
+  border-color: #5c3f1a;
+}

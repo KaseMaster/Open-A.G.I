@@ -12,8 +12,6 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass, asdict
 from enum import Enum
-from email.mime.text import MimeText
-from email.mime.multipart import MimeMultipart
 import sqlite3
 import threading
 from pathlib import Path
@@ -23,6 +21,14 @@ try:
 except ImportError:
     import logging
     logger = logging.getLogger(__name__)
+
+try:
+    from email.mime.text import MIMEText as MimeText
+    from email.mime.multipart import MIMEMultipart as MimeMultipart
+    EMAIL_AVAILABLE = True
+except ImportError:
+    EMAIL_AVAILABLE = False
+    logger.warning("Módulos de email no disponibles - notificaciones por email deshabilitadas")
 
 class AlertSeverity(Enum):
     """Niveles de severidad de alertas"""
@@ -96,6 +102,10 @@ class EmailChannel(NotificationChannel):
     
     async def send(self, alert: Alert) -> bool:
         try:
+            if not EMAIL_AVAILABLE:
+                logger.warning("Módulos de email no disponibles - saltando notificación por email")
+                return False
+                
             smtp_server = self.config.get("smtp_server", "localhost")
             smtp_port = self.config.get("smtp_port", 587)
             username = self.config.get("username")
@@ -519,6 +529,10 @@ class AEGISAlertSystem:
     def _setup_channels(self):
         """Configura canales de notificación"""
         channels_config = self.config.get("channels", {})
+        
+        # Si channels es una lista vacía, convertir a dict vacío
+        if isinstance(channels_config, list):
+            channels_config = {}
         
         for name, channel_config in channels_config.items():
             channel_type = channel_config.get("type")

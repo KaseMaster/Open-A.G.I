@@ -75,7 +75,7 @@ class AEGISTestRunner:
         if test_types:
             print(f"📋 Ejecutando solo tests de tipo: {', '.join(test_types)}")
         
-        results = await self.framework.run_all_tests(test_types)
+        results = await self.framework.run_all_tests()
         
         total_time = time.time() - start_time
         

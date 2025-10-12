@@ -18,6 +18,7 @@ except Exception:
 
 import click
 from dotenv import load_dotenv
+import inspect
 
 
 def safe_import(module_name: str) -> Tuple[Optional[object], Optional[Exception]]:
@@ -29,16 +30,24 @@ def safe_import(module_name: str) -> Tuple[Optional[object], Optional[Exception]
         return None, e
 
 
-def module_call(mod: object, func_name: str, *args, **kwargs):
-    """Llama a una función de un módulo si existe y es callable."""
+async def module_call(mod: object, func_name: str, *args, **kwargs):
+    """Llama a una función de un módulo si existe y maneja correctamente sync/async.
+
+    - Si la función objetivo es síncrona, la ejecuta y devuelve su resultado directamente.
+    - Si la función devuelve un objeto awaitable/coroutine, lo espera y devuelve su resultado.
+    """
     if not mod:
         return False
     fn = getattr(mod, func_name, None)
     if callable(fn):
         try:
-            return fn(*args, **kwargs)
+            result = fn(*args, **kwargs)
+            # Si el resultado es awaitable (coroutine, Future, etc.), esperar.
+            if inspect.isawaitable(result) or asyncio.iscoroutine(result):
+                return await result
+            return result
         except Exception as e:
-            logger.error(f"Error ejecutando {mod.__name__}.{func_name}: {e}")
+            logger.error(f"Error ejecutando {getattr(mod, '__name__', mod)}.{func_name}: {e}")
             return False
     return False
 
@@ -377,6 +386,16 @@ def load_config(config_path: Optional[str]) -> Dict[str, Any]:
     if dash_port and dash_port.isdigit():
         cfg["monitoring"]["dashboard_port"] = int(dash_port)
 
+    # Sincronizar el puerto del dashboard web con la configuración de monitoreo
+    try:
+        mon_port = cfg.get("monitoring", {}).get("dashboard_port")
+        if isinstance(mon_port, int) and mon_port:
+            # Asegurar que el dashboard web use el mismo puerto
+            if "web_dashboard" in cfg and isinstance(cfg["web_dashboard"], dict):
+                cfg["web_dashboard"]["port"] = mon_port
+    except Exception as e:
+        logger.warning(f"No se pudo sincronizar el puerto del dashboard: {e}")
+
     return cfg
 
 
@@ -671,6 +690,42 @@ def list_modules():
             logger.success(f"{m}: disponible")
         else:
             logger.warning(f"{m}: no disponible ({err})")
+
+
+@cli.command(name="start-dashboard")
+@click.option("--config", type=click.Path(exists=False), help="Ruta del archivo de configuración JSON.")
+def start_dashboard_cmd(config: Optional[str]):
+    """Inicia únicamente el Dashboard Web (Flask + SocketIO)"""
+    try:
+        cfg = load_config(config)
+
+        # Asegurar sincronización del puerto desde monitoring hacia web_dashboard
+        mon_port = cfg.get("monitoring", {}).get("dashboard_port", 8080)
+        cfg.setdefault("web_dashboard", {})
+        cfg["web_dashboard"]["port"] = mon_port
+
+        dashboard_mod, dashboard_err = safe_import("web_dashboard")
+        if dashboard_err:
+            logger.error(f"Dashboard web no disponible: {dashboard_err}")
+            sys.exit(1)
+
+        logger.info(f"🚀 Iniciando dashboard web en puerto {cfg['web_dashboard']['port']}...")
+        asyncio.run(module_call(dashboard_mod, "start_web_dashboard", cfg.get("web_dashboard", {})))
+
+        logger.info("✅ Dashboard web iniciado. Presiona Ctrl+C para detener.")
+        try:
+            while True:
+                asyncio.run(asyncio.sleep(1))
+        except KeyboardInterrupt:
+            # Intentar detener el dashboard limpiamente
+            try:
+                asyncio.run(module_call(dashboard_mod, "stop_web_dashboard"))
+            except Exception:
+                pass
+            logger.info("🛑 Dashboard web detenido")
+    except Exception as e:
+        logger.error(f"Fallo al iniciar el dashboard web: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

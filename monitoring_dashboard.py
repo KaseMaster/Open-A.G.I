@@ -41,6 +41,43 @@ import queue
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# Helper serialization functions to ensure JSON compatibility for Enums/dataclasses
+def alert_to_dict(alert: "Alert") -> Dict[str, Any]:
+    """Serialize Alert dataclass to a JSON-safe dict (convert Enums to strings)."""
+    try:
+        return {
+            "alert_id": alert.alert_id,
+            "level": alert.level.value if isinstance(alert.level, Enum) else alert.level,
+            "title": alert.title,
+            "message": alert.message,
+            "node_id": alert.node_id,
+            "metric_type": (alert.metric_type.value if isinstance(alert.metric_type, Enum) else alert.metric_type) if alert.metric_type is not None else None,
+            "threshold_value": alert.threshold_value,
+            "current_value": alert.current_value,
+            # Keep timestamp as float seconds since epoch for frontend simplicity
+            "timestamp": alert.timestamp,
+            "acknowledged": alert.acknowledged,
+            "resolved": alert.resolved,
+        }
+    except Exception as e:
+        logger.warning(f"⚠️ Error serializando alerta {getattr(alert, 'alert_id', 'unknown')}: {e}")
+        # Fallback to dataclasses.asdict with manual Enum to string conversion where possible
+        d = asdict(alert)
+        if isinstance(d.get("level"), Enum):
+            d["level"] = d["level"].value
+        mt = d.get("metric_type")
+        if isinstance(mt, Enum):
+            d["metric_type"] = mt.value
+        return d
+
+def node_to_dict(node: "NodeInfo") -> Dict[str, Any]:
+    """Serialize NodeInfo dataclass to a JSON-safe dict (convert Enums to strings)."""
+    d = asdict(node)
+    status = d.get("status")
+    if isinstance(status, Enum):
+        d["status"] = status.value
+    return d
+
 class MetricType(Enum):
     """Tipos de métricas del sistema"""
     CPU_USAGE = "cpu_usage"
@@ -630,7 +667,8 @@ class DashboardServer:
         def get_alerts():
             try:
                 alerts = self.alert_manager.get_active_alerts()
-                return jsonify([asdict(alert) for alert in alerts])
+                # Ensure enums are serialized to strings
+                return jsonify([alert_to_dict(alert) for alert in alerts])
             except Exception as e:
                 logger.error(f"❌ Error obteniendo alertas: {e}")
                 return jsonify({"error": str(e)}), 500
@@ -639,7 +677,8 @@ class DashboardServer:
         def get_nodes():
             try:
                 nodes = self.node_manager.get_active_nodes()
-                return jsonify([asdict(node) for node in nodes])
+                # Ensure enums are serialized to strings
+                return jsonify([node_to_dict(node) for node in nodes])
             except Exception as e:
                 logger.error(f"❌ Error obteniendo nodos: {e}")
                 return jsonify({"error": str(e)}), 500
@@ -854,7 +893,8 @@ DASHBOARD_HTML_TEMPLATE = '''
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AEGIS Framework - Dashboard de Monitoreo</title>
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Use explicit Plotly.js v2.x to avoid outdated v1.x warning -->
+    <script src="https://cdn.plot.ly/plotly-2.24.2.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .metric-card { transition: all 0.3s ease; }
@@ -1379,7 +1419,8 @@ async def main():
         logger.info("✅ Mock network provider configurado - Dashboard funcionará sin P2P")
 
         # Crear servidor del dashboard con mock provider
-        dashboard = DashboardServer(host="localhost", port=5000, network_provider=network_provider, network_loop=network_loop)
+        # Cambiar puerto a 8090 para compatibilidad con servicio onion configurado en torrc
+        dashboard = DashboardServer(host="localhost", port=8090, network_provider=network_provider, network_loop=network_loop)
         
         # Simular sistema distribuido
         dashboard.simulate_distributed_system()
@@ -1387,7 +1428,7 @@ async def main():
         # Iniciar servidor
         dashboard.start_server()
         
-        print("🌐 Dashboard iniciado en http://localhost:5000")
+        print("🌐 Dashboard iniciado en http://localhost:8090")
         print("📊 Presiona Ctrl+C para detener")
         
         # Mantener servidor corriendo

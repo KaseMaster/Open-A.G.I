@@ -621,7 +621,11 @@ class NodeRecoveryManager:
                 url = f"http://{node_info.address}:{node_info.port}/ping"
                 async with session.get(url) as response:
                     return response.status == 200
-        except:
+        except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+            logger.warning(f"Error conectando con nodo {node_info.node_id}: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Error inesperado verificando nodo {node_info.node_id}: {e}")
             return False
     
     async def _synchronize_node_data(self, node_info: NodeInfo) -> bool:

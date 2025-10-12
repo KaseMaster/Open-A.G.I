@@ -4,17 +4,32 @@ Tests Unitarios para el Sistema P2P de AEGIS
 """
 
 import asyncio
-import unittest
-import pytest
-from unittest.mock import Mock, patch, AsyncMock
-import sys
-import os
 import json
+import logging
+import os
+import sys
 import time
+from pathlib import Path
+from typing import Dict, List, Optional
+from unittest.mock import AsyncMock, Mock, patch
 
-# Agregar el directorio padre al path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Importaciones condicionales para dependencias opcionales
+try:
+    from storage_system import AEGISStorage
+    STORAGE_AVAILABLE = True
+except ImportError:
+    STORAGE_AVAILABLE = False
+    logging.warning("Módulo storage_system no disponible - funcionalidad de almacenamiento deshabilitada")
 
+try:
+    import pytest
+    PYTEST_AVAILABLE = True
+except ImportError:
+    PYTEST_AVAILABLE = False
+    logging.warning("Módulo pytest no disponible - algunos tests pueden fallar")
+
+# Importar el framework de tests
+sys.path.append(str(Path(__file__).parent.parent))
 from test_framework import (
     AEGISTestFramework, TestSuite, TestType, TestStatus,
     unit_test, integration_test, performance_test, security_test, stress_test
@@ -60,6 +75,12 @@ class P2PNetworkTests:
         mock.connect_to_peer = AsyncMock(return_value=True)
         mock.send_message = AsyncMock(return_value=True)
         mock.broadcast_message = AsyncMock(return_value=True)
+        # Métodos adicionales usados por los tests
+        mock.validate_message = Mock(side_effect=lambda m: bool(m.get("type")))
+        mock.authenticate_peer = AsyncMock(side_effect=lambda p: bool(p.get("public_key")))
+        mock.send_encrypted_message = AsyncMock(return_value=True)
+        # Implementación simple de rate limiting: siempre True para simplificar
+        mock.check_rate_limit = Mock(return_value=True)
         mock.get_connected_peers = Mock(return_value=self.test_peers)
         mock.get_network_status = Mock(return_value={
             "status": "running",
@@ -365,11 +386,13 @@ class P2PNetworkTests:
     @integration_test
     async def test_p2p_with_storage(self):
         """Test de integración con sistema de almacenamiento"""
-        try:
-            from storage_system import AEGISStorage
-            storage = AEGISStorage()
-        except ImportError:
-            pytest.skip("Módulo de almacenamiento no disponible")
+        if not STORAGE_AVAILABLE:
+            if PYTEST_AVAILABLE:
+                pytest.skip("Módulo de almacenamiento no disponible")
+            else:
+                raise Exception("Skipped: Módulo de almacenamiento no disponible")
+        
+        storage = AEGISStorage()
         
         # Test de sincronización de datos
         test_data = {"key": "value", "timestamp": time.time()}

@@ -1180,7 +1180,7 @@ class ConnectionManager:
                     plaintext = json.dumps(message, sort_keys=True).encode()
                     secure_msg = self.crypto_engine.encrypt_message(plaintext, peer_id)
                     if not secure_msg:
-                        raise Exception("encrypt_failed")
+                        raise RuntimeError("Falló el cifrado del mensaje para peer_id: {peer_id}")
                     blob = secure_msg.serialize()
                     wrapped = {
                         "type": "secure",
@@ -1190,8 +1190,9 @@ class ConnectionManager:
                         "timestamp": time.time(),
                     }
                     message_data = json.dumps(wrapped).encode() + b'\n'
-                except Exception:
+                except (CryptoError, RuntimeError, ValueError) as e:
                     # Fallback a mensaje en claro firmado
+                    logger.warning(f"Error en cifrado seguro para {peer_id}: {e}. Usando fallback a mensaje firmado")
                     canonical = json.dumps(message, sort_keys=True).encode()
                     signature_b64 = ""
                     try:

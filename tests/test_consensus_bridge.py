@@ -72,5 +72,10 @@ async def run_test() -> None:
     assert captured.get("payload") == {"foo": "bar"}, "Payload reconstruido incorrectamente"
 
 
-if __name__ == "__main__":
+def test_consensus_bridge_proposal_handling():
+    """Pytest-compatible wrapper that executes the async consensus bridge test.
+
+    Uses asyncio.run to avoid relying on pytest-asyncio plugin and ensures
+    the coroutine is executed within a proper event loop.
+    """
     asyncio.run(run_test())

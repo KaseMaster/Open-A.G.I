@@ -1,62 +1,118 @@
-# Dependencias para IA Distribuida y Colaborativa
-# AEGIS Security Framework - Uso Ético Únicamente
+# AEGIS Test Framework - Dependencias Completas
+# =============================================
+# 
+# Framework de seguridad AEGIS - Uso Ético Únicamente
+# Este archivo contiene todas las dependencias organizadas por categorías
+# con soporte para instalación selectiva y manejo de dependencias opcionales
+
+# DEPENDENCIAS CORE (Requeridas)
+# ===============================
+# Estas dependencias son esenciales para el funcionamiento básico
 
 # Criptografía y Seguridad
-cryptography>=41.0.0
-pycryptodome>=3.19.0
-pyotp>=2.9.0
+cryptography>=41.0.0          # Operaciones criptográficas avanzadas
+pycryptodome>=3.19.0          # Algoritmos criptográficos adicionales
+pyotp>=2.9.0                  # Autenticación de dos factores
 
-# Red TOR
-stem>=1.8.2
-pysocks>=1.7.1
-aiohttp>=3.9.0
-aiohttp-socks>=0.8.4
+# Networking y P2P
+aiohttp>=3.9.0                # Cliente/servidor HTTP asíncrono
+aiohttp-socks>=0.8.4          # Soporte SOCKS para aiohttp
+websockets>=12.0              # Comunicación WebSocket
+asyncio-mqtt>=0.16.0          # Cliente MQTT asíncrono
+uvloop>=0.19.0; platform_system!="Windows"  # Event loop optimizado (Linux/macOS)
 
-# Computación Distribuida y P2P
-asyncio-mqtt>=0.16.0
-websockets>=12.0
-uvloop>=0.19.0; platform_system!="Windows"  # Solo para Linux/macOS
+# Red TOR (Opcional - para anonimato)
+stem>=1.8.2                   # Control de Tor
+pysocks>=1.7.1                # Soporte SOCKS
 
-# Machine Learning y Computación Científica
-numpy>=1.24.0
-scipy>=1.11.0
-scikit-learn>=1.3.0
-torch>=2.1.0
-transformers>=4.35.0
+# Utilidades Core
+pydantic>=2.5.0               # Validación de datos
+python-dotenv>=1.0.0          # Manejo de variables de entorno
+click>=8.1.7                  # CLI interfaces
+rich>=13.7.0                  # Output enriquecido en terminal
+tqdm>=4.66.0                  # Barras de progreso
 
-# Base de Datos y Almacenamiento
-aiosqlite>=0.19.0
-redis>=5.0.0
-leveldb>=0.201; platform_system!="Windows"
+# DEPENDENCIAS DE TESTING (Opcionales pero recomendadas)
+# ======================================================
+# Estas dependencias mejoran la experiencia de testing
 
-# Monitoreo y Logging
-loguru>=0.7.2
-prometheus-client>=0.19.0
-psutil>=5.9.6
-pandas>=2.2.2
-flask>=3.0.0
-zeroconf>=0.132.2
-Flask-SocketIO>=5.3.6
-netifaces>=0.11.0
+pytest>=7.4.0                # Framework de testing principal
+pytest-asyncio>=0.21.0       # Soporte para tests asíncronos
+pytest-cov>=4.1.0            # Cobertura de código
+pytest-html>=4.1.0           # Reportes HTML
+pytest-xdist>=3.5.0          # Ejecución paralela de tests
 
-# Utilidades
-pydantic>=2.5.0
-click>=8.1.7
-rich>=13.7.0
-tqdm>=4.66.0
-python-dotenv>=1.0.0
+# DEPENDENCIAS DE ALMACENAMIENTO (Opcionales)
+# ===========================================
+# Estas dependencias habilitan funcionalidades de persistencia
 
-# Testing y Desarrollo
-pytest>=7.4.0
-pytest-asyncio>=0.21.0
-pytest-cov>=4.1.0
-black>=23.11.0
-flake8>=6.1.0
-mypy>=1.7.0
+# Base de datos
+aiosqlite>=0.19.0            # SQLite asíncrono
+redis>=5.0.0                 # Cache y almacenamiento en memoria
+aioredis>=2.0.0              # Cliente Redis asíncrono
+leveldb>=0.201; platform_system!="Windows"  # Base de datos key-value
 
-# Opcional: Aceleración GPU
-# torch-audio>=2.1.0
-# torch-vision>=0.16.0
+# DEPENDENCIAS DE MACHINE LEARNING (Opcionales)
+# =============================================
+# Para funcionalidades de IA y análisis avanzado
 
-# Opcional: Visualización
-plotly>=5.17.0
+numpy>=1.24.0                # Computación numérica
+scipy>=1.11.0                # Algoritmos científicos
+scikit-learn>=1.3.0          # Machine learning
+torch>=2.1.0                 # Deep learning (opcional)
+transformers>=4.35.0         # Modelos de lenguaje (opcional)
+
+# DEPENDENCIAS DE MONITOREO (Opcionales)
+# ======================================
+# Estas dependencias habilitan métricas y observabilidad
+
+loguru>=0.7.2                # Logging avanzado
+prometheus-client>=0.19.0    # Métricas de Prometheus
+psutil>=5.9.6                # Información del sistema
+pandas>=2.2.2                # Análisis de datos
+flask>=3.0.0                 # Servidor web para dashboard
+Flask-SocketIO>=5.3.6        # WebSocket para dashboard
+zeroconf>=0.132.2            # Descubrimiento de servicios
+netifaces>=0.11.0            # Información de interfaces de red
+memory-profiler>=0.61.0      # Profiling de memoria
+
+# DEPENDENCIAS DE DESARROLLO (Opcionales)
+# =======================================
+# Estas dependencias son útiles para desarrollo y debugging
+
+black>=23.12.0               # Formateador de código
+flake8>=7.0.0                # Linter de código
+mypy>=1.8.0                  # Verificación de tipos
+pre-commit>=3.6.0            # Hooks de pre-commit
+colorama>=0.4.6              # Colores en terminal (Windows)
+
+# INSTALACIÓN SELECTIVA
+# =====================
+# 
+# Para instalar solo las dependencias core:
+#   pip install cryptography pycryptodome pyotp aiohttp websockets pydantic python-dotenv click rich tqdm
+#
+# Para instalar con testing:
+#   pip install -r requirements.txt
+#   # O específicamente las de testing: pip install pytest pytest-asyncio pytest-cov pytest-html
+#
+# Para instalar almacenamiento:
+#   pip install aiosqlite redis aioredis
+#
+# Para instalar monitoreo:
+#   pip install loguru prometheus-client psutil pandas flask Flask-SocketIO
+#
+# NOTAS IMPORTANTES
+# =================
+# 
+# 1. El framework está diseñado para funcionar con dependencias opcionales
+# 2. Si una dependencia no está disponible, la funcionalidad relacionada se deshabilita automáticamente
+# 3. Los tests se omiten (skip) si las dependencias requeridas no están presentes
+# 4. Todas las importaciones son condicionales y manejan ImportError apropiadamente
+# 
+# COMPATIBILIDAD
+# ==============
+# 
+# - Python 3.8+
+# - Windows, Linux, macOS
+# - Arquitecturas x86_64 y ARM64

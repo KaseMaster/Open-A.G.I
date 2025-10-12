@@ -187,6 +187,38 @@ BACKUP_ENCRYPTION_ENABLED=true
 # Configuración TOR (opcional)
 TOR_SOCKS_PORT=9050
 TOR_CONTROL_PORT=9051
+TOR_CONTROL_PASSWORD=aegis_tor_password
+TOR_HIDDEN_SERVICE=onion_service
+CLIENT_ONION_AUTH_DIR=G:\\Open A.G.I\\client_onion_auth
+
+```
+
+### Autorización de clientes Onion (v3)
+
+Para restringir el acceso al servicio Onion a clientes autorizados:
+
+1. Genera archivos de autorización para un cliente:
+
+```
+python generate_client_auth.py -n <nombre_cliente>
+```
+
+- Esto crea en el servidor: `onion_service/authorized_clients/<nombre_cliente>.auth`
+- Y en el cliente: `<nombre_cliente>.auth_private`
+
+2. En el cliente, configura en `torrc` la ruta de autorización y coloca el archivo `.auth_private`:
+
+```
+ClientOnionAuthDir "C:/Users/<tú>/tor_onion_auth"
+```
+
+3. En el servidor, asegúrate de tener `HashedControlPassword` y `ControlPort` configurados (ver `config/torrc`). Reinicia Tor para que cargue `authorized_clients`.
+
+4. Verifica el hostname Onion en `onion_service/hostname` y prueba el acceso vía `socks5h` usando el puerto SOCKS configurado (por defecto 9050).
+
+Notas:
+- Puedes definir `TOR_CONTROL_PASSWORD` en el entorno para autenticación por contraseña (alternativa al cookie auth).
+- `HiddenServiceDir` y `ClientOnionAuthDir` deben existir y tener permisos adecuados.
 ```
 
 ## 🔧 Desarrollo

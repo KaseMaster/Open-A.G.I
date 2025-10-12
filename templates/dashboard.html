@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AEGIS Framework - Dashboard de Monitoreo</title>
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!-- Use explicit Plotly.js v2.x to avoid outdated v1.x warning -->
+    <script src="https://cdn.plot.ly/plotly-2.24.2.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .metric-card { transition: all 0.3s ease; }
@@ -121,6 +122,19 @@
             </div>
         </div>
 
+        <!-- Performance Optimization Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">📦 Rendimiento de Batching</h3>
+                <div id="batch-chart" style="height: 300px;"></div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">🗜️ Compresión LZ4</h3>
+                <div id="compression-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+
         <!-- Nodes and Alerts Row -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-white rounded-lg shadow-md p-6">
@@ -148,7 +162,9 @@
             cpu: { x: [], y: [] },
             memory: { x: [], y: [] },
             latency: { x: [], y: [] },
-            accuracy: { x: [], y: [] }
+            accuracy: { x: [], y: [] },
+            batch: { x: [], y: [] },
+            compression: { x: [], y: [] }
         };
 
         // Initialize charts
@@ -217,6 +233,36 @@
                 yaxis: { title: 'Precisión', range: [0, 1] },
                 margin: { t: 20 }
             }, chartConfig);
+
+            // Batch Throughput Chart
+            Plotly.newPlot('batch-chart', [{
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Batch Throughput',
+                line: { color: '#06b6d4' }
+            }], {
+                title: '',
+                xaxis: { title: 'Tiempo' },
+                yaxis: { title: 'Operaciones/seg' },
+                margin: { t: 20 }
+            }, chartConfig);
+
+            // Compression Ratio Chart
+            Plotly.newPlot('compression-chart', [{
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Compression Ratio',
+                line: { color: '#84cc16' }
+            }], {
+                title: '',
+                xaxis: { title: 'Tiempo' },
+                yaxis: { title: 'Ratio de Compresión' },
+                margin: { t: 20 }
+            }, chartConfig);
         }
 
         // Update chart with new data
@@ -265,6 +311,16 @@
                     chartData.accuracy.x.push(timestamp);
                     chartData.accuracy.y.push(metric.value);
                     updateChart('accuracy-chart', chartData.accuracy);
+                    break;
+                case 'batch_throughput':
+                    chartData.batch.x.push(timestamp);
+                    chartData.batch.y.push(metric.value);
+                    updateChart('batch-chart', chartData.batch);
+                    break;
+                case 'compression_ratio':
+                    chartData.compression.x.push(timestamp);
+                    chartData.compression.y.push(metric.value);
+                    updateChart('compression-chart', chartData.compression);
                     break;
             }
         });
@@ -384,10 +440,15 @@
                                 chartData.latency.y = metricData.map(m => m.value);
                                 updateChart('latency-chart', chartData.latency);
                                 break;
-                            case 'model_accuracy':
-                                chartData.accuracy.x = metricData.map(m => new Date(m.timestamp * 1000));
-                                chartData.accuracy.y = metricData.map(m => m.value);
-                                updateChart('accuracy-chart', chartData.accuracy);
+                            case 'batch_throughput':
+                                chartData.batch.x = metricData.map(m => new Date(m.timestamp * 1000));
+                                chartData.batch.y = metricData.map(m => m.value);
+                                updateChart('batch-chart', chartData.batch);
+                                break;
+                            case 'compression_ratio':
+                                chartData.compression.x = metricData.map(m => new Date(m.timestamp * 1000));
+                                chartData.compression.y = metricData.map(m => m.value);
+                                updateChart('compression-chart', chartData.compression);
                                 break;
                         }
                     });

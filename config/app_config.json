@@ -32,6 +32,14 @@
     "dashboard_port": 8090,
     "enable_socketio": true
   },
+  "web_dashboard": {
+    "authentication": {
+      "enabled": true,
+      "username": "admin",
+      "password": "aegis123",
+      "session_minutes": 10080
+    }
+  },
   "security": {
     "rate_limit_per_minute": 120,
     "validate_peer_input": true

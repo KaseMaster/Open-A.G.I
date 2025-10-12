@@ -28,17 +28,60 @@ from enum import Enum
 import threading
 import queue
 import psutil
-import GPUtil
-import networkx as nx
+
+# Importaciones condicionales
+try:
+    import GPUtil
+    GPUTIL_AVAILABLE = True
+except ImportError:
+    GPUtil = None
+    GPUTIL_AVAILABLE = False
+    logging.warning("GPUtil no está disponible. Funcionalidad GPU deshabilitada.")
+
+try:
+    import networkx as nx
+    NETWORKX_AVAILABLE = True
+except ImportError:
+    nx = None
+    NETWORKX_AVAILABLE = False
+    logging.warning("NetworkX no está disponible. Análisis de grafos deshabilitado.")
+
+try:
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    PLOTTING_AVAILABLE = True
+except ImportError:
+    plt = None
+    sns = None
+    PLOTTING_AVAILABLE = False
+    logging.warning("Matplotlib/Seaborn no están disponibles. Visualización deshabilitada.")
+
+try:
+    from sklearn.ensemble import IsolationForest, RandomForestRegressor
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.cluster import DBSCAN
+    import joblib
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    IsolationForest = None
+    RandomForestRegressor = None
+    StandardScaler = None
+    DBSCAN = None
+    joblib = None
+    SKLEARN_AVAILABLE = False
+    logging.warning("Scikit-learn no está disponible. ML deshabilitado.")
+
 from collections import defaultdict, deque
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.ensemble import IsolationForest, RandomForestRegressor
-from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import DBSCAN
-import joblib
 import warnings
-import lz4.frame
+
+try:
+    import lz4.frame
+    LZ4_AVAILABLE = True
+except ImportError:
+    lz4 = None
+    LZ4_AVAILABLE = False
+    logging.warning("lz4 no está disponible. Compresión deshabilitada.")
+
 import hashlib
 from concurrent.futures import ThreadPoolExecutor
 warnings.filterwarnings('ignore')
@@ -357,7 +400,11 @@ class CompressionManager:
             # Intentar deserializar JSON
             try:
                 return json.loads(decompressed.decode('utf-8'))
-            except:
+            except (json.JSONDecodeError, UnicodeDecodeError) as e:
+                logger.warning(f"No se pudo deserializar como JSON: {e}. Retornando datos descomprimidos")
+                return decompressed
+            except Exception as e:
+                logger.error(f"Error inesperado deserializando: {e}")
                 return decompressed
                 
         except Exception as e:

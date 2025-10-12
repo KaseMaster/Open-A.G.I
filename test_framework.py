@@ -6,7 +6,6 @@ Implementa tests unitarios, de integración y de rendimiento para todos los comp
 
 import asyncio
 import unittest
-import pytest
 import time
 import json
 import os
@@ -20,6 +19,17 @@ import threading
 import psutil
 import logging
 from pathlib import Path
+
+# Importación condicional de pytest para manejar excepciones Skipped
+try:
+    import pytest
+    from _pytest.outcomes import Skipped
+    PYTEST_AVAILABLE = True
+except ImportError:
+    PYTEST_AVAILABLE = False
+    # Crear una clase dummy para Skipped si pytest no está disponible
+    class Skipped(Exception):
+        pass
 
 # Configurar logging para tests
 logging.basicConfig(level=logging.INFO)
@@ -224,7 +234,12 @@ class AEGISTestFramework:
         except asyncio.TimeoutError:
             status = TestStatus.ERROR
             error_message = f"Test timeout después de {self.config['test_timeout']} segundos"
-            
+        
+        # Capturar específicamente la excepción Skipped de pytest
+        except Skipped as e:
+            status = TestStatus.SKIPPED
+            error_message = str(e)
+        
         except Exception as e:
             status = TestStatus.ERROR
             error_message = f"Error inesperado: {str(e)}"
