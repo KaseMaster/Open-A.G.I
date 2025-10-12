@@ -291,18 +291,25 @@ class CryptoEngine:
                 info=b"root_key"
             ).derive(shared_secret)
             
+            # Derivación determinística de roles de cadena basada en IDs
+            # Asegura que chain_key_send de un nodo coincida con chain_key_recv del peer
+            local_id_bytes = self.identity.node_id.encode()
+            peer_id_bytes = peer_id.encode()
+            info_send = b"chain_" + local_id_bytes + b"->" + peer_id_bytes
+            info_recv = b"chain_" + peer_id_bytes + b"->" + local_id_bytes
+
             chain_key_send = HKDF(
                 algorithm=hashes.SHA256(),
                 length=32,
                 salt=None,
-                info=b"chain_send"
+                info=info_send
             ).derive(shared_secret)
             
             chain_key_recv = HKDF(
                 algorithm=hashes.SHA256(),
                 length=32,
                 salt=None,
-                info=b"chain_recv"
+                info=info_recv
             ).derive(shared_secret)
             
             # Inicializar estado del ratchet

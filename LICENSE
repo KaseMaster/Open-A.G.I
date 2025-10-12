@@ -1,0 +1,227 @@
+MIT License
+
+Copyright (c) 2024 AEGIS Project Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## Third-Party Licenses
+
+This project includes or depends on third-party software components that are 
+licensed under their own terms. The following is a list of such components 
+and their respective licenses:
+
+### Python Dependencies
+
+#### Cryptography Libraries
+- **cryptography** (Apache License 2.0 / BSD License)
+  - Copyright (c) Individual contributors
+  - Used for: Post-quantum cryptographic algorithms
+  - License: https://github.com/pyca/cryptography/blob/main/LICENSE
+
+- **pycryptodome** (BSD License)
+  - Copyright (c) 2012-2023, Helder Eijs
+  - Used for: Additional cryptographic primitives
+  - License: https://github.com/Legrandin/pycryptodome/blob/master/LICENSE.rst
+
+#### Networking Libraries
+- **asyncio** (Python Software Foundation License)
+  - Part of Python standard library
+  - Used for: Asynchronous networking operations
+
+- **websockets** (BSD License)
+  - Copyright (c) 2013-2023 Aymeric Augustin
+  - Used for: WebSocket communication
+  - License: https://github.com/python-websockets/websockets/blob/main/LICENSE
+
+#### Database Libraries
+- **psycopg2** (GNU Lesser General Public License)
+  - Copyright (c) 2006-2023, Federico Di Gregorio
+  - Used for: PostgreSQL database connectivity
+  - License: https://github.com/psycopg/psycopg2/blob/master/LICENSE
+
+- **redis** (MIT License)
+  - Copyright (c) 2012 Andy McCurdy
+  - Used for: Redis database connectivity
+  - License: https://github.com/redis/redis-py/blob/master/LICENSE
+
+#### Web Framework
+- **fastapi** (MIT License)
+  - Copyright (c) 2018 Sebastián Ramírez
+  - Used for: Web API framework
+  - License: https://github.com/tiangolo/fastapi/blob/master/LICENSE
+
+- **uvicorn** (BSD License)
+  - Copyright (c) 2017-present, Encode OSS Ltd.
+  - Used for: ASGI server
+  - License: https://github.com/encode/uvicorn/blob/master/LICENSE.md
+
+#### Monitoring and Metrics
+- **prometheus_client** (Apache License 2.0)
+  - Copyright 2015 The Prometheus Authors
+  - Used for: Metrics collection and export
+  - License: https://github.com/prometheus/client_python/blob/master/LICENSE
+
+- **structlog** (MIT License / Apache License 2.0)
+  - Copyright (c) 2013 Hynek Schlawack
+  - Used for: Structured logging
+  - License: https://github.com/hynek/structlog/blob/main/LICENSE
+
+#### Testing Libraries
+- **pytest** (MIT License)
+  - Copyright (c) 2004-2023 Holger Krekel and others
+  - Used for: Testing framework
+  - License: https://github.com/pytest-dev/pytest/blob/main/LICENSE
+
+- **pytest-asyncio** (Apache License 2.0)
+  - Copyright 2014 Stephen Moore
+  - Used for: Async testing support
+  - License: https://github.com/pytest-dev/pytest-asyncio/blob/master/LICENSE
+
+#### Development Tools
+- **black** (MIT License)
+  - Copyright (c) 2018 Łukasz Langa
+  - Used for: Code formatting
+  - License: https://github.com/psf/black/blob/main/LICENSE
+
+- **pylint** (GNU General Public License v2)
+  - Copyright (c) 2003-2023 LOGILAB S.A. (Paris, FRANCE)
+  - Used for: Code linting
+  - License: https://github.com/pylint-dev/pylint/blob/main/LICENSE
+
+- **mypy** (MIT License)
+  - Copyright (c) 2012-2023 Jukka Lehtosalo and contributors
+  - Used for: Static type checking
+  - License: https://github.com/python/mypy/blob/master/LICENSE
+
+### JavaScript/TypeScript Dependencies (Dashboard)
+
+#### React Ecosystem
+- **react** (MIT License)
+  - Copyright (c) Meta Platforms, Inc. and affiliates
+  - Used for: User interface framework
+  - License: https://github.com/facebook/react/blob/main/LICENSE
+
+- **typescript** (Apache License 2.0)
+  - Copyright (c) Microsoft Corporation
+  - Used for: Type-safe JavaScript
+  - License: https://github.com/microsoft/TypeScript/blob/main/LICENSE.txt
+
+#### UI Libraries
+- **tailwindcss** (MIT License)
+  - Copyright (c) Tailwind Labs, Inc.
+  - Used for: CSS framework
+  - License: https://github.com/tailwindlabs/tailwindcss/blob/master/LICENSE
+
+- **chart.js** (MIT License)
+  - Copyright (c) 2014-2023 Chart.js Contributors
+  - Used for: Data visualization
+  - License: https://github.com/chartjs/Chart.js/blob/master/LICENSE.md
+
+### Docker Base Images
+
+#### Python Runtime
+- **python:3.11-slim** (Python Software Foundation License)
+  - Official Python Docker image
+  - Used for: Application runtime environment
+  - License: https://docs.python.org/3/license.html
+
+#### PostgreSQL Database
+- **postgres:15** (PostgreSQL License)
+  - Official PostgreSQL Docker image
+  - Used for: Database server
+  - License: https://www.postgresql.org/about/licence/
+
+#### Redis Cache
+- **redis:7-alpine** (BSD License)
+  - Official Redis Docker image
+  - Used for: Caching and session storage
+  - License: https://redis.io/docs/about/license/
+
+### System Dependencies
+
+#### Operating System Libraries
+- **OpenSSL** (Apache License 2.0)
+  - Copyright (c) 1998-2023 The OpenSSL Project
+  - Used for: TLS/SSL cryptographic operations
+  - License: https://www.openssl.org/source/license.html
+
+- **libffi** (MIT License)
+  - Copyright (c) 1996-2020 Anthony Green, Red Hat, Inc and others
+  - Used for: Foreign function interface
+  - License: https://github.com/libffi/libffi/blob/master/LICENSE
+
+### Documentation Tools
+
+#### Sphinx Documentation
+- **sphinx** (BSD License)
+  - Copyright (c) 2007-2023 by the Sphinx team
+  - Used for: Documentation generation
+  - License: https://github.com/sphinx-doc/sphinx/blob/master/LICENSE
+
+- **sphinx-rtd-theme** (MIT License)
+  - Copyright (c) 2013-2018 Dave Snider, Read the Docs, Inc. & contributors
+  - Used for: Documentation theme
+  - License: https://github.com/readthedocs/sphinx_rtd_theme/blob/master/LICENSE
+
+### Compliance Notes
+
+1. **GPL Compatibility**: This project is compatible with GPL-licensed 
+   components through the MIT license's permissive terms.
+
+2. **Attribution Requirements**: All third-party components retain their 
+   original copyright notices and license terms as required.
+
+3. **Distribution**: When distributing this software, ensure all third-party 
+   license requirements are met, including providing copies of relevant licenses.
+
+4. **Modifications**: Any modifications to third-party components must comply 
+   with their respective license terms.
+
+### License Compliance Verification
+
+To verify license compliance and generate an updated license report:
+
+```bash
+# Install license checking tools
+pip install pip-licenses licensecheck
+
+# Generate license report
+pip-licenses --format=markdown --output-file=LICENSE_REPORT.md
+
+# Check for license conflicts
+licensecheck --zero
+```
+
+### Contact Information
+
+For questions regarding licensing or to report license compliance issues:
+
+- **Email**: legal@aegis-project.org
+- **GitHub Issues**: https://github.com/aegis-project/aegis/issues
+- **Legal Documentation**: https://docs.aegis-project.org/legal/
+
+---
+
+**Note**: This license file is automatically updated during the build process 
+to ensure accuracy. The most current version can always be found in the 
+project repository.
+
+Last Updated: 2024-01-15

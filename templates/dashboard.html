@@ -1,0 +1,436 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS Framework - Dashboard de Monitoreo</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .metric-card { transition: all 0.3s ease; }
+        .metric-card:hover { transform: translateY(-2px); }
+        .alert-critical { border-left: 4px solid #ef4444; }
+        .alert-warning { border-left: 4px solid #f59e0b; }
+        .alert-info { border-left: 4px solid #3b82f6; }
+        .node-online { color: #10b981; }
+        .node-offline { color: #ef4444; }
+        .node-degraded { color: #f59e0b; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">🛡️ AEGIS Framework</h1>
+            <p class="text-gray-600">Dashboard de Monitoreo en Tiempo Real</p>
+        </div>
+
+        <!-- Network Status (mínimo) -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+            <p class="text-sm text-gray-600">
+                Estado de Red:
+                NAT <span id="nat-status" class="font-semibold">--</span>
+                · DHT <span id="dht-status" class="font-semibold">--</span>
+                · Peers <span id="peer-count" class="font-semibold">--</span>
+            </p>
+        </div>
+
+        <!-- System Health Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6 metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Salud del Sistema</p>
+                        <p class="text-2xl font-bold text-green-600" id="system-health">--</p>
+                    </div>
+                    <div class="text-green-500">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Nodos Activos</p>
+                        <p class="text-2xl font-bold text-blue-600" id="active-nodes">--</p>
+                    </div>
+                    <div class="text-blue-500">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Alertas Críticas</p>
+                        <p class="text-2xl font-bold text-red-600" id="critical-alerts">--</p>
+                    </div>
+                    <div class="text-red-500">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Tiempo de Respuesta</p>
+                        <p class="text-2xl font-bold text-purple-600" id="response-time">--</p>
+                    </div>
+                    <div class="text-purple-500">
+                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">📊 Uso de CPU</h3>
+                <div id="cpu-chart" style="height: 300px;"></div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">💾 Uso de Memoria</h3>
+                <div id="memory-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">🌐 Latencia de Red</h3>
+                <div id="latency-chart" style="height: 300px;"></div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">🤖 Precisión del Modelo</h3>
+                <div id="accuracy-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+
+        <!-- Nodes and Alerts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">🔗 Estado de Nodos</h3>
+                <div id="nodes-list" class="space-y-3">
+                    <!-- Nodes will be populated here -->
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">🚨 Alertas Activas</h3>
+                <div id="alerts-list" class="space-y-3">
+                    <!-- Alerts will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Socket.IO connection
+        const socket = io();
+        
+        // Chart data storage
+        const chartData = {
+            cpu: { x: [], y: [] },
+            memory: { x: [], y: [] },
+            latency: { x: [], y: [] },
+            accuracy: { x: [], y: [] }
+        };
+
+        // Initialize charts
+        function initCharts() {
+            const chartConfig = {
+                displayModeBar: false,
+                responsive: true
+            };
+
+            // CPU Chart
+            Plotly.newPlot('cpu-chart', [{
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'CPU Usage',
+                line: { color: '#3b82f6' }
+            }], {
+                title: '',
+                xaxis: { title: 'Tiempo' },
+                yaxis: { title: 'Porcentaje (%)' },
+                margin: { t: 20 }
+            }, chartConfig);
+
+            // Memory Chart
+            Plotly.newPlot('memory-chart', [{
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Memory Usage',
+                line: { color: '#10b981' }
+            }], {
+                title: '',
+                xaxis: { title: 'Tiempo' },
+                yaxis: { title: 'Porcentaje (%)' },
+                margin: { t: 20 }
+            }, chartConfig);
+
+            // Latency Chart
+            Plotly.newPlot('latency-chart', [{
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Network Latency',
+                line: { color: '#f59e0b' }
+            }], {
+                title: '',
+                xaxis: { title: 'Tiempo' },
+                yaxis: { title: 'Latencia (ms)' },
+                margin: { t: 20 }
+            }, chartConfig);
+
+            // Accuracy Chart
+            Plotly.newPlot('accuracy-chart', [{
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Model Accuracy',
+                line: { color: '#8b5cf6' }
+            }], {
+                title: '',
+                xaxis: { title: 'Tiempo' },
+                yaxis: { title: 'Precisión', range: [0, 1] },
+                margin: { t: 20 }
+            }, chartConfig);
+        }
+
+        // Update chart with new data
+        function updateChart(chartId, data) {
+            const maxPoints = 50;
+            
+            if (data.x.length > maxPoints) {
+                data.x = data.x.slice(-maxPoints);
+                data.y = data.y.slice(-maxPoints);
+            }
+
+            Plotly.redraw(chartId, [{
+                x: data.x,
+                y: data.y,
+                type: 'scatter',
+                mode: 'lines+markers'
+            }]);
+        }
+
+        // Socket event handlers
+        socket.on('connect', function() {
+            console.log('Connected to dashboard server');
+            loadInitialData();
+        });
+
+        socket.on('new_metric', function(metric) {
+            const timestamp = new Date(metric.timestamp * 1000);
+            
+            switch(metric.metric_type) {
+                case 'cpu_usage':
+                    chartData.cpu.x.push(timestamp);
+                    chartData.cpu.y.push(metric.value);
+                    updateChart('cpu-chart', chartData.cpu);
+                    break;
+                case 'memory_usage':
+                    chartData.memory.x.push(timestamp);
+                    chartData.memory.y.push(metric.value);
+                    updateChart('memory-chart', chartData.memory);
+                    break;
+                case 'network_latency':
+                    chartData.latency.x.push(timestamp);
+                    chartData.latency.y.push(metric.value);
+                    updateChart('latency-chart', chartData.latency);
+                    break;
+                case 'model_accuracy':
+                    chartData.accuracy.x.push(timestamp);
+                    chartData.accuracy.y.push(metric.value);
+                    updateChart('accuracy-chart', chartData.accuracy);
+                    break;
+            }
+        });
+
+        socket.on('new_alert', function(alert) {
+            console.log('New alert:', alert);
+            loadAlerts();
+        });
+
+        // Load initial data
+        function loadInitialData() {
+            loadHealth();
+            loadNodes();
+            loadAlerts();
+            loadMetrics();
+            loadNetwork();
+        }
+
+        function loadHealth() {
+            fetch('/api/health')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('system-health').textContent = (data.overall_score * 100).toFixed(1) + '%';
+                    document.getElementById('active-nodes').textContent = data.active_nodes + '/' + data.total_nodes;
+                    document.getElementById('critical-alerts').textContent = data.critical_alerts;
+                    document.getElementById('response-time').textContent = data.avg_response_time.toFixed(1) + 'ms';
+                });
+        }
+
+        function loadNodes() {
+            fetch('/api/nodes')
+                .then(response => response.json())
+                .then(nodes => {
+                    const nodesList = document.getElementById('nodes-list');
+                    nodesList.innerHTML = '';
+                    
+                    nodes.forEach(node => {
+                        const nodeElement = document.createElement('div');
+                        nodeElement.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+                        
+                        const statusClass = node.status === 'online' ? 'node-online' : 
+                                          node.status === 'offline' ? 'node-offline' : 'node-degraded';
+                        
+                        nodeElement.innerHTML = `
+                            <div>
+                                <p class="font-medium">${node.node_id}</p>
+                                <p class="text-sm text-gray-600">${node.ip_address}:${node.port}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-medium ${statusClass}">${node.status.toUpperCase()}</p>
+                                <p class="text-sm text-gray-600">Health: ${(node.health_score * 100).toFixed(0)}%</p>
+                            </div>
+                        `;
+                        
+                        nodesList.appendChild(nodeElement);
+                    });
+                });
+        }
+
+        function loadAlerts() {
+            fetch('/api/alerts')
+                .then(response => response.json())
+                .then(alerts => {
+                    const alertsList = document.getElementById('alerts-list');
+                    alertsList.innerHTML = '';
+                    
+                    if (alerts.length === 0) {
+                        alertsList.innerHTML = '<p class="text-gray-500 text-center py-4">No hay alertas activas</p>';
+                        return;
+                    }
+                    
+                    alerts.forEach(alert => {
+                        const alertElement = document.createElement('div');
+                        const alertClass = `alert-${alert.level}`;
+                        
+                        alertElement.className = `p-3 bg-gray-50 rounded-lg ${alertClass}`;
+                        alertElement.innerHTML = `
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <p class="font-medium">${alert.title}</p>
+                                    <p class="text-sm text-gray-600">${alert.message}</p>
+                                    <p class="text-xs text-gray-500 mt-1">${new Date(alert.timestamp * 1000).toLocaleString()}</p>
+                                </div>
+                                <button onclick="acknowledgeAlert('${alert.alert_id}')" 
+                                        class="text-sm bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+                                    Reconocer
+                                </button>
+                            </div>
+                        `;
+                        
+                        alertsList.appendChild(alertElement);
+                    });
+                });
+        }
+
+        function loadMetrics() {
+            fetch('/api/metrics')
+                .then(response => response.json())
+                .then(metrics => {
+                    // Process historical metrics for charts
+                    Object.keys(metrics).forEach(metricType => {
+                        const metricData = metrics[metricType];
+                        
+                        switch(metricType) {
+                            case 'cpu_usage':
+                                chartData.cpu.x = metricData.map(m => new Date(m.timestamp * 1000));
+                                chartData.cpu.y = metricData.map(m => m.value);
+                                updateChart('cpu-chart', chartData.cpu);
+                                break;
+                            case 'memory_usage':
+                                chartData.memory.x = metricData.map(m => new Date(m.timestamp * 1000));
+                                chartData.memory.y = metricData.map(m => m.value);
+                                updateChart('memory-chart', chartData.memory);
+                                break;
+                            case 'network_latency':
+                                chartData.latency.x = metricData.map(m => new Date(m.timestamp * 1000));
+                                chartData.latency.y = metricData.map(m => m.value);
+                                updateChart('latency-chart', chartData.latency);
+                                break;
+                            case 'model_accuracy':
+                                chartData.accuracy.x = metricData.map(m => new Date(m.timestamp * 1000));
+                                chartData.accuracy.y = metricData.map(m => m.value);
+                                updateChart('accuracy-chart', chartData.accuracy);
+                                break;
+                        }
+                    });
+                });
+        }
+
+        function loadNetwork() {
+            fetch('/api/network')
+                .then(response => response.json())
+                .then(data => {
+                    const natActive = data.nat_config ? (data.nat_config.active || data.nat_config.enabled || data.nat_config.status === 'active') : false;
+                    const dhtActive = !!data.dht_active;
+                    const peers = (data.connected_peers && data.connected_peers.length) || (data.peer_list && data.peer_list.length) || 0;
+                    
+                    document.getElementById('nat-status').textContent = natActive ? 'Activo' : 'Inactivo';
+                    document.getElementById('dht-status').textContent = dhtActive ? 'Activo' : 'Inactivo';
+                    document.getElementById('peer-count').textContent = peers;
+                })
+                .catch(err => console.error('Error cargando estado de red:', err));
+        }
+
+        function acknowledgeAlert(alertId) {
+            fetch(`/api/alerts/${alertId}/acknowledge`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadAlerts();
+                }
+            });
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+
+            // Refresh data periodically
+            setInterval(loadHealth, 5000);
+            setInterval(loadNodes, 10000);
+            setInterval(loadAlerts, 15000);
+            setInterval(loadNetwork, 5000);
+        });
+    </script>
+</body>
+</html>

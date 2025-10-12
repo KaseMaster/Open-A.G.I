@@ -322,10 +322,12 @@ class ProofOfComputation:
 class PBFTConsensus:
     """Implementación de Practical Byzantine Fault Tolerance"""
 
-    def __init__(self, node_id: str, private_key: ed25519.Ed25519PrivateKey):
+    def __init__(self, node_id: str, private_key: ed25519.Ed25519PrivateKey, network_manager: Optional[Any] = None):
         self.node_id = node_id
         self.private_key = private_key
         self.public_key = private_key.public_key()
+        # Referencia opcional a P2PNetworkManager para emitir mensajes sobre canales seguros
+        self.network_manager = network_manager
 
         # Estado del consenso
         self.view_number = 0
@@ -350,6 +352,33 @@ class PBFTConsensus:
             MessageType.VIEW_CHANGE: self._handle_view_change
         }
 
+        # Registrar handler de red si hay network_manager disponible
+        try:
+            if self.network_manager is not None:
+                from p2p_network import MessageType as NetMessageType  # import local para evitar dependencia circular
+                # Asegurar que nos conocemos a nosotros mismos como nodo conocido
+                self.add_node(self.node_id, self.public_key)
+                # Registrar callback para mensajes CONSENSUS entrantes
+                self.network_manager.register_handler(NetMessageType.CONSENSUS, self._on_consensus_network_message)
+        except Exception as e:
+            logger.warning(f"⚠️ No se pudo registrar handler CONSENSUS en la red: {e}")
+
+    def set_network_manager(self, network_manager: Any) -> None:
+        """Asigna el gestor de red tras la construcción y registra el handler CONSENSUS.
+
+        Permite integrar el consenso cuando el P2PNetworkManager se crea más tarde.
+        """
+        try:
+            self.network_manager = network_manager
+            if self.network_manager is None:
+                return
+            # Asegurar que conocemos nuestra propia clave pública
+            self.add_node(self.node_id, self.public_key)
+            from p2p_network import MessageType as NetMessageType  # local import para evitar dependencia circular
+            self.network_manager.register_handler(NetMessageType.CONSENSUS, self._on_consensus_network_message)
+        except Exception as e:
+            logger.warning(f"⚠️ No se pudo asignar network_manager o registrar handler CONSENSUS: {e}")
+
     def add_node(self, node_id: str, public_key: ed25519.Ed25519PublicKey) -> None:
         """Añade un nodo conocido a la red"""
         self.known_nodes[node_id] = public_key
@@ -373,9 +402,7 @@ class PBFTConsensus:
 
     def sign_message(self, message: ConsensusMessage) -> bytes:
         """Firma un mensaje con la clave privada del nodo"""
-        message_dict = asdict(message)
-        message_dict.pop('signature', None)  # Remover firma existente
-        message_bytes = json.dumps(message_dict, sort_keys=True).encode()
+        message_bytes = json.dumps(self._canonical_message_dict(message), sort_keys=True).encode()
         signature = self.private_key.sign(message_bytes)
         return signature
 
@@ -391,9 +418,7 @@ class PBFTConsensus:
 
         try:
             public_key = self.known_nodes[message.sender_id]
-            message_dict = asdict(message)
-            message_dict.pop('signature')
-            message_bytes = json.dumps(message_dict, sort_keys=True).encode()
+            message_bytes = json.dumps(self._canonical_message_dict(message), sort_keys=True).encode()
 
             public_key.verify(message.signature, message_bytes)
             return True
@@ -639,9 +664,7 @@ class PBFTConsensus:
 
     def _hash_message(self, message: ConsensusMessage) -> str:
         """Calcula el hash de un mensaje"""
-        message_dict = asdict(message)
-        message_dict.pop('signature', None)
-        message_str = json.dumps(message_dict, sort_keys=True)
+        message_str = json.dumps(self._canonical_message_dict(message), sort_keys=True)
         return hashlib.sha256(message_str.encode()).hexdigest()
 
     def _cleanup_consensus_state(self, sequence_number: int) -> None:
@@ -657,18 +680,138 @@ class PBFTConsensus:
 
     async def _broadcast_message(self, message: ConsensusMessage) -> None:
         """Broadcast de un mensaje a todos los nodos conocidos"""
-        # Esta función debe ser implementada por la capa de red
-        # Por ahora es un placeholder
-        logger.debug(f"Broadcasting {message.message_type.value} to {len(self.known_nodes)} nodes")
+        # Si hay capa de red disponible, usarla para enviar por canal seguro (CONSENSUS)
+        if self.network_manager is not None:
+            try:
+                from p2p_network import MessageType  # import local para evitar dependencia circular al cargar
+                # Asegurar firma antes de enviar
+                if message.signature is None:
+                    try:
+                        message.signature = self.sign_message(message)
+                    except Exception as e:
+                        logger.warning(f"No se pudo firmar mensaje CONSENSUS: {e}")
+                payload = self._serialize_message_dict(message)
+                await self.network_manager.broadcast_message(MessageType.CONSENSUS, payload)
+                logger.debug("Broadcast CONSENSUS enviado sobre P2P")
+                return
+            except Exception as e:
+                logger.warning(f"⚠️ Fallo envío CONSENSUS por P2P: {e}; usando log local")
+        # Fallback: solo loggear si no hay red
+        logger.debug(f"Broadcasting {message.message_type.value} to {len(self.known_nodes)} nodes (sin red)")
+
+    def _canonical_message_dict(self, message: ConsensusMessage) -> Dict[str, Any]:
+        """Construye dict canónico para firma/verificación (sin firma, enums como string)"""
+        d = asdict(message)
+        # Remover firma si presente
+        d.pop('signature', None)
+        # Convertir enums a sus valores
+        mt = d.get('message_type')
+        if isinstance(mt, MessageType):
+            d['message_type'] = mt.value
+        return d
+
+    def _serialize_message_dict(self, message: ConsensusMessage) -> Dict[str, Any]:
+        """Serializa mensaje para transporte (incluye firma como string base64, enums como string)"""
+        d = asdict(message)
+        # Convertir enums a valor
+        mt = d.get('message_type')
+        if isinstance(mt, MessageType):
+            d['message_type'] = mt.value
+        # Convertir firma bytes a base64
+        sig = d.get('signature')
+        if sig is not None:
+            try:
+                import base64
+                d['signature'] = base64.b64encode(sig).decode()
+            except Exception:
+                # Fallback hex
+                try:
+                    d['signature'] = sig.hex()  # type: ignore
+                except Exception:
+                    d['signature'] = None
+        return d
+
+    async def _on_consensus_network_message(self, peer_id: str, net_message: Dict[str, Any]) -> None:
+        """Handler para mensajes CONSENSUS recibidos desde la red P2P.
+        Reconstruye ConsensusMessage y despacha al handler correspondiente.
+        """
+        try:
+            payload = net_message.get('payload', {})
+            if not isinstance(payload, dict):
+                logger.warning("Payload CONSENSUS inválido")
+                return
+
+            # Sincronizar claves públicas conocidas desde CryptoEngine si está disponible
+            try:
+                if self.network_manager and getattr(self.network_manager, 'crypto_engine', None):
+                    ce = self.network_manager.crypto_engine
+                    for pid, pub_ident in getattr(ce, 'peer_identities', {}).items():
+                        # Registrar claves de firma Ed25519
+                        self.known_nodes[pid] = pub_ident.public_signing_key
+            except Exception as e:
+                logger.debug(f"No se pudieron sincronizar identidades desde CryptoEngine: {e}")
+
+            # Reconstruir firma
+            sig = payload.get('signature')
+            signature_bytes: Optional[bytes] = None
+            if isinstance(sig, str):
+                try:
+                    # Intentar base64 primero
+                    import base64
+                    signature_bytes = base64.b64decode(sig)
+                except Exception:
+                    try:
+                        signature_bytes = bytes.fromhex(sig)
+                    except Exception:
+                        signature_bytes = None
+
+            # Convertir tipo de mensaje
+            mt_raw = payload.get('message_type')
+            try:
+                mt_enum = MessageType(mt_raw) if isinstance(mt_raw, str) else mt_raw
+            except Exception:
+                logger.warning(f"Tipo de mensaje PBFT desconocido: {mt_raw}")
+                return
+
+            # Construir objeto ConsensusMessage
+            cm = ConsensusMessage(
+                message_type=mt_enum,
+                sender_id=payload.get('sender_id', peer_id),
+                view_number=int(payload.get('view_number', self.view_number)),
+                sequence_number=int(payload.get('sequence_number', 0)),
+                payload=payload.get('payload', {}),
+                timestamp=float(payload.get('timestamp', time.time())),
+                signature=signature_bytes,
+            )
+
+            # Verificar firma si está presente
+            if cm.signature is not None:
+                try:
+                    if not self.verify_message(cm):
+                        logger.warning(f"Firma inválida para mensaje CONSENSUS de {cm.sender_id}; descartando")
+                        return
+                except Exception as e:
+                    logger.warning(f"Error verificando firma CONSENSUS: {e}; descartando")
+                    return
+
+            # Despachar al handler correspondiente
+            handler = self.message_handlers.get(cm.message_type)
+            if handler:
+                await handler(cm)
+            else:
+                logger.debug(f"Mensaje PBFT {cm.message_type} sin handler registrado")
+
+        except Exception as e:
+            logger.warning(f"⚠️ Error manejando mensaje CONSENSUS: {e}")
 
 
 class HybridConsensus:
     """Consenso híbrido que combina PoC y PBFT"""
 
-    def __init__(self, node_id: str, private_key: ed25519.Ed25519PrivateKey):
+    def __init__(self, node_id: str, private_key: ed25519.Ed25519PrivateKey, network_manager: Optional[Any] = None):
         self.node_id = node_id
         self.poc = ProofOfComputation()
-        self.pbft = PBFTConsensus(node_id, private_key)
+        self.pbft = PBFTConsensus(node_id, private_key, network_manager)
 
         # Configuración del consenso híbrido
         self.poc_interval = 300  # 5 minutos entre desafíos PoC

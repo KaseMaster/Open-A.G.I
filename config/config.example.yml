@@ -1,0 +1,403 @@
+# AEGIS Framework - Configuration Example
+# Advanced Encrypted Governance and Intelligence System
+# Copy this file to config.yml and customize for your environment
+
+# Application Configuration
+app:
+  name: "AEGIS Framework"
+  version: "1.0.0"
+  environment: "production"  # development, testing, production
+  debug: false
+  hot_reload: false
+  profiling: false
+
+# Server Configuration
+server:
+  host: "0.0.0.0"
+  port: 8080
+  workers: 4
+  max_connections: 1000
+  timeout: 30
+  keep_alive: 2
+
+# P2P Network Configuration
+p2p:
+  enabled: true
+  port: 8181
+  max_peers: 50
+  discovery_interval: 30
+  heartbeat_interval: 10
+  bootstrap_nodes:
+    - "127.0.0.1:8181"
+  network_id: "aegis-mainnet"
+  protocol_version: "1.0"
+
+# Consensus Configuration
+consensus:
+  algorithm: "hybrid"  # pos, pow, hybrid
+  block_time: 10  # seconds
+  difficulty_adjustment: 2016  # blocks
+  max_block_size: 1048576  # bytes
+  transaction_pool_size: 10000
+  validator_count: 21
+  stake_threshold: 1000
+
+# Cryptography Configuration
+crypto:
+  algorithm: "kyber"  # Post-quantum cryptography
+  key_size: 3072
+  hash_algorithm: "sha3-256"
+  signature_algorithm: "dilithium"
+  encryption_algorithm: "aes-256-gcm"
+  key_derivation: "argon2id"
+  salt_length: 32
+
+# Storage Configuration
+storage:
+  type: "hybrid"  # local, distributed, hybrid
+  data_dir: "/app/data"
+  backup_dir: "/app/backups"
+  max_file_size: 104857600  # 100MB
+  compression: true
+  encryption: true
+  replication_factor: 3
+  sharding_enabled: false
+
+# Database Configuration
+database:
+  # PostgreSQL Configuration
+  postgres:
+    host: "postgres"
+    port: 5432
+    database: "aegis"
+    username: "aegis"
+    password: "aegis_secure_pass"
+    pool_size: 20
+    max_overflow: 30
+    pool_timeout: 30
+    pool_recycle: 3600
+    ssl_mode: "prefer"
+  
+  # Redis Configuration
+  redis:
+    host: "redis"
+    port: 6379
+    password: "aegis_redis_pass"
+    database: 0
+    max_connections: 50
+    socket_timeout: 5
+    socket_connect_timeout: 5
+    retry_on_timeout: true
+
+# Security Configuration
+security:
+  # Authentication
+  auth:
+    enabled: true
+    method: "jwt"  # jwt, oauth2, ldap
+    secret_key: "your-super-secret-key-change-this"
+    algorithm: "HS256"
+    access_token_expire: 3600  # seconds
+    refresh_token_expire: 604800  # 7 days
+    
+  # Authorization
+  authz:
+    enabled: true
+    default_role: "user"
+    admin_users:
+      - "admin@aegis.local"
+    
+  # SSL/TLS Configuration
+  ssl:
+    enabled: true
+    cert_file: "/app/certs/server.crt"
+    key_file: "/app/certs/server.key"
+    ca_file: "/app/certs/ca.crt"
+    verify_mode: "required"
+    
+  # Rate Limiting
+  rate_limit:
+    enabled: true
+    requests_per_minute: 60
+    burst_size: 10
+    
+  # CORS Configuration
+  cors:
+    enabled: true
+    origins:
+      - "http://localhost:3000"
+      - "https://aegis.local"
+    methods:
+      - "GET"
+      - "POST"
+      - "PUT"
+      - "DELETE"
+    headers:
+      - "Content-Type"
+      - "Authorization"
+
+# Monitoring Configuration
+monitoring:
+  # Metrics
+  metrics:
+    enabled: true
+    port: 9090
+    path: "/metrics"
+    interval: 15  # seconds
+    
+  # Prometheus
+  prometheus:
+    enabled: true
+    port: 9091
+    scrape_interval: 15
+    evaluation_interval: 15
+    
+  # Health Checks
+  health:
+    enabled: true
+    path: "/health"
+    interval: 30
+    timeout: 10
+    
+  # Performance Monitoring
+  performance:
+    enabled: true
+    cpu_threshold: 80  # percentage
+    memory_threshold: 80  # percentage
+    disk_threshold: 90  # percentage
+    network_threshold: 80  # percentage
+
+# Logging Configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "json"  # text, json
+  output: "file"  # console, file, both
+  file_path: "/app/logs/aegis.log"
+  max_file_size: 104857600  # 100MB
+  backup_count: 10
+  rotation: "time"  # size, time
+  rotation_interval: "midnight"
+  
+  # Structured Logging
+  structured:
+    enabled: true
+    include_timestamp: true
+    include_level: true
+    include_module: true
+    include_function: true
+    include_line: true
+    
+  # Log Levels by Module
+  loggers:
+    "aegis.core": "INFO"
+    "aegis.p2p": "INFO"
+    "aegis.consensus": "INFO"
+    "aegis.storage": "INFO"
+    "aegis.crypto": "WARNING"
+    "aegis.api": "INFO"
+    "aegis.monitoring": "INFO"
+
+# API Configuration
+api:
+  # REST API
+  rest:
+    enabled: true
+    prefix: "/api/v1"
+    docs_enabled: true
+    docs_path: "/docs"
+    redoc_path: "/redoc"
+    
+  # GraphQL API
+  graphql:
+    enabled: false
+    path: "/graphql"
+    playground_enabled: false
+    
+  # WebSocket API
+  websocket:
+    enabled: true
+    path: "/ws"
+    max_connections: 1000
+    ping_interval: 30
+    ping_timeout: 10
+
+# Dashboard Configuration
+dashboard:
+  enabled: true
+  title: "AEGIS Framework Dashboard"
+  theme: "dark"  # light, dark, auto
+  refresh_interval: 5  # seconds
+  charts:
+    - "system_metrics"
+    - "network_status"
+    - "consensus_info"
+    - "storage_usage"
+    - "security_events"
+
+# Backup Configuration
+backup:
+  enabled: true
+  interval: 3600  # seconds (1 hour)
+  retention_days: 30
+  compression: true
+  encryption: true
+  destinations:
+    - type: "local"
+      path: "/app/backups"
+    - type: "s3"
+      bucket: "aegis-backups"
+      region: "us-east-1"
+      access_key: "your-access-key"
+      secret_key: "your-secret-key"
+
+# Network Configuration
+network:
+  # TOR Configuration
+  tor:
+    enabled: false
+    socks_port: 9050
+    control_port: 9051
+    hidden_service: false
+    
+  # Proxy Configuration
+  proxy:
+    enabled: false
+    type: "http"  # http, socks5
+    host: "127.0.0.1"
+    port: 8080
+    username: ""
+    password: ""
+    
+  # Firewall Configuration
+  firewall:
+    enabled: true
+    allowed_ips:
+      - "127.0.0.1"
+      - "10.0.0.0/8"
+      - "172.16.0.0/12"
+      - "192.168.0.0/16"
+    blocked_ips: []
+    
+  # DNS Configuration
+  dns:
+    servers:
+      - "8.8.8.8"
+      - "8.8.4.4"
+      - "1.1.1.1"
+    timeout: 5
+    retries: 3
+
+# Testing Configuration
+testing:
+  enabled: false
+  mock_data: true
+  test_database: "aegis_test"
+  coverage_threshold: 80
+  
+# Development Configuration
+development:
+  enabled: false
+  auto_reload: true
+  debug_toolbar: true
+  profiler: true
+  mock_external_services: true
+
+# Feature Flags
+features:
+  smart_contracts: false
+  oracles: false
+  sharding: false
+  cross_chain: false
+  governance: true
+  staking: true
+  voting: true
+
+# External Services
+external:
+  # Email Service
+  email:
+    enabled: false
+    provider: "smtp"  # smtp, sendgrid, mailgun
+    host: "smtp.gmail.com"
+    port: 587
+    username: "your-email@gmail.com"
+    password: "your-app-password"
+    use_tls: true
+    
+  # Notification Service
+  notifications:
+    enabled: false
+    providers:
+      - "email"
+      - "slack"
+      - "discord"
+    slack_webhook: "https://hooks.slack.com/services/..."
+    discord_webhook: "https://discord.com/api/webhooks/..."
+    
+  # Analytics
+  analytics:
+    enabled: false
+    provider: "google"  # google, mixpanel, amplitude
+    tracking_id: "GA-XXXXXXXXX"
+
+# Compliance Configuration
+compliance:
+  gdpr:
+    enabled: false
+    data_retention_days: 365
+    anonymization_enabled: true
+    
+  hipaa:
+    enabled: false
+    encryption_required: true
+    audit_logging: true
+    
+  sox:
+    enabled: false
+    financial_controls: true
+    audit_trail: true
+
+# Performance Configuration
+performance:
+  # Caching
+  cache:
+    enabled: true
+    backend: "redis"  # memory, redis, memcached
+    default_timeout: 300  # seconds
+    max_entries: 10000
+    
+  # Connection Pooling
+  connection_pool:
+    enabled: true
+    max_size: 20
+    min_size: 5
+    timeout: 30
+    
+  # Async Configuration
+  async:
+    enabled: true
+    max_workers: 10
+    queue_size: 1000
+    timeout: 60
+
+# Maintenance Configuration
+maintenance:
+  # Automatic Updates
+  auto_update:
+    enabled: false
+    check_interval: 86400  # 24 hours
+    backup_before_update: true
+    
+  # Cleanup Tasks
+  cleanup:
+    enabled: true
+    log_retention_days: 30
+    temp_file_cleanup: true
+    cache_cleanup: true
+    
+  # Health Checks
+  health_checks:
+    enabled: true
+    interval: 300  # 5 minutes
+    timeout: 30
+    retries: 3

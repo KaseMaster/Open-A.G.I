@@ -1,0 +1,129 @@
+# AEGIS Framework - Jupyter Development Environment
+# Advanced Encrypted Governance and Intelligence System
+FROM jupyter/scipy-notebook:latest
+
+# Switch to root for installations
+USER root
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    git \
+    curl \
+    wget \
+    vim \
+    htop \
+    tree \
+    && rm -rf /var/lib/apt/lists/*
+
+# Switch back to jovyan user
+USER jovyan
+
+# Set working directory
+WORKDIR /home/jovyan/work
+
+# Copy requirements
+COPY requirements.txt requirements-dev.txt ./
+
+# Install Python packages
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements-dev.txt && \
+    pip install --no-cache-dir \
+    jupyterlab-git \
+    jupyterlab-lsp \
+    python-lsp-server[all] \
+    jupyterlab_code_formatter \
+    black \
+    isort \
+    nbdime \
+    ipywidgets \
+    plotly \
+    bokeh \
+    seaborn \
+    networkx \
+    graphviz \
+    pydot \
+    && pip cache purge
+
+# Install JupyterLab extensions
+RUN jupyter labextension install --no-build \
+    @jupyter-widgets/jupyterlab-manager \
+    @jupyterlab/git \
+    @krassowski/jupyterlab-lsp \
+    @ryantam626/jupyterlab_code_formatter \
+    && jupyter lab build --dev-build=False --minimize=False
+
+# Configure Jupyter
+RUN jupyter notebook --generate-config && \
+    echo "c.NotebookApp.token = 'aegis_dev_token'" >> ~/.jupyter/jupyter_notebook_config.py && \
+    echo "c.NotebookApp.password = ''" >> ~/.jupyter/jupyter_notebook_config.py && \
+    echo "c.NotebookApp.open_browser = False" >> ~/.jupyter/jupyter_notebook_config.py && \
+    echo "c.NotebookApp.ip = '0.0.0.0'" >> ~/.jupyter/jupyter_notebook_config.py && \
+    echo "c.NotebookApp.port = 8888" >> ~/.jupyter/jupyter_notebook_config.py && \
+    echo "c.NotebookApp.allow_root = True" >> ~/.jupyter/jupyter_notebook_config.py
+
+# Create notebooks directory structure
+RUN mkdir -p /home/jovyan/work/notebooks/{analysis,experiments,prototypes,documentation} && \
+    mkdir -p /home/jovyan/work/data/{raw,processed,external} && \
+    mkdir -p /home/jovyan/work/models && \
+    mkdir -p /home/jovyan/work/reports
+
+# Create sample notebooks
+RUN echo '{\n\
+ "cells": [\n\
+  {\n\
+   "cell_type": "markdown",\n\
+   "metadata": {},\n\
+   "source": [\n\
+    "# AEGIS Framework Analysis\\n",\n\
+    "\\n",\n\
+    "This notebook provides tools for analyzing AEGIS system performance and behavior."\n\
+   ]\n\
+  },\n\
+  {\n\
+   "cell_type": "code",\n\
+   "execution_count": null,\n\
+   "metadata": {},\n\
+   "source": [\n\
+    "import sys\\n",\n\
+    "sys.path.append(\"/home/jovyan/work\")\\n",\n\
+    "\\n",\n\
+    "# Import AEGIS modules\\n",\n\
+    "# from aegis.core import AEGISCore\\n",\n\
+    "# from aegis.monitoring import MetricsCollector\\n",\n\
+    "\\n",\n\
+    "import pandas as pd\\n",\n\
+    "import numpy as np\\n",\n\
+    "import matplotlib.pyplot as plt\\n",\n\
+    "import seaborn as sns\\n",\n\
+    "\\n",\n\
+    "print(\\"AEGIS Analysis Environment Ready\\")"\n\
+   ],\n\
+   "outputs": []\n\
+  }\n\
+ ],\n\
+ "metadata": {\n\
+  "kernelspec": {\n\
+   "display_name": "Python 3",\n\
+   "language": "python",\n\
+   "name": "python3"\n\
+  },\n\
+  "language_info": {\n\
+   "name": "python",\n\
+   "version": "3.11.0"\n\
+  }\n\
+ },\n\
+ "nbformat": 4,\n\
+ "nbformat_minor": 4\n\
+}' > /home/jovyan/work/notebooks/analysis/aegis_analysis.ipynb
+
+# Set proper permissions
+RUN chown -R jovyan:users /home/jovyan/work
+
+# Expose Jupyter port
+EXPOSE 8888
+
+# Start Jupyter Lab
+CMD ["start-notebook.sh", "--NotebookApp.token=aegis_dev_token"]

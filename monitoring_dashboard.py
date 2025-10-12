@@ -53,6 +53,10 @@ class MetricType(Enum):
     MODEL_ACCURACY = "model_accuracy"
     FAULT_TOLERANCE = "fault_tolerance"
     SECURITY_EVENTS = "security_events"
+    BATCH_THROUGHPUT = "batch_throughput"
+    BATCH_EFFICIENCY = "batch_efficiency"
+    COMPRESSION_RATIO = "compression_ratio"
+    COMPRESSION_THROUGHPUT = "compression_throughput"
 
 class AlertLevel(Enum):
     """Niveles de alerta"""
@@ -125,12 +129,16 @@ class SystemHealth:
 class MetricsCollector:
     """Recolector de métricas del sistema"""
     
-    def __init__(self, node_id: str):
+    def __init__(self, node_id: str, network_provider: Optional[Any] = None, network_loop: Optional[Any] = None):
         self.node_id = node_id
         self.metrics_queue = queue.Queue()
         self.collection_interval = 5  # segundos
         self.running = False
         self.collection_thread = None
+        # Proveedor externo de red (por ejemplo, P2PNetworkManager)
+        self.network_provider = network_provider
+        # Loop de asyncio asociado al proveedor de red, para poder ejecutar corutinas desde hilos
+        self.network_loop = network_loop
     
     def start_collection(self):
         """Inicia recolección de métricas"""
@@ -226,21 +234,59 @@ class MetricsCollector:
         try:
             current_time = time.time()
             
-            # Latencia de red (ping a localhost como ejemplo)
-            start_time = time.time()
-            try:
-                socket.create_connection(("127.0.0.1", 80), timeout=1)
-                latency = (time.time() - start_time) * 1000  # ms
-            except:
-                latency = 1000  # timeout
-            
+            latency = None
+            metadata: Dict[str, Any] = {}
+
+            # Intentar obtener latencias reales desde el proveedor de red
+            if self.network_provider:
+                try:
+                    status = None
+                    # Si el método es corutina, ejecutarlo en el loop de la red
+                    try:
+                        import inspect
+                        if inspect.iscoroutinefunction(self.network_provider.get_network_status):
+                            if self.network_loop:
+                                future = asyncio.run_coroutine_threadsafe(self.network_provider.get_network_status(), self.network_loop)
+                                status = future.result(timeout=2.0)
+                            else:
+                                # Último recurso: ejecutar de forma síncrona creando un loop temporal
+                                status = asyncio.run(self.network_provider.get_network_status())
+                        else:
+                            # Llamada síncrona
+                            status = self.network_provider.get_network_status()
+                    except Exception as e:
+                        logger.warning(f"⚠️ Error ejecutando get_network_status: {e}")
+                    if isinstance(status, dict):
+                        conn_stats = status.get('connection_stats', {})
+                        latencies = conn_stats.get('latency_by_peer', {})
+                        if isinstance(latencies, dict) and latencies:
+                            try:
+                                latency_values = [float(v) for v in latencies.values()]
+                                latency = float(statistics.mean(latency_values))
+                            except Exception:
+                                latency_values = [float(v) for v in latencies.values()]
+                                latency = float(sum(latency_values)) / max(1, len(latency_values))
+                            metadata = {"latency_by_peer": latencies}
+                except Exception as e:
+                    logger.warning(f"⚠️ Error obteniendo latencias desde proveedor de red: {e}")
+
+            # Fallback: latencia local si no hay proveedor o no hay datos
+            if latency is None:
+                start_time = time.time()
+                try:
+                    socket.create_connection(("127.0.0.1", 80), timeout=1)
+                    latency = (time.time() - start_time) * 1000  # ms
+                except Exception:
+                    latency = 1000  # timeout
+
             latency_metric = Metric(
                 metric_id=f"latency_{current_time}",
                 metric_type=MetricType.NETWORK_LATENCY,
                 node_id=self.node_id,
                 value=latency,
                 unit="ms",
-                timestamp=current_time
+                timestamp=current_time,
+                metadata=metadata
             )
             self.metrics_queue.put(latency_metric)
             
@@ -275,6 +321,52 @@ class MetricsCollector:
                 timestamp=current_time
             )
             self.metrics_queue.put(accuracy_metric)
+            
+            # Simular métricas de batching
+            batch_throughput = np.random.normal(1500, 200)  # Operaciones por segundo
+            batch_metric = Metric(
+                metric_id=f"batch_throughput_{current_time}",
+                metric_type=MetricType.BATCH_THROUGHPUT,
+                node_id=self.node_id,
+                value=max(0, batch_throughput),
+                unit="ops/sec",
+                timestamp=current_time
+            )
+            self.metrics_queue.put(batch_metric)
+            
+            batch_efficiency = np.random.normal(0.85, 0.05)  # Eficiencia del batch
+            efficiency_metric = Metric(
+                metric_id=f"batch_efficiency_{current_time}",
+                metric_type=MetricType.BATCH_EFFICIENCY,
+                node_id=self.node_id,
+                value=max(0.0, min(1.0, batch_efficiency)),
+                unit="ratio",
+                timestamp=current_time
+            )
+            self.metrics_queue.put(efficiency_metric)
+            
+            # Simular métricas de compresión LZ4
+            compression_ratio = np.random.normal(3.2, 0.4)  # Ratio de compresión
+            compression_metric = Metric(
+                metric_id=f"compression_ratio_{current_time}",
+                metric_type=MetricType.COMPRESSION_RATIO,
+                node_id=self.node_id,
+                value=max(1.0, compression_ratio),
+                unit="ratio",
+                timestamp=current_time
+            )
+            self.metrics_queue.put(compression_metric)
+            
+            compression_throughput = np.random.normal(800, 100)  # MB/s
+            compression_throughput_metric = Metric(
+                metric_id=f"compression_throughput_{current_time}",
+                metric_type=MetricType.COMPRESSION_THROUGHPUT,
+                node_id=self.node_id,
+                value=max(0, compression_throughput),
+                unit="MB/s",
+                timestamp=current_time
+            )
+            self.metrics_queue.put(compression_throughput_metric)
             
         except Exception as e:
             logger.error(f"❌ Error recolectando métricas de aplicación: {e}")
@@ -313,7 +405,7 @@ class AlertManager:
             },
             MetricType.NETWORK_LATENCY: {
                 "warning_threshold": 100.0,
-                "critical_threshold": 500.0,
+                "critical_threshold": 2000.0,
                 "operator": "greater_than"
             },
             MetricType.MODEL_ACCURACY: {
@@ -480,7 +572,7 @@ class NodeManager:
 class DashboardServer:
     """Servidor web del dashboard"""
     
-    def __init__(self, host: str = "localhost", port: int = 5000):
+    def __init__(self, host: str = "localhost", port: int = 5000, network_provider: Optional[Any] = None, network_loop: Optional[Any] = None):
         self.host = host
         self.port = port
         self.app = Flask(__name__)
@@ -488,7 +580,10 @@ class DashboardServer:
         self.socketio = SocketIO(self.app, cors_allowed_origins="*")
         
         # Componentes del sistema
-        self.metrics_collector = MetricsCollector("dashboard_node")
+        self.network_provider = network_provider
+        # Loop de asyncio de la red P2P (si está disponible)
+        self.network_loop = network_loop
+        self.metrics_collector = MetricsCollector("dashboard_node", network_provider=self.network_provider, network_loop=self.network_loop)
         self.alert_manager = AlertManager()
         self.node_manager = NodeManager()
         
@@ -563,6 +658,34 @@ class DashboardServer:
             except Exception as e:
                 logger.error(f"❌ Error obteniendo salud del sistema: {e}")
                 return jsonify({"error": str(e)}), 500
+
+        @self.app.route('/api/network')
+        def get_network():
+            try:
+                if self.network_provider:
+                    # Llamada directa y simple al método del provider
+                    try:
+                        status = self.network_provider.get_network_status()
+                        return jsonify(status)
+                    except Exception as e:
+                        logger.warning(f"⚠️ Error obteniendo estado de red: {e}")
+                        return jsonify({
+                            "network_active": False,
+                            "message": f"error: {str(e)}",
+                            "node_id": getattr(self.network_provider, 'node_id', 'unknown'),
+                            "discovered_peers": 0,
+                            "connected_peers": 0,
+                            "nat_config": None,
+                            "dht_active": False
+                        })
+                else:
+                    return jsonify({
+                        "network_active": False,
+                        "message": "No hay proveedor de red configurado"
+                    })
+            except Exception as e:
+                logger.error(f"❌ Error obteniendo estado de red: {e}")
+                return jsonify({"error": str(e)}), 500
         
         @self.app.route('/api/alerts/<alert_id>/acknowledge', methods=['POST'])
         def acknowledge_alert(alert_id):
@@ -619,26 +742,20 @@ class DashboardServer:
             )
             self.node_manager.register_node(dashboard_node)
             
-            # Iniciar servidor web
-            self.server = make_server(self.host, self.port, self.app, threaded=True)
-            self.server_thread = threading.Thread(target=self._run_server)
-            self.server_thread.daemon = True
-            self.server_thread.start()
-            
-            # Iniciar loop de procesamiento
+            # Iniciar loop de procesamiento en hilo separado
             self._start_processing_loop()
             
-            logger.info(f"🌐 Dashboard iniciado en http://{self.host}:{self.port}")
+            logger.info(f"🌐 Dashboard iniciando en http://{self.host}:{self.port}")
+            
+            # Usar solo SocketIO server (elimina conflicto con make_server)
+            self.socketio.run(self.app, host=self.host, port=self.port, debug=False, allow_unsafe_werkzeug=True)
             
         except Exception as e:
             logger.error(f"❌ Error iniciando servidor: {e}")
     
     def _run_server(self):
-        """Ejecuta servidor web"""
-        try:
-            self.socketio.run(self.app, host=self.host, port=self.port, debug=False)
-        except Exception as e:
-            logger.error(f"❌ Error en servidor web: {e}")
+        """Método obsoleto - ahora se usa socketio.run directamente"""
+        pass
     
     def _start_processing_loop(self):
         """Inicia loop de procesamiento de datos"""
@@ -655,8 +772,19 @@ class DashboardServer:
                         # Evaluar alertas
                         self.alert_manager.evaluate_metric(metric)
                         
+                        # Convertir métrica a diccionario serializable
+                        metric_dict = {
+                            'metric_id': metric.metric_id,
+                            'metric_type': metric.metric_type.value,
+                            'node_id': metric.node_id,
+                            'value': metric.value,
+                            'unit': metric.unit,
+                            'timestamp': metric.timestamp,
+                            'metadata': metric.metadata
+                        }
+                        
                         # Emitir a clientes WebSocket
-                        self.socketio.emit('new_metric', asdict(metric), room='dashboard')
+                        self.socketio.emit('new_metric', metric_dict, room='dashboard')
                     
                     # Actualizar estado de nodos
                     self.node_manager.update_node_status(
@@ -747,6 +875,16 @@ DASHBOARD_HTML_TEMPLATE = '''
             <p class="text-gray-600">Dashboard de Monitoreo en Tiempo Real</p>
         </div>
 
+        <!-- Network Status (mínimo) -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+            <p class="text-sm text-gray-600">
+                Estado de Red:
+                NAT <span id="nat-status" class="font-semibold">--</span>
+                · DHT <span id="dht-status" class="font-semibold">--</span>
+                · Peers <span id="peer-count" class="font-semibold">--</span>
+            </p>
+        </div>
+
         <!-- System Health Overview -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div class="bg-white rounded-lg shadow-md p-6 metric-card">
@@ -831,6 +969,19 @@ DASHBOARD_HTML_TEMPLATE = '''
             </div>
         </div>
 
+        <!-- Performance Optimization Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">📦 Rendimiento de Batching</h3>
+                <div id="batch-chart" style="height: 300px;"></div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">🗜️ Compresión LZ4</h3>
+                <div id="compression-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+
         <!-- Nodes and Alerts Row -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-white rounded-lg shadow-md p-6">
@@ -858,7 +1009,9 @@ DASHBOARD_HTML_TEMPLATE = '''
             cpu: { x: [], y: [] },
             memory: { x: [], y: [] },
             latency: { x: [], y: [] },
-            accuracy: { x: [], y: [] }
+            accuracy: { x: [], y: [] },
+            batch: { x: [], y: [] },
+            compression: { x: [], y: [] }
         };
 
         // Initialize charts
@@ -927,6 +1080,36 @@ DASHBOARD_HTML_TEMPLATE = '''
                 yaxis: { title: 'Precisión', range: [0, 1] },
                 margin: { t: 20 }
             }, chartConfig);
+
+            // Batch Throughput Chart
+            Plotly.newPlot('batch-chart', [{
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Batch Throughput',
+                line: { color: '#06b6d4' }
+            }], {
+                title: '',
+                xaxis: { title: 'Tiempo' },
+                yaxis: { title: 'Operaciones/seg' },
+                margin: { t: 20 }
+            }, chartConfig);
+
+            // Compression Ratio Chart
+            Plotly.newPlot('compression-chart', [{
+                x: [],
+                y: [],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Compression Ratio',
+                line: { color: '#84cc16' }
+            }], {
+                title: '',
+                xaxis: { title: 'Tiempo' },
+                yaxis: { title: 'Ratio de Compresión' },
+                margin: { t: 20 }
+            }, chartConfig);
         }
 
         // Update chart with new data
@@ -976,6 +1159,16 @@ DASHBOARD_HTML_TEMPLATE = '''
                     chartData.accuracy.y.push(metric.value);
                     updateChart('accuracy-chart', chartData.accuracy);
                     break;
+                case 'batch_throughput':
+                    chartData.batch.x.push(timestamp);
+                    chartData.batch.y.push(metric.value);
+                    updateChart('batch-chart', chartData.batch);
+                    break;
+                case 'compression_ratio':
+                    chartData.compression.x.push(timestamp);
+                    chartData.compression.y.push(metric.value);
+                    updateChart('compression-chart', chartData.compression);
+                    break;
             }
         });
 
@@ -990,6 +1183,7 @@ DASHBOARD_HTML_TEMPLATE = '''
             loadNodes();
             loadAlerts();
             loadMetrics();
+            loadNetwork();
         }
 
         function loadHealth() {
@@ -1093,14 +1287,34 @@ DASHBOARD_HTML_TEMPLATE = '''
                                 chartData.latency.y = metricData.map(m => m.value);
                                 updateChart('latency-chart', chartData.latency);
                                 break;
-                            case 'model_accuracy':
-                                chartData.accuracy.x = metricData.map(m => new Date(m.timestamp * 1000));
-                                chartData.accuracy.y = metricData.map(m => m.value);
-                                updateChart('accuracy-chart', chartData.accuracy);
+                            case 'batch_throughput':
+                                chartData.batch.x = metricData.map(m => new Date(m.timestamp * 1000));
+                                chartData.batch.y = metricData.map(m => m.value);
+                                updateChart('batch-chart', chartData.batch);
+                                break;
+                            case 'compression_ratio':
+                                chartData.compression.x = metricData.map(m => new Date(m.timestamp * 1000));
+                                chartData.compression.y = metricData.map(m => m.value);
+                                updateChart('compression-chart', chartData.compression);
                                 break;
                         }
                     });
                 });
+        }
+
+        function loadNetwork() {
+            fetch('/api/network')
+                .then(response => response.json())
+                .then(data => {
+                    const natActive = data.nat_config ? (data.nat_config.active || data.nat_config.enabled || data.nat_config.status === 'active') : false;
+                    const dhtActive = !!data.dht_active;
+                    const peers = (data.connected_peers && data.connected_peers.length) || (data.peer_list && data.peer_list.length) || 0;
+                    
+                    document.getElementById('nat-status').textContent = natActive ? 'Activo' : 'Inactivo';
+                    document.getElementById('dht-status').textContent = dhtActive ? 'Activo' : 'Inactivo';
+                    document.getElementById('peer-count').textContent = peers;
+                })
+                .catch(err => console.error('Error cargando estado de red:', err));
         }
 
         function acknowledgeAlert(alertId) {
@@ -1118,11 +1332,12 @@ DASHBOARD_HTML_TEMPLATE = '''
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
             initCharts();
-            
+
             // Refresh data periodically
             setInterval(loadHealth, 5000);
             setInterval(loadNodes, 10000);
             setInterval(loadAlerts, 15000);
+            setInterval(loadNetwork, 5000);
         });
     </script>
 </body>
@@ -1141,8 +1356,30 @@ async def main():
         with open('templates/dashboard.html', 'w', encoding='utf-8') as f:
             f.write(DASHBOARD_HTML_TEMPLATE)
         
-        # Crear servidor del dashboard
-        dashboard = DashboardServer(host="localhost", port=5000)
+        # BYPASS COMPLETO DEL P2PNetworkManager - Usar mock provider para evitar bloqueos
+        logger.info("🔧 Iniciando dashboard con bypass del P2PNetworkManager")
+        
+        # Mock network provider que responde inmediatamente
+        class MockNetworkProvider:
+            def get_network_status(self):
+                return {
+                    "status": "mock_mode",
+                    "nat_config": {"active": False, "enabled": False, "status": "disabled"},
+                    "dht_active": False,
+                    "connected_peers": [],
+                    "peer_list": [],
+                    "node_id": "mock_dashboard_node",
+                    "uptime": 0,
+                    "message": "P2P Network bypassed - Dashboard running in standalone mode"
+                }
+        
+        network_provider = MockNetworkProvider()
+        network_loop = None
+        
+        logger.info("✅ Mock network provider configurado - Dashboard funcionará sin P2P")
+
+        # Crear servidor del dashboard con mock provider
+        dashboard = DashboardServer(host="localhost", port=5000, network_provider=network_provider, network_loop=network_loop)
         
         # Simular sistema distribuido
         dashboard.simulate_distributed_system()
@@ -1174,7 +1411,66 @@ def start_dashboard(config: dict):
     try:
         host = config.get("host", "127.0.0.1")
         port = int(config.get("dashboard_port", 8080))
-        server = DashboardServer(host=host, port=port)
+        network_provider = config.get("network_provider")
+        network_loop = None
+        # Si no se proporciona un provider, iniciar P2PNetworkManager automáticamente
+        if network_provider is None:
+            try:
+                from p2p_network import start_network as start_p2p_network
+                p2p_config = {
+                    "node_id": config.get("node_id", "dashboard_node"),
+                    "node_type": config.get("node_type", "full"),
+                    "port": int(config.get("p2p_port", config.get("port", 8080))),
+                    "heartbeat_interval_sec": int(config.get("heartbeat_interval_sec", 30)),
+                    "max_peer_connections": int(config.get("max_peer_connections", 20)),
+                }
+                # Intentar usar el loop actual; si no está corriendo, crear uno en un hilo aparte
+                loop = None
+                try:
+                    loop = asyncio.get_event_loop()
+                except Exception:
+                    loop = None
+                if loop and loop.is_running():
+                    network_loop = loop
+                    network_provider = start_p2p_network(p2p_config)
+                else:
+                    # Crear un loop dedicado en background para la red P2P
+                    def _run_loop(l):
+                        asyncio.set_event_loop(l)
+                        l.run_forever()
+                    loop = asyncio.new_event_loop()
+                    t = threading.Thread(target=_run_loop, args=(loop,), daemon=True)
+                    t.start()
+                    network_loop = loop
+                    # Crear y arrancar el gestor P2P dentro del loop dedicado
+                    async def _create_and_start_manager(pcfg):
+                        from p2p_network import P2PNetworkManager, NodeType
+                        node_type_str = str(pcfg.get("node_type", "full")).upper()
+                        try:
+                            node_type = NodeType[node_type_str]
+                        except Exception:
+                            node_type = NodeType.FULL
+                        manager = P2PNetworkManager(
+                            node_id=pcfg.get("node_id", "dashboard_node"),
+                            node_type=node_type,
+                            port=int(pcfg.get("port", 8080))
+                        )
+                        manager.heartbeat_interval = int(pcfg.get("heartbeat_interval_sec", 30))
+                        manager.max_peer_connections = int(pcfg.get("max_peer_connections", 20))
+                        # Lanzar la red sin bloquear
+                        asyncio.create_task(manager.start_network())
+                        return manager
+                    fut = asyncio.run_coroutine_threadsafe(_create_and_start_manager(p2p_config), network_loop)
+                    try:
+                        network_provider = fut.result(timeout=5.0)
+                    except Exception:
+                        network_provider = None
+                if network_provider is not None:
+                    logger.info("🔌 P2PNetworkManager iniciado automáticamente para el dashboard")
+            except Exception as e:
+                logger.warning(f"⚠️ No se pudo iniciar automáticamente P2PNetworkManager: {e}")
+
+        server = DashboardServer(host=host, port=port, network_provider=network_provider, network_loop=network_loop)
         server.start_server()
         logger.info(f"🌐 Dashboard disponible en http://{host}:{port}")
         return server

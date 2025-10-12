@@ -1,0 +1,280 @@
+# AEGIS Development Dependencies
+# This file contains all dependencies needed for development, testing, and documentation
+
+# Core dependencies (also in requirements.txt)
+-r requirements.txt
+
+# Development Tools
+# ================
+
+# Code Formatting and Linting
+black==23.12.1                 # Code formatter
+isort==5.13.2                  # Import sorter
+pylint==3.0.3                  # Code linter
+flake8==7.0.0                  # Style guide enforcement
+mypy==1.8.0                    # Static type checker
+bandit==1.7.5                  # Security linter
+
+# Pre-commit hooks
+pre-commit==3.6.0              # Git pre-commit hooks framework
+
+# Testing Framework
+# =================
+
+# Core testing
+pytest==7.4.4                  # Testing framework
+pytest-asyncio==0.23.2         # Async testing support
+pytest-cov==4.1.0              # Coverage reporting
+pytest-mock==3.12.0            # Mocking utilities
+pytest-xdist==3.5.0            # Parallel test execution
+pytest-benchmark==4.0.0        # Performance benchmarking
+
+# Test utilities
+factory-boy==3.3.0             # Test data generation
+faker==22.0.0                  # Fake data generation
+responses==0.24.1              # HTTP request mocking
+freezegun==1.4.0               # Time mocking
+testcontainers==3.7.1          # Integration testing with containers
+
+# Security Testing
+# =================
+
+# Security analysis
+safety==2.3.5                  # Dependency vulnerability scanner
+semgrep==1.52.0                # Static analysis security scanner
+pip-audit==2.6.1               # Audit pip packages for vulnerabilities
+
+# Performance Testing
+# ====================
+
+# Load testing
+locust==2.20.0                 # Load testing framework
+memory-profiler==0.61.0        # Memory usage profiling
+py-spy==0.3.14                 # Sampling profiler
+
+# Documentation
+# =============
+
+# Documentation generation
+sphinx==7.2.6                  # Documentation generator
+sphinx-rtd-theme==2.0.0        # Read the Docs theme
+sphinx-autodoc-typehints==1.25.2  # Type hints in docs
+myst-parser==2.0.0             # Markdown parser for Sphinx
+sphinx-copybutton==0.5.2       # Copy button for code blocks
+
+# API documentation
+sphinx-openapi==1.3.0          # OpenAPI documentation
+redoc-cli==0.13.21             # ReDoc CLI for API docs
+
+# Development Utilities
+# =====================
+
+# Environment management
+python-dotenv==1.0.0           # Environment variable loading
+environs==11.0.0               # Environment variable parsing
+
+# Database utilities
+alembic==1.13.1                # Database migrations
+sqlalchemy-utils==0.41.1       # SQLAlchemy utilities
+
+# Debugging
+ipdb==0.13.13                  # Enhanced debugger
+rich==13.7.0                   # Rich text and beautiful formatting
+icecream==2.1.3                # Debugging print statements
+
+# Development servers
+watchdog==3.0.0                # File system event monitoring
+livereload==2.6.3              # Live reload for development
+
+# Code Quality Analysis
+# =====================
+
+# Complexity analysis
+radon==6.0.1                   # Code complexity metrics
+xenon==0.9.1                   # Code complexity monitoring
+
+# Dependency analysis
+pipdeptree==2.13.1             # Dependency tree visualization
+pip-tools==7.3.0               # Dependency management
+
+# License checking
+pip-licenses==4.3.2            # License compatibility checking
+licensecheck==2023.1.1         # License verification
+
+# Container Development
+# =====================
+
+# Docker utilities
+docker==7.0.0                  # Docker SDK for Python
+docker-compose==1.29.2         # Docker Compose (legacy)
+
+# Kubernetes development
+kubernetes==28.1.0             # Kubernetes Python client
+
+# Monitoring and Observability
+# =============================
+
+# Development monitoring
+prometheus-client==0.19.0      # Prometheus metrics (dev version)
+grafana-api==1.0.3             # Grafana API client
+
+# Log analysis
+loguru==0.7.2                  # Enhanced logging
+colorlog==6.8.0                # Colored logging
+
+# API Development
+# ===============
+
+# API testing
+httpx==0.26.0                  # HTTP client for testing
+requests-mock==1.11.0          # HTTP request mocking
+
+# OpenAPI tools
+openapi-spec-validator==0.7.1  # OpenAPI specification validation
+swagger-ui-bundle==0.0.9       # Swagger UI assets
+
+# Data Analysis (for metrics and testing)
+# ========================================
+
+# Data manipulation
+pandas==2.1.4                  # Data analysis library
+numpy==1.26.2                  # Numerical computing
+
+# Visualization
+matplotlib==3.8.2              # Plotting library
+seaborn==0.13.0                # Statistical visualization
+
+# Jupyter notebooks (for analysis)
+jupyter==1.0.0                 # Jupyter notebook
+jupyterlab==4.0.9              # JupyterLab interface
+
+# Build and Packaging
+# ====================
+
+# Package building
+build==1.0.3                   # Build frontend
+wheel==0.42.0                  # Wheel building
+setuptools==69.0.3             # Package setup tools
+twine==4.0.2                   # Package uploading
+
+# Version management
+bump2version==1.0.1            # Version bumping utility
+
+# CI/CD Tools
+# ===========
+
+# GitHub Actions utilities
+github3.py==4.0.1              # GitHub API client
+
+# Coverage reporting
+codecov==2.1.13                # Codecov integration
+coverage[toml]==7.4.0          # Coverage measurement
+
+# Automation
+# ==========
+
+# Task automation
+invoke==2.2.0                  # Task execution library
+fabric==3.2.2                  # Remote execution library
+
+# File processing
+click==8.1.7                   # Command line interface creation
+typer==0.9.0                   # Modern CLI framework
+
+# Development Configuration Files
+# ===============================
+
+# Configuration validation
+pydantic[email]==2.5.3         # Data validation (extended)
+jsonschema==4.20.0             # JSON schema validation
+
+# YAML processing
+pyyaml==6.0.1                  # YAML parser
+ruamel.yaml==0.18.5            # Advanced YAML processing
+
+# TOML processing
+toml==0.10.2                   # TOML parser
+tomli==2.0.1                   # TOML parser (Python < 3.11)
+
+# Development Database
+# ====================
+
+# SQLite utilities (for testing)
+sqlite-utils==3.36             # SQLite command-line utilities
+
+# In-memory databases
+fakeredis==2.20.1              # Fake Redis for testing
+
+# Async Development
+# =================
+
+# Async utilities
+aiofiles==23.2.1               # Async file operations
+aiohttp==3.9.1                 # Async HTTP client/server
+aiosqlite==0.19.0              # Async SQLite
+
+# Development Servers
+# ===================
+
+# Hot reload development
+uvicorn[standard]==0.25.0      # ASGI server with reload
+gunicorn==21.2.0               # WSGI server
+
+# Static file serving
+whitenoise==6.6.0              # Static file serving
+
+# Internationalization
+# ====================
+
+# i18n support
+babel==2.14.0                  # Internationalization utilities
+lingua==4.15.0                 # Translation string extraction
+
+# Development Extras
+# ===================
+
+# Terminal utilities
+colorama==0.4.6                # Cross-platform colored terminal text
+termcolor==2.4.0               # Terminal color utilities
+tqdm==4.66.1                   # Progress bars
+
+# System utilities
+psutil==5.9.7                  # System and process utilities
+distro==1.9.0                  # Linux distribution detection
+
+# Development IDE Support
+# ========================
+
+# Language server protocol
+python-lsp-server==1.9.0       # Python LSP server
+pylsp-mypy==0.6.8              # MyPy plugin for LSP
+
+# Jupyter extensions
+ipywidgets==8.1.1              # Interactive widgets
+nbconvert==7.14.0              # Notebook conversion
+
+# Version Constraints
+# ===================
+
+# Ensure compatibility
+setuptools-scm==8.0.4          # Version from SCM
+packaging==23.2                # Package version utilities
+
+# Development Notes:
+# - All versions are pinned for reproducible development environments
+# - Use 'pip-compile' to update versions while maintaining compatibility
+# - Run 'pip-sync requirements-dev.txt' to sync development environment
+# - Some packages may have additional system dependencies (see docs/DEVELOPMENT.md)
+
+# Platform-specific dependencies
+# ==============================
+
+# Windows-specific
+pywin32==306; sys_platform == "win32"          # Windows API access
+wmi==1.5.1; sys_platform == "win32"            # Windows Management Interface
+
+# macOS-specific
+pyobjc-core==10.1; sys_platform == "darwin"    # macOS Objective-C bridge
+
+# Linux-specific
+python-systemd==235; sys_platform == "linux"   # systemd integration
