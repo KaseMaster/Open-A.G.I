@@ -34,7 +34,7 @@ Una aplicación de chat segura y descentralizada construida con React, Web3 y te
 
 ```bash
 # Clonar el repositorio
-git clone https://github.com/tu-usuario/aegis-secure-chat.git
+git clone https://github.com/KaseMaster/Open-A.G.I.git
 
 # Navegar al directorio
 cd aegis-secure-chat/dapps/secure-chat/ui

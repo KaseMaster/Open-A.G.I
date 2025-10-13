@@ -189,6 +189,9 @@ cd Python-3.11.7
 ./configure --enable-optimizations
 make altinstall
 
+# Clonar repositorio AEGIS
+git clone https://github.com/KaseMaster/Open-A.G.I.git
+
 # Crear enlaces simbólicos
 sudo ln -sf /usr/local/bin/python3.11 /usr/local/bin/python3
 sudo ln -sf /usr/local/bin/pip3.11 /usr/local/bin/pip3

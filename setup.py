@@ -150,14 +150,14 @@ keywords = [
 
 # Project URLs
 project_urls = {
-    'Homepage': 'https://github.com/AEGIS-Project/AEGIS',
-    'Documentation': 'https://aegis-project.readthedocs.io/',
-    'Repository': 'https://github.com/AEGIS-Project/AEGIS',
-    'Bug Tracker': 'https://github.com/AEGIS-Project/AEGIS/issues',
-    'Changelog': 'https://github.com/AEGIS-Project/AEGIS/blob/main/docs/CHANGELOG.md',
-    'Security Policy': 'https://github.com/AEGIS-Project/AEGIS/security/policy',
-    'Discussions': 'https://github.com/AEGIS-Project/AEGIS/discussions',
-    'Wiki': 'https://github.com/AEGIS-Project/AEGIS/wiki',
+    'Homepage': 'https://github.com/KaseMaster/Open-A.G.I',
+        'Documentation': 'https://aegis-project.readthedocs.io/',
+        'Repository': 'https://github.com/KaseMaster/Open-A.G.I',
+        'Bug Tracker': 'https://github.com/KaseMaster/Open-A.G.I/issues',
+        'Changelog': 'https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/CHANGELOG.md',
+        'Security Policy': 'https://github.com/KaseMaster/Open-A.G.I/security/policy',
+        'Discussions': 'https://github.com/KaseMaster/Open-A.G.I/discussions',
+        'Wiki': 'https://github.com/KaseMaster/Open-A.G.I/wiki',
 }
 
 # Package data to include
@@ -200,7 +200,7 @@ setup(
     long_description_content_type='text/markdown',
     
     # URLs and metadata
-    url='https://github.com/AEGIS-Project/AEGIS',
+    url='https://github.com/KaseMaster/Open-A.G.I',
     project_urls=project_urls,
     
     # Package discovery and structure
@@ -278,8 +278,8 @@ def print_post_install_message():
     print("   - Enable monitoring and logging for production deployments")
     print("\n📞 Support:")
     print("   - Documentation: https://aegis-project.readthedocs.io/")
-    print("   - Issues: https://github.com/AEGIS-Project/AEGIS/issues")
-    print("   - Discussions: https://github.com/AEGIS-Project/AEGIS/discussions")
+    print("   - Issues: https://github.com/KaseMaster/Open-A.G.I/issues")
+    print("   - Discussions: https://github.com/KaseMaster/Open-A.G.I/discussions")
     print("\n" + "="*60)
     print("Thank you for using AEGIS! 🙏")
     print("="*60 + "\n")

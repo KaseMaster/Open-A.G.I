@@ -16,7 +16,8 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Configuration
-AEGIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+AEGIS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/..)" && pwd)"
+REPO_URL="https://github.com/KaseMaster/Open-A.G.I.git"
 PYTHON_VERSION="3.11"
 NODE_VERSION="18"
 DOCKER_COMPOSE_VERSION="2.20.0"

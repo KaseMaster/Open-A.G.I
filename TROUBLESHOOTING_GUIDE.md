@@ -856,11 +856,15 @@ route print
 - `README.md` - Información general del proyecto
 - `DEPLOYMENT_GUIDE_COMPLETE.md` - Guía de despliegue
 - `DEPENDENCIES_GUIDE.md` - Guía de dependencias
+- **Documentación**: [https://github.com/KaseMaster/Open-A.G.I/wiki](https://github.com/KaseMaster/Open-A.G.I/wiki)
 
 **Scripts útiles:**
 - `auto-deploy-windows.ps1` - Instalación automática Windows
 - `auto-deploy-linux.sh` - Instalación automática Linux
 - `verify-deployment-*.{ps1,sh}` - Scripts de verificación
+
+**Repositorio**: [https://github.com/KaseMaster/Open-A.G.I](https://github.com/KaseMaster/Open-A.G.I)
+**Issues**: [https://github.com/KaseMaster/Open-A.G.I/issues](https://github.com/KaseMaster/Open-A.G.I/issues)
 
 ---
 

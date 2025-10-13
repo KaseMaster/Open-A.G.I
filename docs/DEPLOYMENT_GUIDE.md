@@ -73,7 +73,7 @@ Esta guía cubre todos los aspectos del despliegue, desde desarrollo hasta produ
 
 ```powershell
 # 1. Clonar repositorio
-git clone https://github.com/your-org/aegis-framework.git
+git clone https://github.com/KaseMaster/Open-A.G.I.git
 cd aegis-framework
 
 # 2. Instalar dependencias
@@ -93,7 +93,7 @@ cd aegis-framework
 
 ```bash
 # 1. Clonar repositorio
-git clone https://github.com/your-org/aegis-framework.git
+git clone https://github.com/KaseMaster/Open-A.G.I.git
 cd aegis-framework
 
 # 2. Hacer scripts ejecutables

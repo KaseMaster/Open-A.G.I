@@ -22,6 +22,7 @@ NC='\033[0m' # No Color
 # Variables globales
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+REPO_URL="https://github.com/KaseMaster/Open-A.G.I.git"
 MODE="full"
 SKIP_TOR=false
 VERBOSE=false
