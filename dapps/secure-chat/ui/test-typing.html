@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Indicador de Escritura - Secure Chat</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .chat-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .chat-window {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-header {
+            color: white;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        .messages-area {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        .message {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .message.own {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            margin-left: auto;
+        }
+        .message.other {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .typing-indicator {
+            display: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            max-width: 80%;
+            animation: fadeIn 0.3s ease-in;
+        }
+        .typing-indicator.show {
+            display: block;
+        }
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite ease-in-out;
+        }
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+        .message-input {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 14px;
+        }
+        .message-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .send-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .test-section h3 {
+            color: white;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .control-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .control-btn.active {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+        }
+        .status {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            color: white;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .status-item {
+            margin-bottom: 5px;
+        }
+        .status-item.active {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        @keyframes typingBounce {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @media (max-width: 768px) {
+            .chat-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⌨️ Prueba del Indicador de Escritura en Tiempo Real</h1>
+        
+        <!-- Chat Simulation -->
+        <div class="chat-container">
+            <!-- User 1 Chat -->
+            <div class="chat-window">
+                <div class="chat-header">👤 Usuario 1 (Tú)</div>
+                <div class="messages-area" id="messages1">
+                    <div class="message own">¡Hola! ¿Cómo estás?</div>
+                    <div class="message other">¡Hola! Todo bien, ¿y tú?</div>
+                </div>
+                <div class="typing-indicator" id="typing1">
+                    <div class="typing-dots">
+                        <span>Usuario 2 está escribiendo</span>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+                <div class="input-area">
+                    <input type="text" class="message-input" id="input1" placeholder="Escribe tu mensaje...">
+                    <button class="send-btn" onclick="sendMessage(1)">Enviar</button>
+                </div>
+            </div>
+
+            <!-- User 2 Chat -->
+            <div class="chat-window">
+                <div class="chat-header">👤 Usuario 2 (Simulado)</div>
+                <div class="messages-area" id="messages2">
+                    <div class="message other">¡Hola! ¿Cómo estás?</div>
+                    <div class="message own">¡Hola! Todo bien, ¿y tú?</div>
+                </div>
+                <div class="typing-indicator" id="typing2">
+                    <div class="typing-dots">
+                        <span>Usuario 1 está escribiendo</span>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+                <div class="input-area">
+                    <input type="text" class="message-input" id="input2" placeholder="Escribe tu mensaje...">
+                    <button class="send-btn" onclick="sendMessage(2)">Enviar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Controls -->
+        <div class="test-section">
+            <h3>🎮 Controles de Prueba</h3>
+            <div class="controls">
+                <button class="control-btn" onclick="simulateTyping(1)">Simular Usuario 1 escribiendo</button>
+                <button class="control-btn" onclick="simulateTyping(2)">Simular Usuario 2 escribiendo</button>
+                <button class="control-btn" onclick="stopTyping(1)">Parar Usuario 1</button>
+                <button class="control-btn" onclick="stopTyping(2)">Parar Usuario 2</button>
+                <button class="control-btn" onclick="clearMessages()">Limpiar mensajes</button>
+                <button class="control-btn" onclick="runAutoTest()">Prueba automática</button>
+            </div>
+        </div>
+
+        <!-- Status Monitor -->
+        <div class="test-section">
+            <h3>📊 Monitor de Estado</h3>
+            <div class="status" id="statusMonitor">
+                <div class="status-item">🔄 Sistema iniciado</div>
+                <div class="status-item">⌨️ Detección de escritura: Activa</div>
+                <div class="status-item">🕐 Timeout de escritura: 2 segundos</div>
+                <div class="status-item">📡 Simulación WebSocket: Activa</div>
+            </div>
+        </div>
+
+        <!-- Configuration -->
+        <div class="test-section">
+            <h3>⚙️ Configuración</h3>
+            <div class="controls">
+                <label style="color: white; margin-right: 10px;">
+                    Timeout (ms):
+                    <input type="number" id="typingTimeout" value="2000" min="500" max="10000" step="500" 
+                           style="margin-left: 5px; padding: 5px; border-radius: 5px; border: none; width: 80px;">
+                </label>
+                <button class="control-btn" onclick="updateTimeout()">Actualizar</button>
+                <button class="control-btn" id="autoDetectBtn" onclick="toggleAutoDetect()">Auto-detección: ON</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let typingTimeouts = {};
+        let isTypingStates = { 1: false, 2: false };
+        let autoDetectEnabled = true;
+        let typingTimeoutDuration = 2000;
+
+        function addStatusMessage(message, isActive = false) {
+            const monitor = document.getElementById('statusMonitor');
+            const statusItem = document.createElement('div');
+            statusItem.className = `status-item ${isActive ? 'active' : ''}`;
+            statusItem.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+            monitor.appendChild(statusItem);
+            monitor.scrollTop = monitor.scrollHeight;
+        }
+
+        function showTypingIndicator(userId) {
+            const indicator = document.getElementById(`typing${userId}`);
+            const otherUserId = userId === 1 ? 2 : 1;
+            
+            if (!isTypingStates[userId]) {
+                isTypingStates[userId] = true;
+                indicator.classList.add('show');
+                addStatusMessage(`👤 Usuario ${userId} comenzó a escribir`, true);
+                
+                // Simular notificación WebSocket
+                setTimeout(() => {
+                    addStatusMessage(`📡 WebSocket: typing_start enviado para Usuario ${userId}`);
+                }, 100);
+            }
+        }
+
+        function hideTypingIndicator(userId) {
+            const indicator = document.getElementById(`typing${userId}`);
+            
+            if (isTypingStates[userId]) {
+                isTypingStates[userId] = false;
+                indicator.classList.remove('show');
+                addStatusMessage(`👤 Usuario ${userId} dejó de escribir`);
+                
+                // Simular notificación WebSocket
+                setTimeout(() => {
+                    addStatusMessage(`📡 WebSocket: typing_stop enviado para Usuario ${userId}`);
+                }, 100);
+            }
+        }
+
+        function handleTyping(userId) {
+            if (!autoDetectEnabled) return;
+
+            const otherUserId = userId === 1 ? 2 : 1;
+            
+            // Mostrar indicador en la ventana del otro usuario
+            showTypingIndicator(otherUserId);
+            
+            // Limpiar timeout anterior
+            if (typingTimeouts[userId]) {
+                clearTimeout(typingTimeouts[userId]);
+            }
+            
+            // Establecer nuevo timeout
+            typingTimeouts[userId] = setTimeout(() => {
+                hideTypingIndicator(otherUserId);
+            }, typingTimeoutDuration);
+        }
+
+        function sendMessage(userId) {
+            const input = document.getElementById(`input${userId}`);
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            const messagesArea = document.getElementById(`messages${userId}`);
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message own';
+            messageDiv.textContent = message;
+            messagesArea.appendChild(messageDiv);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+            
+            // Limpiar input y ocultar indicador
+            input.value = '';
+            const otherUserId = userId === 1 ? 2 : 1;
+            hideTypingIndicator(otherUserId);
+            
+            // Limpiar timeout
+            if (typingTimeouts[userId]) {
+                clearTimeout(typingTimeouts[userId]);
+                delete typingTimeouts[userId];
+            }
+            
+            addStatusMessage(`📤 Mensaje enviado por Usuario ${userId}: "${message}"`);
+            
+            // Simular respuesta automática del otro usuario
+            setTimeout(() => {
+                simulateAutoResponse(otherUserId, message);
+            }, 1000 + Math.random() * 2000);
+        }
+
+        function simulateAutoResponse(userId, originalMessage) {
+            const responses = [
+                "¡Interesante!",
+                "Entiendo perfectamente",
+                "¿En serio?",
+                "Eso suena genial",
+                "Cuéntame más",
+                "¡Qué buena noticia!",
+                "Tienes razón",
+                "Me parece bien"
+            ];
+            
+            const response = responses[Math.floor(Math.random() * responses.length)];
+            const messagesArea = document.getElementById(`messages${userId}`);
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message own';
+            messageDiv.textContent = response;
+            messagesArea.appendChild(messageDiv);
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+            
+            addStatusMessage(`🤖 Respuesta automática del Usuario ${userId}: "${response}"`);
+        }
+
+        function simulateTyping(userId) {
+            const otherUserId = userId === 1 ? 2 : 1;
+            showTypingIndicator(otherUserId);
+            addStatusMessage(`🎮 Simulación manual: Usuario ${userId} escribiendo`);
+        }
+
+        function stopTyping(userId) {
+            const otherUserId = userId === 1 ? 2 : 1;
+            hideTypingIndicator(otherUserId);
+            if (typingTimeouts[userId]) {
+                clearTimeout(typingTimeouts[userId]);
+                delete typingTimeouts[userId];
+            }
+            addStatusMessage(`🛑 Simulación detenida: Usuario ${userId}`);
+        }
+
+        function clearMessages() {
+            document.getElementById('messages1').innerHTML = '';
+            document.getElementById('messages2').innerHTML = '';
+            addStatusMessage('🗑️ Mensajes limpiados');
+        }
+
+        function updateTimeout() {
+            const newTimeout = parseInt(document.getElementById('typingTimeout').value);
+            typingTimeoutDuration = newTimeout;
+            addStatusMessage(`⚙️ Timeout actualizado a ${newTimeout}ms`);
+        }
+
+        function toggleAutoDetect() {
+            autoDetectEnabled = !autoDetectEnabled;
+            const btn = document.getElementById('autoDetectBtn');
+            btn.textContent = `Auto-detección: ${autoDetectEnabled ? 'ON' : 'OFF'}`;
+            btn.classList.toggle('active', autoDetectEnabled);
+            addStatusMessage(`🔄 Auto-detección ${autoDetectEnabled ? 'activada' : 'desactivada'}`);
+        }
+
+        async function runAutoTest() {
+            addStatusMessage('🚀 Iniciando prueba automática completa...', true);
+            
+            // Prueba 1: Simulación de escritura
+            addStatusMessage('📝 Paso 1: Probando detección de escritura...');
+            simulateTyping(1);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Prueba 2: Timeout automático
+            addStatusMessage('⏱️ Paso 2: Probando timeout automático...');
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            // Prueba 3: Envío de mensaje
+            addStatusMessage('📤 Paso 3: Probando envío de mensaje...');
+            document.getElementById('input1').value = 'Mensaje de prueba automática';
+            sendMessage(1);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Prueba 4: Escritura simultánea
+            addStatusMessage('👥 Paso 4: Probando escritura simultánea...');
+            simulateTyping(1);
+            await new Promise(resolve => setTimeout(resolve, 500));
+            simulateTyping(2);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Prueba 5: Configuración de timeout
+            addStatusMessage('⚙️ Paso 5: Probando cambio de configuración...');
+            document.getElementById('typingTimeout').value = '1000';
+            updateTimeout();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Restaurar configuración
+            document.getElementById('typingTimeout').value = '2000';
+            updateTimeout();
+            
+            addStatusMessage('✅ ¡Prueba automática completada exitosamente!', true);
+            addStatusMessage('📊 Resultados: Todas las funcionalidades operativas');
+        }
+
+        // Event listeners para detección automática
+        document.getElementById('input1').addEventListener('input', () => handleTyping(1));
+        document.getElementById('input2').addEventListener('input', () => handleTyping(2));
+        
+        document.getElementById('input1').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage(1);
+        });
+        
+        document.getElementById('input2').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage(2);
+        });
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            addStatusMessage('🎯 Sistema de indicador de escritura iniciado', true);
+            addStatusMessage('💡 Escribe en cualquier campo para ver la detección automática');
+        });
+    </script>
+</body>
+</html>

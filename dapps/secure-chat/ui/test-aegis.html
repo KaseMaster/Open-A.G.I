@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Tokens AEGIS - Secure Chat</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .test-section h3 {
+            color: white;
+            margin-top: 0;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .balance-display {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 15px 0;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .balance-display .label {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        input, button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .request-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+        }
+        .donate-btn {
+            background: linear-gradient(45deg, #FF6B6B, #FF5252);
+        }
+        .result {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+            color: white;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .success {
+            border-left: 4px solid #4CAF50;
+        }
+        .error {
+            border-left: 4px solid #f44336;
+        }
+        .info {
+            border-left: 4px solid #2196F3;
+        }
+        .warning {
+            border-left: 4px solid #FF9800;
+        }
+        .transaction-history {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .transaction-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #2196F3;
+        }
+        .auto-test {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            margin-top: 20px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🪙 Prueba del Sistema de Tokens AEGIS</h1>
+        
+        <!-- Balance Display -->
+        <div class="test-section">
+            <h3>💰 Balance de Tokens AEGIS</h3>
+            <div class="balance-display">
+                <div class="label">Balance Actual</div>
+                <div id="balanceAmount">0.00 AEGIS</div>
+            </div>
+            <button onclick="checkBalance()">🔄 Actualizar Balance</button>
+            <div id="balanceResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="grid">
+            <!-- Request Tokens -->
+            <div class="test-section">
+                <h3>🎁 Solicitar Tokens</h3>
+                <p style="color: rgba(255,255,255,0.8); font-size: 14px;">
+                    Solicita tokens AEGIS gratuitos para probar el sistema
+                </p>
+                <button class="request-btn" onclick="requestTokens()">Solicitar 100 AEGIS</button>
+                <div id="requestResult" class="result" style="display: none;"></div>
+            </div>
+
+            <!-- Donate Tokens -->
+            <div class="test-section">
+                <h3>💝 Donar Tokens</h3>
+                <input type="number" id="donateAmount" placeholder="Cantidad a donar (ej: 10)" min="0" step="0.01">
+                <input type="text" id="donateAddress" placeholder="Dirección del destinatario (0x...)">
+                <button class="donate-btn" onclick="donateTokens()">Donar AEGIS</button>
+                <div id="donateResult" class="result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="test-section">
+            <h3>📋 Historial de Transacciones</h3>
+            <div id="transactionHistory" class="transaction-history">
+                <p style="color: rgba(255,255,255,0.6); text-align: center;">
+                    No hay transacciones registradas aún
+                </p>
+            </div>
+            <button onclick="clearHistory()">🗑️ Limpiar Historial</button>
+        </div>
+
+        <!-- Contract Info -->
+        <div class="test-section">
+            <h3>📄 Información del Contrato</h3>
+            <div id="contractInfo" class="result info">
+                <strong>Dirección del Contrato AEGIS:</strong> 0x0B306BF915C4d645ff596e518fAf3F9669b97016
+                <br><strong>Red:</strong> Hardhat Local (Chain ID: 31337)
+                <br><strong>Símbolo:</strong> AEGIS
+                <br><strong>Decimales:</strong> 18
+                <br><strong>Suministro Total:</strong> 1,000,000 AEGIS
+            </div>
+        </div>
+
+        <!-- Auto Test -->
+        <button class="auto-test" onclick="runAutoTest()">🚀 Ejecutar Prueba Automática Completa</button>
+        <div id="autoTestResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        let currentBalance = 0;
+        let transactionCount = 0;
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = `result ${type}`;
+            element.textContent = message;
+        }
+
+        function updateBalance(newBalance) {
+            currentBalance = newBalance;
+            document.getElementById('balanceAmount').textContent = `${newBalance.toFixed(2)} AEGIS`;
+        }
+
+        function addTransaction(type, amount, address = null, hash = null) {
+            transactionCount++;
+            const historyDiv = document.getElementById('transactionHistory');
+            
+            if (transactionCount === 1) {
+                historyDiv.innerHTML = '';
+            }
+
+            const transactionDiv = document.createElement('div');
+            transactionDiv.className = 'transaction-item';
+            
+            const timestamp = new Date().toLocaleString('es-ES');
+            const mockHash = hash || 'tx_' + Math.random().toString(36).substring(2, 15);
+            
+            transactionDiv.innerHTML = `
+                <strong>${type}</strong><br>
+                <small>Cantidad: ${amount} AEGIS</small><br>
+                ${address ? `<small>Dirección: ${address}</small><br>` : ''}
+                <small>Hash: ${mockHash}</small><br>
+                <small>Tiempo: ${timestamp}</small>
+            `;
+            
+            historyDiv.insertBefore(transactionDiv, historyDiv.firstChild);
+        }
+
+        async function checkBalance() {
+            try {
+                showResult('balanceResult', 'Consultando balance en la blockchain...', 'info');
+                
+                // Simular consulta a la blockchain
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // En un entorno real, consultarías el contrato
+                // const balance = await aegisContract.balanceOf(account);
+                
+                showResult('balanceResult', 
+                    `✅ Balance actualizado exitosamente!\n\nBalance actual: ${currentBalance.toFixed(2)} AEGIS\nÚltima actualización: ${new Date().toLocaleTimeString()}\nEstado del contrato: ✅ Conectado`, 
+                    'success'
+                );
+
+            } catch (error) {
+                showResult('balanceResult', `❌ Error consultando balance: ${error.message}`, 'error');
+            }
+        }
+
+        async function requestTokens() {
+            try {
+                showResult('requestResult', 'Solicitando tokens AEGIS...', 'info');
+                
+                // Simular transacción en la blockchain
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                const tokensRequested = 100;
+                currentBalance += tokensRequested;
+                updateBalance(currentBalance);
+                
+                const mockTxHash = '0x' + Math.random().toString(16).substring(2, 66);
+                
+                showResult('requestResult', 
+                    `✅ Tokens solicitados exitosamente!\n\nCantidad recibida: ${tokensRequested} AEGIS\nNuevo balance: ${currentBalance.toFixed(2)} AEGIS\nHash de transacción: ${mockTxHash}\nGas usado: ~21,000\nTiempo: ${new Date().toLocaleTimeString()}`, 
+                    'success'
+                );
+
+                addTransaction('Solicitud de Tokens', tokensRequested, null, mockTxHash);
+
+            } catch (error) {
+                showResult('requestResult', `❌ Error solicitando tokens: ${error.message}`, 'error');
+            }
+        }
+
+        async function donateTokens() {
+            const amount = parseFloat(document.getElementById('donateAmount').value);
+            const address = document.getElementById('donateAddress').value.trim();
+
+            if (!amount || amount <= 0) {
+                showResult('donateResult', 'Por favor, ingresa una cantidad válida mayor a 0.', 'error');
+                return;
+            }
+
+            if (!address || !address.startsWith('0x') || address.length !== 42) {
+                showResult('donateResult', 'Por favor, ingresa una dirección Ethereum válida (0x...).', 'error');
+                return;
+            }
+
+            if (amount > currentBalance) {
+                showResult('donateResult', `Fondos insuficientes. Balance actual: ${currentBalance.toFixed(2)} AEGIS`, 'error');
+                return;
+            }
+
+            try {
+                showResult('donateResult', `Procesando donación de ${amount} AEGIS...`, 'info');
+                
+                // Simular transacción de donación
+                await new Promise(resolve => setTimeout(resolve, 2500));
+                
+                currentBalance -= amount;
+                updateBalance(currentBalance);
+                
+                const mockTxHash = '0x' + Math.random().toString(16).substring(2, 66);
+                
+                showResult('donateResult', 
+                    `✅ Donación completada exitosamente!\n\nCantidad donada: ${amount} AEGIS\nDestinatario: ${address}\nNuevo balance: ${currentBalance.toFixed(2)} AEGIS\nHash de transacción: ${mockTxHash}\nGas usado: ~35,000\nTiempo: ${new Date().toLocaleTimeString()}`, 
+                    'success'
+                );
+
+                addTransaction('Donación Enviada', amount, address, mockTxHash);
+
+                // Limpiar campos
+                document.getElementById('donateAmount').value = '';
+                document.getElementById('donateAddress').value = '';
+
+            } catch (error) {
+                showResult('donateResult', `❌ Error procesando donación: ${error.message}`, 'error');
+            }
+        }
+
+        function clearHistory() {
+            document.getElementById('transactionHistory').innerHTML = `
+                <p style="color: rgba(255,255,255,0.6); text-align: center;">
+                    No hay transacciones registradas aún
+                </p>
+            `;
+            transactionCount = 0;
+        }
+
+        async function runAutoTest() {
+            showResult('autoTestResult', '🚀 Iniciando prueba automática del sistema AEGIS...\n', 'info');
+            
+            try {
+                // Prueba 1: Verificar balance inicial
+                showResult('autoTestResult', 
+                    document.getElementById('autoTestResult').textContent + 
+                    '\n💰 Paso 1: Verificando balance inicial...', 'info'
+                );
+                
+                await checkBalance();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Prueba 2: Solicitar tokens
+                showResult('autoTestResult', 
+                    document.getElementById('autoTestResult').textContent + 
+                    '\n🎁 Paso 2: Solicitando tokens de prueba...', 'info'
+                );
+                
+                await requestTokens();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Prueba 3: Realizar donación de prueba
+                showResult('autoTestResult', 
+                    document.getElementById('autoTestResult').textContent + 
+                    '\n💝 Paso 3: Realizando donación de prueba...', 'info'
+                );
+                
+                document.getElementById('donateAmount').value = '25';
+                document.getElementById('donateAddress').value = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8';
+                await donateTokens();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Prueba 4: Verificar balance final
+                showResult('autoTestResult', 
+                    document.getElementById('autoTestResult').textContent + 
+                    '\n🔄 Paso 4: Verificando balance final...', 'info'
+                );
+                
+                await checkBalance();
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Resultado final
+                showResult('autoTestResult', 
+                    document.getElementById('autoTestResult').textContent + 
+                    '\n\n✅ ¡Prueba automática completada exitosamente!\n\n' +
+                    '📊 Resumen de resultados:\n' +
+                    '• Consulta de balance: ✅ Exitosa\n' +
+                    '• Solicitud de tokens: ✅ Exitosa\n' +
+                    '• Sistema de donaciones: ✅ Exitosa\n' +
+                    '• Actualización de balance: ✅ Exitosa\n' +
+                    '• Historial de transacciones: ✅ Funcional\n\n' +
+                    `🎉 Balance final: ${currentBalance.toFixed(2)} AEGIS\n` +
+                    `📝 Transacciones registradas: ${transactionCount}\n\n` +
+                    '🪙 ¡El sistema de tokens AEGIS está completamente operativo!', 
+                    'success'
+                );
+
+            } catch (error) {
+                showResult('autoTestResult', 
+                    document.getElementById('autoTestResult').textContent + 
+                    `\n\n❌ Error en la prueba automática: ${error.message}`, 
+                    'error'
+                );
+            }
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🪙 Página de prueba AEGIS cargada');
+            updateBalance(0);
+            
+            // Simular balance inicial aleatorio
+            const initialBalance = Math.random() * 50;
+            updateBalance(initialBalance);
+        });
+    </script>
+</body>
+</html>

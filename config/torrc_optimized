@@ -1,0 +1,54 @@
+# Configuración TOR optimizada para AEGIS Framework
+# Nivel de optimización: balanced
+
+# Configuración básica
+SocksPort 127.0.0.1:9050 IsolateDestAddr IsolateSOCKSAuth
+ControlPort 127.0.0.1:9051
+CookieAuthentication 1
+HashedControlPassword 16:872860B76453A77D60CA2BB8C1A7042072093276A3D701AD684053EC4C
+
+# Directorios
+DataDirectory "G:\Open A.G.I\tor_data"
+CacheDirectory "G:\Open A.G.I\tor_cache"
+
+# Configuración de cliente
+ClientOnly 1
+AvoidDiskWrites 1
+
+# Configuración balanceada
+CircuitBuildTimeout 60
+CircuitIdleTimeout 300
+MaxClientCircuitsPending 16
+UseEntryGuards 1
+NumEntryGuards 3
+ConnectionPadding 1
+ReducedConnectionPadding 0
+
+# Configuración de red
+EnforceDistinctSubnets 1
+ClientUseIPv6 1
+ClientPreferIPv6ORPort 0
+
+
+# Configuración de seguridad
+SafeSocks 0
+TestSocks 0
+WarnUnsafeSocks 1
+SocksPolicy accept *
+
+# Configuración de logs
+Log notice file G:\OpenAGI_logs\tor_optimized.log
+
+# Servicio onion optimizado
+HiddenServiceDir "G:\Open A.G.I\onion_service"
+HiddenServiceVersion 3
+HiddenServicePort 80 127.0.0.1:8090
+HiddenServiceMaxStreams 10
+HiddenServiceMaxStreamsCloseCircuit 1
+
+# Autenticación de cliente onion
+ClientOnionAuthDir "G:\Open A.G.I\client_onion_auth"
+
+# Bases de datos GeoIP
+GeoIPFile "C:\ProgramData\chocolatey\lib\tor\tools\data\geoip"
+GeoIPv6File "C:\ProgramData\chocolatey\lib\tor\tools\data\geoip6"

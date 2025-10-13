@@ -1,14 +1,18 @@
 export const CONTRACTS = {
-  UserRegistry: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512", // Dirección despliegue local
-  ChatRoom: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"     // Dirección despliegue local
+  UserRegistry: "0xa85233C63b9Ee964Add6F2cffe00Fd84eb32338f", // Dirección despliegue local actualizada
+  ChatRoom: "0x4A679253410272dd5232B3Ff7cF5dbB88f295319"     // Dirección despliegue local actualizada
 };
+
+// Exportar direcciones individuales para compatibilidad
+export const USERREGISTRY_ADDRESS = CONTRACTS.UserRegistry;
+export const CHATROOM_ADDRESS = CONTRACTS.ChatRoom;
 
 // Configuración de IPFS para subir contenidos cifrados
 // Ejemplos:
 // - Local node: API_URL: "http://127.0.0.1:5001/api/v0"
 // - Infura: API_URL: "https://ipfs.infura.io:5001/api/v0", BASIC_AUTH: "Basic base64(projectId:projectSecret)"
 export const IPFS = {
-  API_URL: "http://127.0.0.1:5001/api/v0",
+  API_URL: "", // Deshabilitado temporalmente - usar servicio público
   BASIC_AUTH: ""
 };
 
@@ -38,4 +42,4 @@ export const DONATION_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 // Gateway para previsualizar/descargar por navegador
 // Ejemplo local: http://127.0.0.1:8080/ipfs/
-export const IPFS_GATEWAY = "http://127.0.0.1:8080/ipfs/";
+export const IPFS_GATEWAY = "https://ipfs.io/ipfs/";
