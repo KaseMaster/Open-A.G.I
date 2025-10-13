@@ -1,13 +1,13 @@
 {
-  "timestamp": 1760277616.9961672,
+  "timestamp": 1760374402.1042628,
   "test_environment": {
-    "temp_dir": "C:\\Users\\damep\\AppData\\Local\\Temp\\aegis_test_0xfrly3q",
+    "temp_dir": "C:\\Users\\damep\\AppData\\Local\\Temp\\aegis_test_1_3ehvsq",
     "python_version": "3.12+",
     "framework_version": "1.0.0"
   },
   "summary": {
     "execution_summary": {
-      "total_time": 4.867401599884033,
+      "total_time": 5.145151376724243,
       "total_tests": 16,
       "success_rate": 100.0,
       "result_counts": {
@@ -38,32 +38,32 @@
       }
     },
     "performance_metrics": {
-      "avg_test_duration": 0.3040195554494858,
+      "avg_test_duration": 0.32135725021362305,
       "slowest_tests": [
         {
           "test_id": "PF002",
           "name": "Latencia del Sistema",
-          "duration": 3.016343116760254
+          "duration": 3.2512123584747314
         },
         {
           "test_id": "PF001",
           "name": "Throughput del Sistema",
-          "duration": 1.0060336589813232
+          "duration": 1.005662202835083
         },
         {
           "test_id": "CS002",
           "name": "Rendimiento de Consenso",
-          "duration": 0.35323619842529297
+          "duration": 0.35356998443603516
         },
         {
           "test_id": "DL001",
           "name": "Agregación Federada",
-          "duration": 0.25403881072998047
+          "duration": 0.26381659507751465
         },
         {
           "test_id": "SC002",
           "name": "Autenticación",
-          "duration": 0.12914514541625977
+          "duration": 0.1445152759552002
         }
       ]
     },
@@ -74,7 +74,7 @@
         "name": "Detección de Fallos de Nodos",
         "category": "integration",
         "result": "passed",
-        "duration": 0.00010991096496582031,
+        "duration": 0.00011348724365234375,
         "metrics": {
           "total_nodes": 3,
           "active_nodes": 2,
@@ -87,9 +87,9 @@
         "name": "Recuperación Automática",
         "category": "integration",
         "result": "passed",
-        "duration": 0.10047507286071777,
+        "duration": 0.1002798080444336,
         "metrics": {
-          "recovery_time": 1.5396638295654543,
+          "recovery_time": 2.3981898988201955,
           "recovery_success": true,
           "recovery_method": "automatic_restart"
         }
@@ -99,7 +99,7 @@
         "name": "Replicación de Datos",
         "category": "integration",
         "result": "passed",
-        "duration": 0.00016880035400390625,
+        "duration": 9.918212890625e-05,
         "metrics": {
           "replication_factor": 3,
           "successful_replicas": 3,
@@ -111,7 +111,7 @@
         "name": "Tolerancia Bizantina",
         "category": "integration",
         "result": "passed",
-        "duration": 0.0001881122589111328,
+        "duration": 0.00010848045349121094,
         "metrics": {
           "total_nodes": 7,
           "byzantine_nodes": 2,
@@ -119,7 +119,7 @@
           "winning_proposal": "proposal_A",
           "vote_distribution": {
             "proposal_A": 6,
-            "proposal_B": 1
+            "proposal_C": 1
           }
         }
       },
@@ -128,12 +128,12 @@
         "name": "Rendimiento de Consenso",
         "category": "performance",
         "result": "passed",
-        "duration": 0.35323619842529297,
+        "duration": 0.35356998443603516,
         "metrics": {
-          "total_time": 0.353090763092041,
+          "total_time": 0.35348033905029297,
           "rounds": 5,
-          "avg_round_time": 0.0706181526184082,
-          "throughput": 14.160664969580747
+          "avg_round_time": 0.07069606781005859,
+          "throughput": 14.145058289334171
         }
       },
       {
@@ -141,11 +141,11 @@
         "name": "Agregación Federada",
         "category": "integration",
         "result": "passed",
-        "duration": 0.25403881072998047,
+        "duration": 0.26381659507751465,
         "metrics": {
           "num_nodes": 5,
-          "total_samples": 514,
-          "gradient_norm": 0.5707141011731588,
+          "total_samples": 535,
+          "gradient_norm": 0.4355355464351328,
           "aggregation_method": "weighted_average"
         }
       },
@@ -154,12 +154,12 @@
         "name": "Preservación de Privacidad",
         "category": "security",
         "result": "passed",
-        "duration": 0.0013031959533691406,
+        "duration": 0.002706289291381836,
         "metrics": {
           "epsilon": 1.0,
           "noise_scale": 1.0,
-          "data_difference": 0.9976502437085326,
-          "correlation": 0.5533087510386597,
+          "data_difference": 1.0152477954462804,
+          "correlation": 0.5882145908839266,
           "privacy_preserved": true
         }
       },
@@ -168,7 +168,7 @@
         "name": "Cifrado/Descifrado",
         "category": "security",
         "result": "passed",
-        "duration": 0.0024089813232421875,
+        "duration": 0.01772761344909668,
         "metrics": {
           "original_length": 50,
           "encrypted_length": 164,
@@ -181,7 +181,7 @@
         "name": "Autenticación",
         "category": "security",
         "result": "passed",
-        "duration": 0.12914514541625977,
+        "duration": 0.1445152759552002,
         "metrics": {
           "username": "test_user",
           "auth_success": true,
@@ -194,14 +194,14 @@
         "name": "Detección de Intrusiones",
         "category": "security",
         "result": "passed",
-        "duration": 0.00012135505676269531,
+        "duration": 0.0001747608184814453,
         "metrics": {
           "total_requests": 5,
           "detected_threats": 4,
           "detection_accuracy": 1.0,
           "threat_types": [
-            "suspicious_user_agent",
-            "rate_limit_exceeded"
+            "rate_limit_exceeded",
+            "suspicious_user_agent"
           ]
         }
       },
@@ -210,7 +210,7 @@
         "name": "Descubrimiento de Peers",
         "category": "integration",
         "result": "passed",
-        "duration": 0.000171661376953125,
+        "duration": 0.0002918243408203125,
         "metrics": {
           "total_peers": 5,
           "discovered_peers": 4,
@@ -223,7 +223,7 @@
         "name": "Enrutamiento de Mensajes",
         "category": "integration",
         "result": "passed",
-        "duration": 0.00014400482177734375,
+        "duration": 0.0001990795135498047,
         "metrics": {
           "source": "node_0",
           "destination": "node_4",
@@ -241,11 +241,11 @@
         "name": "Creación de Bloques",
         "category": "integration",
         "result": "passed",
-        "duration": 0.00019621849060058594,
+        "duration": 0.0007941722869873047,
         "metrics": {
-          "block_hash": "5e3a845a0e23a37e944a1472a07e9aa5951f49e39cf5e49763339aca91c066f3",
+          "block_hash": "a8e06f968f4441073ce958a0ab987ceaecb757d292a22370127caeec7cab1d98",
           "transaction_count": 10,
-          "block_size": 775,
+          "block_size": 776,
           "creation_successful": true
         }
       },
@@ -254,12 +254,12 @@
         "name": "Validación de Cadena",
         "category": "integration",
         "result": "passed",
-        "duration": 0.00022864341735839844,
+        "duration": 0.0004448890686035156,
         "metrics": {
           "chain_length": 5,
           "validation_result": true,
           "validation_message": "Cadena válida",
-          "total_transactions": 14
+          "total_transactions": 18
         }
       },
       {
@@ -267,11 +267,11 @@
         "name": "Throughput del Sistema",
         "category": "performance",
         "result": "passed",
-        "duration": 1.0060336589813232,
+        "duration": 1.005662202835083,
         "metrics": {
           "total_transactions": 1000,
-          "processing_time": 1.0059401988983154,
-          "throughput": 994.0948786967446,
+          "processing_time": 1.0055360794067383,
+          "throughput": 994.494400031867,
           "batch_size": 50
         }
       },
@@ -280,14 +280,14 @@
         "name": "Latencia del Sistema",
         "category": "performance",
         "result": "passed",
-        "duration": 3.016343116760254,
+        "duration": 3.2512123584747314,
         "metrics": {
           "num_requests": 100,
-          "avg_latency": 0.030154197216033934,
-          "p95_latency": 0.047264146804809566,
-          "p99_latency": 0.049936103820800784,
-          "min_latency": 0.010489463806152344,
-          "max_latency": 0.05031847953796387
+          "avg_latency": 0.03247274875640869,
+          "p95_latency": 0.049457323551177976,
+          "p99_latency": 0.05020535707473755,
+          "min_latency": 0.010534524917602539,
+          "max_latency": 0.05061912536621094
         }
       }
     ]
