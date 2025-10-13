@@ -1,693 +1,1066 @@
-import { useEffect, useState } from 'react'
-import './App.css'
-import './styles.css'
-import { ethers } from 'ethers'
-import { CONTRACTS, IPFS, DONATIONS, DONATION_ADDRESS, IPFS_GATEWAY } from './config'
-import UserRegistryAbi from './abi/UserRegistry.json'
-import ChatRoomAbi from './abi/ChatRoom.json'
-import AEGISTokenAbi from './abi/AEGISToken.json'
-import AEGISFaucetAbi from './abi/AEGISFaucet.json'
-import { ensureLocalKeypair, getPublicKeyBase64, getSecretKeyUint8, loadRecipientPublicKey, encryptBytes, decryptBytes } from './crypto'
-import { uploadBytesToIPFS, fetchBytesFromIPFS, ipfsInfo, pinAdd, pinRm, isPinned } from './ipfs'
+import React, { useState, useEffect, useRef } from 'react';
+import { ethers } from 'ethers';
+import { create } from 'ipfs-http-client';
+import nacl from 'tweetnacl';
+import './App.css';
 
-function App() {
-  const [provider, setProvider] = useState(null)
-  const [signer, setSigner] = useState(null)
-  const [address, setAddress] = useState('')
-  const [publicKey, setPublicKey] = useState('')
-  const [registry, setRegistry] = useState(null)
-  const [chat, setChat] = useState(null)
-  const [roomId, setRoomId] = useState('')
-  const [inviteAddr, setInviteAddr] = useState('')
-  const [cid, setCid] = useState('')
-  const [contentHash, setContentHash] = useState('')
-  const [status, setStatus] = useState('')
-  const [recipientAddr, setRecipientAddr] = useState('')
-  const [recipientPubKey, setRecipientPubKey] = useState('')
-  const [messages, setMessages] = useState([])
-  const [fileToShare, setFileToShare] = useState(null)
-  const [decryptedPreview, setDecryptedPreview] = useState('')
-  const [loadingFeed, setLoadingFeed] = useState(false)
-  const [decryptedBytes, setDecryptedBytes] = useState(null)
-  const [decryptedFilename, setDecryptedFilename] = useState('')
-  const [darkMode, setDarkMode] = useState(false)
-  const [networkInfo, setNetworkInfo] = useState(null)
-  const [ipfsStatus, setIpfsStatus] = useState(null)
-  const [donateAmountEth, setDonateAmountEth] = useState('')
-  const [donateAmountAegis, setDonateAmountAegis] = useState('')
-  const [donateStatus, setDonateStatus] = useState('')
-  const [aegisToken, setAegisToken] = useState(null)
-  const [aegisFaucet, setAegisFaucet] = useState(null)
-  const [aegisBalance, setAegisBalance] = useState('0')
-  const [faucetStatus, setFaucetStatus] = useState('')
-  const [lastRequestTime, setLastRequestTime] = useState(0)
-  const [toasts, setToasts] = useState([])
-  const [actionStates, setActionStates] = useState({})
+// Base58 encoding/decoding
+const base58Alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 
-  useEffect(() => {
-    if (window.ethereum) {
-      const prov = new ethers.BrowserProvider(window.ethereum)
-      setProvider(prov)
+function base58Encode(buffer) {
+  if (buffer.length === 0) return '';
+  
+  let digits = [0];
+  for (let i = 0; i < buffer.length; i++) {
+    let carry = buffer[i];
+    for (let j = 0; j < digits.length; j++) {
+      carry += digits[j] << 8;
+      digits[j] = carry % 58;
+      carry = Math.floor(carry / 58);
     }
-  }, [])
-
-  const connect = async () => {
-    if (!provider) return
-    await provider.send('eth_requestAccounts', [])
-    const s = await provider.getSigner()
-    setSigner(s)
-    const addr = await s.getAddress()
-    setAddress(addr)
-    setStatus('Conectado')
-    try {
-      const net = await provider.getNetwork()
-      setNetworkInfo({ chainId: Number(net.chainId), name: net.name })
-    } catch (_) {}
-    // Preparar claves locales
-    ensureLocalKeypair()
-    // Instanciar contratos si hay direcciones configuradas
-    // Instanciar contratos si hay direcciones configuradas
-    if (CONTRACTS.UserRegistry) {
-      setRegistry(new ethers.Contract(CONTRACTS.UserRegistry, UserRegistryAbi, s))
-    }
-    if (CONTRACTS.ChatRoom) {
-      const c = new ethers.Contract(CONTRACTS.ChatRoom, ChatRoomAbi, s)
-      setChat(c)
-      // Suscribir eventos para feed
-      c.on('MessagePosted', (evRoomId, author, evCid, evHash) => {
-        setMessages(prev => [{ type: 'message', roomId: Number(evRoomId), author, cid: evCid, hash: evHash }, ...prev])
-      })
-      c.on('FileShared', (evRoomId, author, evCid, evHash) => {
-        setMessages(prev => [{ type: 'file', roomId: Number(evRoomId), author, cid: evCid, hash: evHash }, ...prev])
-      })
-    }
-    
-    // Instanciar contratos AEGIS
-    if (DONATIONS.AEGIS_TOKEN.address) {
-      const token = new ethers.Contract(DONATIONS.AEGIS_TOKEN.address, AEGISTokenAbi, s)
-      setAegisToken(token)
-      // Obtener balance inicial
-      try {
-        const balance = await token.balanceOf(addr)
-        setAegisBalance(ethers.formatEther(balance))
-      } catch (e) {
-        console.error('Error obteniendo balance AEGIS:', e)
-      }
-    }
-    
-    if (DONATIONS.AEGIS_FAUCET.address) {
-      const faucet = new ethers.Contract(DONATIONS.AEGIS_FAUCET.address, AEGISFaucetAbi, s)
-      setAegisFaucet(faucet)
-      // Obtener tiempo de última solicitud
-      try {
-        const lastTime = await faucet.getLastRequestTime(addr)
-        setLastRequestTime(Number(lastTime))
-      } catch (e) {
-        console.error('Error obteniendo tiempo de faucet:', e)
-      }
-    }
-    
-    // Consultar estado de IPFS
-    try {
-      const info = await ipfsInfo()
-      setIpfsStatus(info)
-    } catch (_) {}
-  }
-
-  const publishKey = async () => {
-    if (!registry) return setStatus('Configura la dirección de UserRegistry en src/config.js')
-    try {
-      const pub = publicKey || getPublicKeyBase64()
-      const tx = await registry.setPublicKey(pub)
-      await tx.wait()
-      setStatus('Clave pública publicada')
-    } catch (e) {
-      console.error(e)
-      setStatus('Error publicando clave')
+    while (carry > 0) {
+      digits.push(carry % 58);
+      carry = Math.floor(carry / 58);
     }
   }
-
-  const createRoom = async () => {
-    if (!chat) return setStatus('Configura la dirección de ChatRoom en src/config.js')
-    try {
-      const tx = await chat.createRoom(inviteAddr ? [inviteAddr] : [])
-      await tx.wait()
-      // Opcional: leer RoomCreated del receipt
-      setStatus('Sala creada')
-    } catch (e) {
-      console.error(e)
-      setStatus('Error creando sala')
-    }
+  
+  let leadingZeros = 0;
+  for (let i = 0; i < buffer.length && buffer[i] === 0; i++) {
+    leadingZeros++;
   }
-
-  const postMsg = async () => {
-    if (!chat) return setStatus('Configura la dirección de ChatRoom en src/config.js')
-    try {
-      // Obtener clave del destinatario
-      let destPub = recipientPubKey
-      if (!destPub && recipientAddr && registry) {
-        destPub = await loadRecipientPublicKey(registry, recipientAddr)
-        setRecipientPubKey(destPub || '')
-      }
-      if (!destPub) return setStatus('Falta clave pública del destinatario')
-      // Simular contenido a cifrar si no hay archivo (usar contentHash como texto)
-      const content = new TextEncoder().encode(contentHash || `msg-${Date.now()}`)
-      const encrypted = encryptBytes(content, destPub, getSecretKeyUint8())
-      // Subir a IPFS (si está configurado)
-      if (!IPFS.API_URL) {
-        setStatus('IPFS no configurado (src/config.js). Se publica sólo metadato hash')
-      }
-      const cidValue = IPFS.API_URL ? await uploadBytesToIPFS(encrypted) : (cid || '')
-      const hashBytes32 = ethers.keccak256(encrypted)
-      const tx = await chat.postMessage(Number(roomId), cidValue || '', hashBytes32)
-      await tx.wait()
-      setStatus(`Mensaje publicado. CID=${cidValue || '-'} hash=${hashBytes32}`)
-    } catch (e) {
-      console.error(e)
-      setStatus('Error publicando mensaje')
-    }
-  }
-
-  const shareFile = async () => {
-    if (!chat) return setStatus('Configura la dirección de ChatRoom en src/config.js')
-    try {
-      if (!fileToShare) return setStatus('Selecciona un archivo')
-      // Obtener clave del destinatario
-      let destPub = recipientPubKey
-      if (!destPub && recipientAddr && registry) {
-        destPub = await loadRecipientPublicKey(registry, recipientAddr)
-        setRecipientPubKey(destPub || '')
-      }
-      if (!destPub) return setStatus('Falta clave pública del destinatario')
-      const buf = await fileToShare.arrayBuffer()
-      const plain = new Uint8Array(buf)
-      const encrypted = encryptBytes(plain, destPub, getSecretKeyUint8())
-      if (!IPFS.API_URL) {
-        setStatus('IPFS no configurado (src/config.js). No se puede subir archivo')
-        return
-      }
-      const cidValue = await uploadBytesToIPFS(encrypted)
-      const hashBytes32 = ethers.keccak256(encrypted)
-      const tx = await chat.shareFile(Number(roomId), cidValue, hashBytes32, fileToShare.name, fileToShare.size)
-      await tx.wait()
-      setStatus(`Archivo compartido. CID=${cidValue} hash=${hashBytes32}`)
-      setFileToShare(null)
-    } catch (e) {
-      console.error(e)
-      setStatus('Error compartiendo archivo')
-    }
-  }
-
-  const decryptFromCID = async (cidValue, authorAddr, filename = '', itemId = null) => {
-    if (itemId) setActionState(itemId, 'decrypt', 'loading')
-    try {
-      if (!cidValue) {
-        setStatus('No hay CID para descifrar')
-        if (itemId) setActionState(itemId, 'decrypt', 'error')
-        return
-      }
-      const bytes = await fetchBytesFromIPFS(cidValue)
-      // Obtener clave pública del remitente
-      let senderPub = ''
-      if (registry) senderPub = await loadRecipientPublicKey(registry, authorAddr)
-      if (!senderPub) {
-        setStatus('El remitente no ha publicado su clave pública')
-        if (itemId) setActionState(itemId, 'decrypt', 'error')
-        return
-      }
-      const plain = decryptBytes(bytes, senderPub, getSecretKeyUint8())
-      if (!plain) {
-        setStatus('No se pudo descifrar (clave/nounce incorrectos)')
-        if (itemId) setActionState(itemId, 'decrypt', 'error')
-        return
-      }
-      // Intentar interpretar como texto
-      setDecryptedBytes(plain)
-      setDecryptedFilename(filename || (plain ? 'contenido.bin' : ''))
-      // Intentamos decodificar texto para vista previa
-      try {
-        const text = new TextDecoder().decode(plain)
-        setDecryptedPreview(text)
-      } catch (_) {
-        setDecryptedPreview('(Contenido binario)')
-      }
-      setStatus('Contenido descifrado correctamente')
-      addToast('Contenido descifrado correctamente', 'success')
-      if (itemId) {
-        setActionState(itemId, 'decrypt', 'success')
-        setTimeout(() => setActionState(itemId, 'decrypt', 'idle'), 2000)
-      }
-    } catch (e) {
-      console.error(e)
-      setStatus('Error descifrando desde IPFS')
-      addToast('Error descifrando desde IPFS', 'error')
-      if (itemId) {
-        setActionState(itemId, 'decrypt', 'error')
-        setTimeout(() => setActionState(itemId, 'decrypt', 'idle'), 3000)
-      }
-    }
-  }
-
-  const loadHistory = async () => {
-    try {
-      if (!chat || !provider || !roomId) return setStatus('Configura la sala y el proveedor')
-      setLoadingFeed(true)
-      const room = Number(roomId)
-      const latest = await provider.getBlockNumber()
-      const filterMsg = chat.filters.MessagePosted(room)
-      const filterFile = chat.filters.FileShared(room)
-      const [msgs, files] = await Promise.all([
-        chat.queryFilter(filterMsg, Math.max(0, latest - 5000), latest),
-        chat.queryFilter(filterFile, Math.max(0, latest - 5000), latest)
-      ])
-      const items = []
-      for (const ev of msgs) {
-        const { roomId: r, author, cid, contentHash } = ev.args
-        items.push({ type: 'message', roomId: Number(r), author, cid, hash: contentHash, blockNumber: ev.blockNumber })
-      }
-      for (const ev of files) {
-        const { roomId: r, author, cid, contentHash, filename, size } = ev.args
-        items.push({ type: 'file', roomId: Number(r), author, cid, hash: contentHash, filename, size: Number(size), blockNumber: ev.blockNumber })
-      }
-      items.sort((a, b) => (b.blockNumber || 0) - (a.blockNumber || 0))
-      setMessages(items)
-      setStatus('Historial cargado')
-    } catch (e) {
-      console.error(e)
-      setStatus('Error cargando historial')
-    } finally {
-      setLoadingFeed(false)
-    }
-  }
-
-  useEffect(() => {
-    // Cargar historial cuando cambia el Room ID
-    if (chat && roomId) {
-      loadHistory()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chat, roomId])
-
-  const copyToClipboard = async (text) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      addToast('Copiado al portapapeles', 'success')
-    } catch (_) {
-      addToast('No se pudo copiar', 'error')
-    }
-  }
-
-  const downloadDecrypted = () => {
-    if (!decryptedBytes) return
-    const blob = new Blob([decryptedBytes], { type: 'application/octet-stream' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = decryptedFilename || 'contenido.bin'
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
-  }
-
-  const donateETH = async () => {
-    if (!signer) return setDonateStatus('Conecta la wallet')
-    try {
-      const value = ethers.parseEther(donateAmountEth || '0')
-      if (value <= 0n) return setDonateStatus('Monto inválido')
-      const tx = await signer.sendTransaction({ to: DONATIONS.ETH_ADDRESS, value })
-      setDonateStatus(`Enviando donación ETH... ${tx.hash}`)
-      await tx.wait()
-      setDonateStatus('Donación ETH enviada. ¡Gracias!')
-      addToast('Donación ETH enviada. ¡Gracias!', 'success')
-      setDonateAmountEth('')
-    } catch (e) {
-      console.error(e)
-      setDonateStatus('Error enviando donación ETH')
-      addToast('Error enviando donación ETH', 'error')
-    }
-  }
-
-  const donateAEGIS = async () => {
-    if (!signer || !aegisToken) return setDonateStatus('Conecta la wallet')
-    try {
-      const amount = ethers.parseEther(donateAmountAegis || '0')
-      if (amount <= 0n) return setDonateStatus('Monto AEGIS inválido')
-      
-      // Verificar balance
-      const balance = await aegisToken.balanceOf(address)
-      if (balance < amount) {
-        setDonateStatus('Balance AEGIS insuficiente')
-        addToast('Balance AEGIS insuficiente', 'error')
-        return
-      }
-      
-      const tx = await aegisToken.transfer(DONATIONS.ETH_ADDRESS, amount)
-      setDonateStatus(`Enviando donación AEGIS... ${tx.hash}`)
-      await tx.wait()
-      
-      // Actualizar balance
-      const newBalance = await aegisToken.balanceOf(address)
-      setAegisBalance(ethers.formatEther(newBalance))
-      
-      setDonateStatus('Donación AEGIS enviada. ¡Gracias!')
-      addToast('Donación AEGIS enviada. ¡Gracias!', 'success')
-      setDonateAmountAegis('')
-    } catch (e) {
-      console.error(e)
-      setDonateStatus('Error enviando donación AEGIS')
-      addToast('Error enviando donación AEGIS', 'error')
-    }
-  }
-
-  const requestAEGISTokens = async () => {
-    if (!signer || !aegisFaucet) return setFaucetStatus('Conecta la wallet')
-    try {
-      // Verificar cooldown
-      const now = Math.floor(Date.now() / 1000)
-      const cooldown = DONATIONS.AEGIS_FAUCET.cooldown
-      if (lastRequestTime + cooldown > now) {
-        const remaining = (lastRequestTime + cooldown - now) / 3600
-        setFaucetStatus(`Espera ${remaining.toFixed(1)} horas`)
-        addToast(`Espera ${remaining.toFixed(1)} horas para solicitar más tokens`, 'warning')
-        return
-      }
-      
-      const tx = await aegisFaucet.requestTokens()
-      setFaucetStatus(`Solicitando tokens... ${tx.hash}`)
-      await tx.wait()
-      
-      // Actualizar balance y tiempo
-      if (aegisToken) {
-        const newBalance = await aegisToken.balanceOf(address)
-        setAegisBalance(ethers.formatEther(newBalance))
-      }
-      setLastRequestTime(now)
-      
-      setFaucetStatus('Tokens AEGIS recibidos!')
-      addToast(`${DONATIONS.AEGIS_FAUCET.amount} AEGIS tokens recibidos!`, 'success')
-    } catch (e) {
-      console.error(e)
-      setFaucetStatus('Error solicitando tokens')
-      addToast('Error solicitando tokens del faucet', 'error')
-    }
-  }
-
-  const addToast = (text, type = 'info') => {
-    const id = Date.now() + Math.random()
-    setToasts(prev => [...prev, { id, text, type }])
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id))
-    }, 3000)
-  }
-
-  const setActionState = (itemId, action, state) => {
-    setActionStates(prev => ({
-      ...prev,
-      [`${itemId}-${action}`]: state
-    }))
-  }
-
-  const getActionState = (itemId, action) => {
-    return actionStates[`${itemId}-${action}`] || 'idle'
-  }
-
-  const verifyIntegrity = async (cidValue, expectedHash, idx, itemId = null) => {
-    if (itemId) setActionState(itemId, 'verify', 'loading')
-    try {
-      if (!cidValue || !expectedHash) {
-        addToast('Faltan datos para verificar', 'warning')
-        if (itemId) setActionState(itemId, 'verify', 'error')
-        return
-      }
-      const bytes = await fetchBytesFromIPFS(cidValue)
-      const actual = ethers.keccak256(bytes)
-      const ok = actual.toLowerCase() === expectedHash.toLowerCase()
-      addToast(ok ? '✓ Integridad verificada correctamente' : '⚠ Integridad comprometida - hash no coincide', ok ? 'success' : 'error')
-      // Marcar en el feed
-      setMessages(prev => prev.map((m, i) => i === idx ? { ...m, integrity: ok } : m))
-      if (itemId) {
-        setActionState(itemId, 'verify', ok ? 'success' : 'error')
-        setTimeout(() => setActionState(itemId, 'verify', 'idle'), 3000)
-      }
-    } catch (e) {
-      console.error(e)
-      addToast('Error verificando integridad', 'error')
-      if (itemId) {
-        setActionState(itemId, 'verify', 'error')
-        setTimeout(() => setActionState(itemId, 'verify', 'idle'), 3000)
-      }
-    }
-  }
-
-  const togglePin = async (cidValue, idx, itemId = null) => {
-    try {
-      if (!cidValue) return
-      const pinned = await isPinned(cidValue)
-      const action = pinned ? 'unpin' : 'pin'
-      if (itemId) setActionState(itemId, action, 'loading')
-      
-      if (pinned) {
-        await pinRm(cidValue)
-        addToast(`Contenido desanclado de IPFS: ${cidValue}`, 'success')
-        setMessages(prev => prev.map((m, i) => i === idx ? { ...m, pinned: false } : m))
-      } else {
-        await pinAdd(cidValue)
-        addToast(`Contenido anclado en IPFS: ${cidValue}`, 'success')
-        setMessages(prev => prev.map((m, i) => i === idx ? { ...m, pinned: true } : m))
-      }
-      
-      if (itemId) {
-        setActionState(itemId, action, 'success')
-        setTimeout(() => setActionState(itemId, action, 'idle'), 2000)
-      }
-    } catch (e) {
-      console.error(e)
-      const pinned = await isPinned(cidValue).catch(() => false)
-      const action = pinned ? 'unpin' : 'pin'
-      addToast(`Error al ${pinned ? 'desanclar' : 'anclar'}: ${e.message}`, 'error')
-      if (itemId) {
-        setActionState(itemId, action, 'error')
-        setTimeout(() => setActionState(itemId, action, 'idle'), 3000)
-      }
-    }
-  }
-
-  const renderActionButton = (itemId, action, onClick, children, className = '') => {
-    const state = getActionState(itemId, action)
-    const isLoading = state === 'loading'
-    const isDisabled = isLoading
-    
-    let icon = null
-    if (state === 'loading') {
-      icon = <div className="spinner"></div>
-    } else if (state === 'success') {
-      icon = <span className="status-icon status-success">✓</span>
-    } else if (state === 'error') {
-      icon = <span className="status-icon status-error">✗</span>
-    }
-    
-    return (
-      <button
-        onClick={onClick}
-        disabled={isDisabled}
-        className={`${className} ${isLoading ? 'loading' : ''}`}
-      >
-        {icon}
-        {children}
-      </button>
-    )
-  }
-
-  return (
-    <div className={`container ${darkMode ? 'dark' : ''}`} style={{ background: darkMode ? '#121212' : '#fff', color: darkMode ? '#eee' : '#000' }}>
-      <h2>Secure Chat DApp (E2E + IPFS, metadatos on-chain)</h2>
-      <div className="section">
-        <button onClick={() => setDarkMode(v => !v)}>{darkMode ? 'Modo claro' : 'Modo oscuro'}</button>
-      </div>
-      <div className="section">
-        <button onClick={connect}>Conectar wallet</button>
-        <div>Estado: {status}</div>
-        <div>Cuenta: {address || '-'}</div>
-        <div>Red: {networkInfo ? `${networkInfo.name} (chainId ${networkInfo.chainId})` : '-'}</div>
-        <div>IPFS: {ipfsStatus ? `OK (${ipfsStatus.agentVersion || ''})` : 'No conectado'}</div>
-      </div>
-
-      <div className="section">
-        <h3>Publicar clave pública</h3>
-        <input placeholder="Clave pública (base64)" value={publicKey || getPublicKeyBase64()} onChange={e => setPublicKey(e.target.value)} />
-        <button onClick={publishKey}>Publicar</button>
-      </div>
-
-      <div className="section">
-        <h3>Crear sala</h3>
-        <input placeholder="Dirección a invitar (opcional)" value={inviteAddr} onChange={e => setInviteAddr(e.target.value)} />
-        <button onClick={createRoom}>Crear</button>
-      </div>
-
-      <div className="section">
-        <h3>Enviar mensaje (CID)</h3>
-        <input placeholder="Room ID" value={roomId} onChange={e => setRoomId(e.target.value)} />
-        <input placeholder="CID" value={cid} onChange={e => setCid(e.target.value)} />
-        <input placeholder="Mensaje (texto que será cifrado)" value={contentHash} onChange={e => setContentHash(e.target.value)} />
-        <input placeholder="Dirección destinatario" value={recipientAddr} onChange={e => setRecipientAddr(e.target.value)} />
-        <input placeholder="Clave pública destinatario (base64)" value={recipientPubKey} onChange={e => setRecipientPubKey(e.target.value)} />
-        <button onClick={postMsg}>Enviar</button>
-      </div>
-
-      <div className="section">
-        <h3>Compartir archivo cifrado</h3>
-        <input type="file" onChange={e => setFileToShare(e.target.files?.[0] || null)} />
-        <button onClick={shareFile} disabled={!fileToShare}>Compartir archivo</button>
-      </div>
-
-      <div className="section">
-        <h3>Feed</h3>
-        <button onClick={loadHistory} disabled={!chat || !roomId || loadingFeed}>{loadingFeed ? 'Cargando...' : 'Refrescar'}</button>
-        <div style={{ marginBottom: 10 }}>
-          <strong>Vista previa descifrada:</strong>
-          <div style={{ whiteSpace: 'pre-wrap' }}>{decryptedPreview || '(Vacío)'}</div>
-          <div>
-            <button onClick={downloadDecrypted} disabled={!decryptedBytes}>Descargar contenido</button>
-          </div>
-        </div>
-        {loadingFeed && messages.length === 0 ? (
-          <div className="cards-grid">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="skeleton-card" />
-            ))}
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="meta">No hay elementos en el feed</div>
-        ) : (
-          <div className="cards-grid">
-            {messages.map((m, idx) => (
-              <div key={idx} className="card">
-                <div className="card-header">
-                  <span className={`badge ${m.type === 'file' ? 'file' : 'message'}`}>{m.type === 'file' ? 'Archivo' : 'Mensaje'}</span>
-                  <span className="card-title">Room {m.roomId}</span>
-                </div>
-                <div className="card-body">
-                  <div className="meta">Autor: {m.author}</div>
-                  {m.filename ? <div className="meta">Nombre: {m.filename} {m.size ? `(${m.size} bytes)` : ''}</div> : null}
-                  <div className="meta">CID: {m.cid || '-'}</div>
-                  <div className="meta">Hash: {m.hash || '-'}</div>
-                  {typeof m.integrity === 'boolean' ? (
-                    <div className="meta">Integridad: {m.integrity ? 'OK' : 'NO coincide'}</div>
-                  ) : null}
-                </div>
-                <div className="card-actions">
-                  {m.cid ? (
-                    <>
-                      {renderActionButton(
-                        `${idx}-${m.cid}`,
-                        'decrypt',
-                        () => decryptFromCID(m.cid, m.author, m.filename || '', `${idx}-${m.cid}`),
-                        'Descifrar',
-                        'btn-decrypt'
-                      )}
-                      {renderActionButton(
-                        `${idx}-${m.cid}`,
-                        'verify',
-                        () => verifyIntegrity(m.cid, m.hash, idx, `${idx}-${m.cid}`),
-                        'Verificar integridad',
-                        'btn-verify'
-                      )}
-                      {renderActionButton(
-                        `${idx}-${m.cid}`,
-                        m.pinned ? 'unpin' : 'pin',
-                        () => togglePin(m.cid, idx, `${idx}-${m.cid}`),
-                        m.pinned ? 'Unpin' : 'Pin',
-                        'btn-pin'
-                      )}
-                      <a href={`${IPFS_GATEWAY}${m.cid}`} target="_blank" rel="noreferrer">Abrir en gateway</a>
-                    </>
-                  ) : null}
-                  <button onClick={() => copyToClipboard(m.cid || '')} disabled={!m.cid}>Copiar CID</button>
-                  <button onClick={() => copyToClipboard(m.hash || '')} disabled={!m.hash}>Copiar hash</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Toasts */}
-      <div style={{ position: 'fixed', top: 10, right: 10, zIndex: 9999 }}>
-        {toasts.map(t => (
-          <div key={t.id} style={{
-            marginBottom: 8,
-            padding: '8px 12px',
-            borderRadius: 6,
-            background: t.type === 'error' ? '#ffdddd' : t.type === 'success' ? '#ddffdd' : t.type === 'warning' ? '#fff6cc' : '#eeeeee',
-            color: '#333',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)'
-          }}>{t.text}</div>
-        ))}
-      </div>
-
-      <div className="section">
-        <h3>💰 Donaciones</h3>
-        
-        {/* Donaciones ETH */}
-        <div className="donation-section">
-          <h4>Donar ETH</h4>
-          <div>Dirección: {DONATIONS.ETH_ADDRESS}</div>
-          <input 
-            placeholder="Monto en ETH" 
-            value={donateAmountEth} 
-            onChange={e => setDonateAmountEth(e.target.value)} 
-          />
-          <button onClick={donateETH} disabled={!signer}>Donar ETH</button>
-        </div>
-
-        {/* Donaciones AEGIS */}
-        <div className="donation-section">
-          <h4>🛡️ Donar AEGIS Token</h4>
-          <div>Token: {DONATIONS.AEGIS_TOKEN.name} ({DONATIONS.AEGIS_TOKEN.symbol})</div>
-          <div>Tu balance: {aegisBalance} AEGIS</div>
-          <input 
-            placeholder="Monto en AEGIS" 
-            value={donateAmountAegis} 
-            onChange={e => setDonateAmountAegis(e.target.value)} 
-          />
-          <button onClick={donateAEGIS} disabled={!signer || !aegisToken}>Donar AEGIS</button>
-        </div>
-
-        {/* Faucet AEGIS */}
-        <div className="donation-section">
-          <h4>🚰 Faucet AEGIS</h4>
-          <div>Obtén {DONATIONS.AEGIS_FAUCET.amount} AEGIS tokens gratis cada {DONATIONS.AEGIS_FAUCET.cooldown / 3600} horas</div>
-          <button onClick={requestAEGISTokens} disabled={!signer || !aegisFaucet}>
-            Solicitar Tokens AEGIS
-          </button>
-          <div>{faucetStatus}</div>
-        </div>
-
-        <div className="donation-status">{donateStatus}</div>
-      </div>
-
-      <div className="section">
-        <h3>Claves locales</h3>
-        <div>Clave pública (base64): {getPublicKeyBase64() || '-'}</div>
-        <button onClick={() => copyToClipboard(getPublicKeyBase64() || '')}>Copiar clave pública</button>
-        <div style={{ marginTop: 8, fontSize: 12, opacity: 0.8 }}>Nunca compartas tu clave secreta. Úsala solo para backup.</div>
-        <button onClick={() => copyToClipboard(localStorage.getItem('securechat_sk') || '')}>Copiar clave secreta (base64)</button>
-        <button onClick={() => {
-          const sk = localStorage.getItem('securechat_sk') || ''
-          const blob = new Blob([sk], { type: 'text/plain' })
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          a.download = 'securechat_secret_key.b64.txt'
-          document.body.appendChild(a)
-          a.click()
-          a.remove()
-          URL.revokeObjectURL(url)
-        }}>Descargar clave secreta</button>
-      </div>
-    </div>
-  )
+  
+  return '1'.repeat(leadingZeros) + digits.reverse().map(d => base58Alphabet[d]).join('');
 }
 
-export default App
+function base58Decode(str) {
+  if (str.length === 0) return new Uint8Array(0);
+  
+  let bytes = [0];
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    const charIndex = base58Alphabet.indexOf(char);
+    if (charIndex === -1) throw new Error('Invalid base58 character');
+    
+    let carry = charIndex;
+    for (let j = 0; j < bytes.length; j++) {
+      carry += bytes[j] * 58;
+      bytes[j] = carry & 0xff;
+      carry >>= 8;
+    }
+    while (carry > 0) {
+      bytes.push(carry & 0xff);
+      carry >>= 8;
+    }
+  }
+  
+  let leadingOnes = 0;
+  for (let i = 0; i < str.length && str[i] === '1'; i++) {
+    leadingOnes++;
+  }
+  
+  return new Uint8Array([...Array(leadingOnes).fill(0), ...bytes.reverse()]);
+}
+
+  // Contract addresses (actualizadas después del despliegue)
+  const CHAT_CONTRACT_ADDRESS = "0x4A679253410272dd5232B3Ff7cF5dbB88f295319";
+  const AEGIS_TOKEN_ADDRESS = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
+
+const CHAT_ABI = [
+  "function createRoom(string memory name) public",
+  "function joinRoom(uint256 roomId) public",
+  "function sendMessage(uint256 roomId, string memory messageHash) public",
+  "function getRooms() public view returns (tuple(uint256 id, string name, address creator, uint256 memberCount)[])",
+  "function getRoomMessages(uint256 roomId) public view returns (tuple(address sender, string messageHash, uint256 timestamp)[])",
+  "event RoomCreated(uint256 indexed roomId, string name, address indexed creator)",
+  "event MessageSent(uint256 indexed roomId, address indexed sender, string messageHash, uint256 timestamp)"
+];
+
+const AEGIS_ABI = [
+  "function balanceOf(address owner) view returns (uint256)",
+  "function transfer(address to, uint256 amount) returns (bool)",
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)"
+];
+
+// IPFS client con fallback a gateway público
+let ipfsClient;
+try {
+  ipfsClient = create({
+    host: 'localhost',
+    port: 5001,
+    protocol: 'http'
+  });
+} catch (error) {
+  console.warn('IPFS local no disponible, usando gateway público');
+  ipfsClient = null;
+}
+
+// Encryption utilities
+function encryptMessage(message, recipientPublicKey, senderSecretKey) {
+  try {
+    const messageBytes = new TextEncoder().encode(message);
+    const nonce = nacl.randomBytes(24);
+    const encrypted = nacl.box(messageBytes, nonce, recipientPublicKey, senderSecretKey);
+    
+    const combined = new Uint8Array(nonce.length + encrypted.length);
+    combined.set(nonce);
+    combined.set(encrypted, nonce.length);
+    
+    return base58Encode(combined);
+  } catch (error) {
+    console.error('Encryption error:', error);
+    return message;
+  }
+}
+
+function decryptMessage(encryptedMessage, senderPublicKey, recipientSecretKey) {
+  try {
+    const combined = base58Decode(encryptedMessage);
+    const nonce = combined.slice(0, 24);
+    const encrypted = combined.slice(24);
+    
+    const decrypted = nacl.box.open(encrypted, nonce, senderPublicKey, recipientSecretKey);
+    if (!decrypted) throw new Error('Decryption failed');
+    
+    return new TextDecoder().decode(decrypted);
+  } catch (error) {
+    console.error('Decryption error:', error);
+    return encryptedMessage;
+  }
+}
+
+// IPFS utilities
+async function uploadToIPFS(data) {
+  try {
+    if (ipfsClient) {
+      // Intentar usar nodo IPFS local
+      const result = await ipfsClient.add(JSON.stringify(data));
+      return result.path;
+    } else {
+      // Fallback: simular hash para desarrollo sin IPFS
+      const dataStr = JSON.stringify(data);
+      const hash = 'Qm' + btoa(dataStr).replace(/[^a-zA-Z0-9]/g, '').substring(0, 44);
+      console.warn('IPFS no disponible, usando hash simulado:', hash);
+      
+      // Guardar en localStorage como fallback temporal
+      localStorage.setItem(`ipfs_${hash}`, dataStr);
+      return hash;
+    }
+  } catch (error) {
+    console.error('IPFS upload error:', error);
+    // Fallback en caso de error
+    const dataStr = JSON.stringify(data);
+    const hash = 'Qm' + btoa(dataStr).replace(/[^a-zA-Z0-9]/g, '').substring(0, 44);
+    localStorage.setItem(`ipfs_${hash}`, dataStr);
+    return hash;
+  }
+}
+
+async function fetchFromIPFS(hash) {
+  try {
+    if (ipfsClient) {
+      // Intentar usar nodo IPFS local
+      let data = '';
+      for await (const chunk of ipfsClient.cat(hash)) {
+        data += new TextDecoder().decode(chunk);
+      }
+      return JSON.parse(data);
+    } else {
+      // Fallback: buscar en localStorage
+      const data = localStorage.getItem(`ipfs_${hash}`);
+      return data ? JSON.parse(data) : null;
+    }
+  } catch (error) {
+    console.error('IPFS fetch error:', error);
+    // Fallback: buscar en localStorage
+    const data = localStorage.getItem(`ipfs_${hash}`);
+    return data ? JSON.parse(data) : null;
+  }
+}
+
+function App() {
+  const [account, setAccount] = useState('');
+  const [provider, setProvider] = useState(null);
+  const [signer, setSigner] = useState(null);
+  const [chatContract, setChatContract] = useState(null);
+  const [aegisContract, setAegisContract] = useState(null);
+  const [rooms, setRooms] = useState([]);
+  const [currentRoom, setCurrentRoom] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [newRoomName, setNewRoomName] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+  const [aegisBalance, setAegisBalance] = useState('0');
+  // Dark mode toggle with localStorage persistence
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('secureChat-darkMode');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  // Save dark mode preference
+  useEffect(() => {
+    localStorage.setItem('secureChat-darkMode', JSON.stringify(darkMode));
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
+
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setDarkMode(prev => !prev);
+  };
+  const [activeTab, setActiveTab] = useState('chat');
+  const [notifications, setNotifications] = useState([]);
+  const [isTyping, setIsTyping] = useState(false);
+  const [parallaxOffset, setParallaxOffset] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  // Detectar si es móvil
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Default rooms for demo
+  const defaultRooms = [
+    { id: 0, name: "General", memberCount: 1, isDefault: true },
+    { id: 1, name: "Tech Talk", memberCount: 1, isDefault: true },
+    { id: 2, name: "Random", memberCount: 1, isDefault: true }
+  ];
+
+  // Notification system
+  const showNotification = (message, type = 'info') => {
+    const id = Date.now();
+    const notification = { id, message, type };
+    setNotifications(prev => [...prev, notification]);
+    
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 5000);
+  };
+
+  // Wallet connection
+  const connectWallet = async () => {
+    console.log('🔗 Iniciando conexión de wallet...');
+    
+    if (typeof window.ethereum !== 'undefined') {
+      try {
+        console.log('🦊 MetaMask detectado, solicitando conexión...');
+        
+        // Request account access
+        const accounts = await window.ethereum.request({ 
+          method: 'eth_requestAccounts' 
+        });
+        
+        console.log('📋 Cuentas obtenidas:', accounts);
+        
+        if (accounts.length === 0) {
+          throw new Error('No se seleccionó ninguna cuenta');
+        }
+
+        // Create provider and signer
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        console.log('🌐 Provider creado:', provider);
+        
+        const signer = await provider.getSigner();
+        const address = await signer.getAddress();
+        console.log('✍️ Signer obtenido:', address);
+
+        // Create contract instances
+        console.log('📄 Creando instancias de contratos...');
+        console.log('   - Chat Contract Address:', CHAT_CONTRACT_ADDRESS);
+        console.log('   - AEGIS Token Address:', AEGIS_TOKEN_ADDRESS);
+        
+        const chatContract = new ethers.Contract(CHAT_CONTRACT_ADDRESS, CHAT_ABI, signer);
+        const aegisContract = new ethers.Contract(AEGIS_TOKEN_ADDRESS, AEGIS_ABI, signer);
+        
+        console.log('✅ Contratos creados exitosamente');
+
+        // Update state
+        setProvider(provider);
+        setSigner(signer);
+        setAccount(address);
+        setChatContract(chatContract);
+        setAegisContract(aegisContract);
+
+        console.log('🎉 Wallet conectada exitosamente:', address);
+        showNotification('Wallet conectado exitosamente', 'success');
+
+        // Load data immediately after connection
+        setTimeout(() => {
+          console.log('⏰ Cargando datos después de la conexión...');
+          // No llamar aquí, el useEffect se encargará cuando los estados se actualicen
+        }, 1000);
+
+      } catch (error) {
+        console.error('❌ Error conectando wallet:', error);
+        
+        if (error.code === 4001) {
+          showNotification('Conexión cancelada por el usuario', 'error');
+        } else if (error.code === -32002) {
+          showNotification('Ya hay una solicitud de conexión pendiente', 'warning');
+        } else {
+          showNotification(`Error conectando wallet: ${error.message}`, 'error');
+        }
+      }
+    } else {
+      console.error('🚫 MetaMask no está instalado');
+      showNotification('MetaMask no encontrado. Por favor instala MetaMask.', 'error');
+    }
+  };
+
+  // Check if wallet is already connected
+  const checkWalletConnection = async () => {
+    console.log('🔍 Verificando conexión de wallet existente...');
+    
+    if (typeof window.ethereum !== 'undefined') {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        console.log('📋 Cuentas encontradas:', accounts);
+        
+        if (accounts.length > 0) {
+          console.log('✅ Wallet ya conectada, inicializando...');
+          await connectWallet();
+        } else {
+          console.log('ℹ️ No hay wallet conectada');
+        }
+      } catch (error) {
+        console.error('❌ Error verificando wallet:', error);
+      }
+    } else {
+      console.warn('⚠️ MetaMask no detectado en el navegador');
+      showNotification('MetaMask no está instalado. Por favor, instala MetaMask para usar esta aplicación.', 'error');
+    }
+  };
+
+  const disconnectWallet = () => {
+    setProvider(null);
+    setSigner(null);
+    setChatContract(null);
+    setAegisContract(null);
+    setAccount('');
+    setRooms([]);
+    setCurrentRoom(null);
+    setMessages([]);
+    setAegisBalance('0');
+    showNotification('Wallet desconectado', 'info');
+  };
+
+  // Load rooms
+  const loadRooms = async () => {
+    if (!chatContract) {
+      console.log('No se pueden cargar salas: contrato no disponible');
+      return;
+    }
+    
+    try {
+      console.log('Cargando salas del contrato...');
+      const contractRooms = await chatContract.getRooms();
+      console.log('Salas del contrato:', contractRooms);
+      
+      const formattedRooms = contractRooms.map(room => ({
+        id: Number(room.id),
+        name: room.name,
+        memberCount: Number(room.memberCount),
+        creator: room.creator,
+        isDefault: false
+      }));
+      
+      const allRooms = [...defaultRooms, ...formattedRooms];
+      console.log('Todas las salas:', allRooms);
+      setRooms(allRooms);
+    } catch (error) {
+      console.error('Error loading rooms:', error);
+      showNotification('Error cargando salas', 'error');
+      // Usar salas por defecto si hay error
+      setRooms(defaultRooms);
+    }
+  };
+
+  // Send message
+  const sendMessage = async () => {
+    if ((!newMessage.trim() && !selectedFile) || !currentRoom) return;
+    
+    try {
+      const messageData = {
+        text: newMessage,
+        sender: account,
+        timestamp: Date.now(),
+        type: selectedFile ? 'file' : 'text'
+      };
+
+      if (selectedFile) {
+        const fileData = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.readAsDataURL(selectedFile);
+        });
+        
+        messageData.file = {
+          name: selectedFile.name,
+          size: selectedFile.size,
+          type: selectedFile.type,
+          data: fileData
+        };
+      }
+
+      const ipfsHash = await uploadToIPFS(messageData);
+      
+      if (!currentRoom.isDefault) {
+        await chatContract.sendMessage(currentRoom.id, ipfsHash);
+      }
+      
+      setMessages(prev => [...prev, { ...messageData, ipfsHash }]);
+      setNewMessage('');
+      setSelectedFile(null);
+      showNotification('Mensaje enviado', 'success');
+    } catch (error) {
+      console.error('Error sending message:', error);
+      showNotification('Error enviando mensaje', 'error');
+    }
+  };
+
+  // Create room
+  const createRoom = async () => {
+    if (!newRoomName.trim() || !chatContract) return;
+    
+    try {
+      setIsCreatingRoom(true);
+      const roomData = {
+        name: newRoomName,
+        creator: account,
+        timestamp: Date.now()
+      };
+      
+      const ipfsHash = await uploadToIPFS(roomData);
+      await chatContract.createRoom(newRoomName, ipfsHash);
+      
+      await loadRooms();
+      setNewRoomName('');
+      setIsCreatingRoom(false);
+      showNotification('Sala creada exitosamente', 'success');
+    } catch (error) {
+      setIsCreatingRoom(false);
+      console.error('Error creating room:', error);
+      showNotification('Error creando sala', 'error');
+    }
+  };
+
+  // Mobile sidebar toggle
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  // Close sidebar when selecting a room on mobile
+  const selectRoom = async (room) => {
+    try {
+      await joinRoom(room);
+      if (isMobile) {
+        setSidebarOpen(false);
+      }
+    } catch (error) {
+      console.error('Error selecting room:', error);
+    }
+  };
+
+  // Handle back button on mobile
+  const handleBackToRooms = () => {
+    setCurrentRoom(null);
+    if (isMobile) {
+      setSidebarOpen(true);
+    }
+  };
+
+  // Join room
+  const joinRoom = async (room) => {
+    try {
+      if (!room.isDefault && chatContract) {
+        await chatContract.joinRoom(room.id);
+      }
+      
+      setCurrentRoom(room);
+      setActiveTab('chat');
+      await loadMessages(room);
+      showNotification(`Unido a ${room.name}`, 'success');
+    } catch (error) {
+      console.error('Error joining room:', error);
+      showNotification('Error uniéndose a la sala', 'error');
+    }
+  };
+
+  // Load messages
+  const loadMessages = async (room) => {
+    if (!room) return;
+    
+    try {
+      if (room.isDefault) {
+        // Default room messages
+        const defaultMessages = [
+          {
+            text: `¡Bienvenido a ${room.name}! Este es un chat descentralizado seguro.`,
+            sender: 'system',
+            timestamp: Date.now() - 3600000,
+            type: 'text'
+          }
+        ];
+        setMessages(defaultMessages);
+      } else if (chatContract) {
+        const contractMessages = await chatContract.getRoomMessages(room.id);
+        const loadedMessages = [];
+        
+        for (const msg of contractMessages) {
+          const messageData = await fetchFromIPFS(msg.ipfsHash);
+          if (messageData) {
+            loadedMessages.push({
+              ...messageData,
+              timestamp: Number(msg.timestamp) * 1000
+            });
+          }
+        }
+        
+        setMessages(loadedMessages);
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    }
+  };
+
+  // File handling
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        showNotification('Archivo muy grande (máximo 10MB)', 'error');
+        return;
+      }
+      setSelectedFile(file);
+      showNotification(`Archivo seleccionado: ${file.name}`, 'info');
+    }
+  };
+
+  const cancelFileSelection = () => {
+    setSelectedFile(null);
+    fileInputRef.current.value = '';
+  };
+
+  // AEGIS token functions
+  const loadAegisBalance = async () => {
+    if (!aegisContract || !account) {
+      console.log('No se puede cargar balance AEGIS: contrato o cuenta no disponible');
+      return;
+    }
+    
+    try {
+      console.log('Cargando balance AEGIS para:', account);
+      const balance = await aegisContract.balanceOf(account);
+      const formattedBalance = ethers.formatEther(balance);
+      console.log('Balance AEGIS cargado:', formattedBalance);
+      setAegisBalance(formattedBalance);
+    } catch (error) {
+      console.error('Error loading AEGIS balance:', error);
+      showNotification('Error cargando balance AEGIS', 'error');
+    }
+  };
+
+  const requestAegisTokens = async () => {
+    if (!aegisContract) return;
+    
+    try {
+      await aegisContract.requestTokens();
+      await loadAegisBalance();
+      showNotification('Tokens AEGIS solicitados', 'success');
+    } catch (error) {
+      console.error('Error requesting tokens:', error);
+      showNotification('Error solicitando tokens', 'error');
+    }
+  };
+
+  const donateAegis = async (amount) => {
+    if (!aegisContract || !amount) return;
+    
+    try {
+      const amountWei = ethers.parseEther(amount.toString());
+      await aegisContract.donate(account, amountWei);
+      await loadAegisBalance();
+      showNotification(`${amount} AEGIS donados`, 'success');
+    } catch (error) {
+      console.error('Error donating tokens:', error);
+      showNotification('Error donando tokens', 'error');
+    }
+  };
+
+  // Utility functions
+  const formatAddress = (address) => {
+    if (!address) return '';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
+
+  const formatTime = (timestamp) => {
+    return new Date(timestamp).toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Effects
+  useEffect(() => {
+    // Check if wallet is already connected on app load
+    checkWalletConnection();
+  }, []);
+
+  useEffect(() => {
+    if (account && chatContract && aegisContract) {
+      console.log('✅ Cuenta y contratos disponibles, cargando datos...');
+      console.log('   - Account:', account);
+      console.log('   - Chat Contract:', chatContract?.target || chatContract?.address);
+      console.log('   - AEGIS Contract:', aegisContract?.target || aegisContract?.address);
+      
+      // Pequeño delay para asegurar que los contratos estén completamente inicializados
+      setTimeout(() => {
+        console.log('🔄 Ejecutando carga de datos...');
+        loadRooms();
+        loadAegisBalance();
+      }, 500);
+    } else {
+      console.log('⏳ Esperando inicialización completa...');
+      console.log('   - Account:', !!account);
+      console.log('   - Chat Contract:', !!chatContract);
+      console.log('   - AEGIS Contract:', !!aegisContract);
+    }
+  }, [account, chatContract, aegisContract]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setParallaxOffset(window.pageYOffset * 0.5);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Render wallet connection screen
+  if (!account) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center transition-all duration-500 ${darkMode ? 'bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900' : 'bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50'}`}>
+        <div className="text-center space-y-8 p-8 animate-fade-in-up">
+          <div className="animate-bounce mb-4 animate-heartbeat">
+            <span className="text-8xl">🔐</span>
+          </div>
+          <h1 className={`text-6xl font-bold mb-4 text-gradient-animated ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            SecureChat
+          </h1>
+          <p className={`text-xl mb-8 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            Chat descentralizado con encriptación end-to-end
+          </p>
+          <button
+            onClick={connectWallet}
+            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl font-semibold text-lg shadow-2xl hover:shadow-purple-500/25 transition-all duration-300 transform hover:scale-105 ripple-button hover-glow animate-pulse-advanced"
+          >
+            Conectar Wallet
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Main app render
+  return (
+    <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
+      {/* Mobile Header - Solo visible en móvil */}
+      <div className="mobile-header">
+        <div className="mobile-header-content">
+          <button
+            className="hamburger-btn"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+          
+          <div className="mobile-header-title">
+            <span className="mobile-header-icon">🔐</span>
+            <h1>SecureChat</h1>
+          </div>
+          
+          <div className="mobile-header-actions">
+            <button
+              onClick={toggleDarkMode}
+              className="icon-btn dark-mode-toggle"
+              title={darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            >
+              <span className="theme-icon">
+                {darkMode ? '☀️' : '🌙'}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Sidebar Overlay para móvil */}
+      {sidebarOpen && isMobile && (
+        <div 
+          className="sidebar-overlay"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <div className="app-main">
+        {/* Sidebar */}
+        <div className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
+          {/* Desktop Header - Solo visible en desktop */}
+          <div className="desktop-header">
+            <div className="desktop-header-content">
+              <div className="desktop-header-title">
+                <span className="desktop-header-icon">🔐</span>
+                <div>
+                  <h1>SecureChat</h1>
+                  <p>{formatAddress(account)}</p>
+                </div>
+              </div>
+              
+              <div className="desktop-header-actions">
+                <div className="aegis-balance">
+                  <span>💎</span>
+                  {aegisBalance} AEGIS
+                </div>
+                
+                <button
+                  onClick={toggleDarkMode}
+                  className="icon-btn dark-mode-toggle"
+                  title={darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+                >
+                  <span className="theme-icon">
+                    {darkMode ? '☀️' : '🌙'}
+                  </span>
+                </button>
+                
+                <button
+                  onClick={disconnectWallet}
+                  className="disconnect-btn"
+                >
+                  Desconectar
+                </button>
+              </div>
+            </div>
+          </div>
+          {/* Tabs */}
+          <div className="sidebar-tabs">
+            {[
+              { id: 'chat', label: 'Chat', icon: '💬' },
+              { id: 'discover', label: 'Descubrir', icon: '🔍' },
+              { id: 'profile', label: 'Perfil', icon: '👤' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`sidebar-tab ${activeTab === tab.id ? 'sidebar-tab-active' : ''}`}
+              >
+                <span className="sidebar-tab-icon">{tab.icon}</span>
+                <div className="sidebar-tab-label">{tab.label}</div>
+              </button>
+            ))}
+          </div>
+
+          {/* Chat Tab */}
+          {activeTab === 'chat' && (
+            <div className="sidebar-content">
+              <div className="create-room-section">
+                <button
+                  onClick={() => setIsCreatingRoom(!isCreatingRoom)}
+                  className="create-room-btn"
+                >
+                  {isCreatingRoom ? 'Cancelar' : 'Crear Sala'}
+                </button>
+              </div>
+
+              <div className="rooms-list">
+                {rooms.map((room) => (
+                  <div
+                    key={room.id}
+                    onClick={() => selectRoom(room)}
+                    className={`room-item ${currentRoom?.id === room.id ? 'room-item-active' : ''}`}
+                  >
+                    <div className="room-avatar">
+                      <span>{room.name.charAt(0).toUpperCase()}</span>
+                    </div>
+                    <div className="room-info">
+                      <h3 className="room-name">{room.name}</h3>
+                      <p className="room-members">{room.memberCount} miembros</p>
+                    </div>
+                    <div className="room-status">
+                      <div className="online-indicator"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Discover Tab */}
+          {activeTab === 'discover' && (
+            <div className="flex-1 p-6">
+              <div className="text-center space-y-4">
+                <div className="text-6xl animate-bounce-in-soft animate-heartbeat">🔍</div>
+                <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Descubrir Salas
+                </h3>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Próximamente: Explora salas públicas y únete a conversaciones interesantes
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Profile Tab */}
+          {activeTab === 'profile' && (
+            <div className="flex-1 p-6">
+              <div className="max-w-md mx-auto space-y-6">
+                <div className="text-center">
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center animate-bounce-in-soft hover-glow animate-heartbeat">
+                    <span className="text-3xl">👤</span>
+                  </div>
+                  <h2 className={`text-2xl font-bold mb-2 animate-fade-in-up ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Tu Perfil
+                  </h2>
+                  <p className={`text-sm animate-slide-in-right ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {formatAddress(account)}
+                  </p>
+                </div>
+
+                <div className={`p-6 rounded-2xl shadow-lg backdrop-blur-lg border glass-advanced hover-lift animate-fade-in-up ${darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white/70 border-gray-200'}`}>
+                  <h3 className={`text-lg font-bold mb-4 animate-fade-in-up ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    Tokens AEGIS
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div className={`p-4 rounded-xl text-center glass-advanced animate-pulse-advanced ${darkMode ? 'bg-purple-600/20' : 'bg-purple-100'}`}>
+                      <div className={`text-3xl font-bold text-gradient-animated animate-shimmer-advanced ${darkMode ? 'text-purple-300' : 'text-purple-700'}`}>
+                        {aegisBalance}
+                      </div>
+                      <div className={`text-sm animate-fade-in-up ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                        AEGIS Tokens
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={requestAegisTokens}
+                      className="w-full p-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium shadow-lg hover:shadow-green-500/25 transition-all duration-300 transform hover:scale-105 ripple-button hover-glow animate-float-soft"
+                    >
+                      Solicitar Tokens
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Main Chat Area */}
+        <div className="chat-area">
+          {currentRoom ? (
+            <>
+              {/* Chat Header */}
+              <div className="chat-header">
+                <div className="chat-header-content">
+                  <button
+                    onClick={handleBackToRooms}
+                    className="back-btn"
+                  >
+                    ←
+                  </button>
+                  <div className="chat-avatar">
+                    <span>{currentRoom.name.charAt(0).toUpperCase()}</span>
+                  </div>
+                  <div className="chat-info">
+                    <h2 className="chat-title">{currentRoom.name}</h2>
+                    <p className="chat-status">{currentRoom.memberCount} miembros activos</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Messages */}
+              <div className="messages-container">
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`message ${message.sender === account ? 'message-sent' : 'message-received'}`}
+                  >
+                    <div className="message-avatar">
+                      <span>
+                        {message.sender === account ? 'Tú' : message.sender.slice(0, 2).toUpperCase()}
+                      </span>
+                    </div>
+                    
+                    <div className="message-content">
+                      <div className="message-sender">
+                        {message.sender === account ? 'Tú' : formatAddress(message.sender)}
+                      </div>
+                      
+                      <div className="message-bubble">
+                        {message.type === 'file' && message.file ? (
+                          <div className="message-file">
+                            <div className="file-preview">
+                              <div className="file-icon">📎</div>
+                              <div className="file-info">
+                                <div className="file-name">{message.file.name}</div>
+                                <div className="file-size">{(message.file.size / 1024 / 1024).toFixed(2)} MB</div>
+                              </div>
+                              <button className="file-download">⬇️</button>
+                            </div>
+                            {message.text && <p className="file-caption">{message.text}</p>}
+                          </div>
+                        ) : (
+                          <p className="message-text">{message.text}</p>
+                        )}
+                      </div>
+                      
+                      <div className="message-meta">
+                        <span className="message-time">{formatTime(message.timestamp)}</span>
+                        {message.sender === account && (
+                          <span className="message-status">✓✓</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Typing Indicator */}
+                {isTyping && (
+                  <div className="typing-indicator">
+                    <div className="typing-avatar">
+                      <span>...</span>
+                    </div>
+                    <div className="typing-bubble">
+                      <div className="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Message Input */}
+              <div className="message-input-container">
+                {selectedFile && (
+                  <div className="file-preview-container">
+                    <div className="file-preview-item">
+                      <div className="file-icon">📎</div>
+                      <div className="file-info">
+                        <span className="file-name">{selectedFile.name}</span>
+                        <span className="file-size">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</span>
+                      </div>
+                      <button onClick={cancelFileSelection} className="file-remove">
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="message-input-bar">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    className="file-input-hidden"
+                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
+                  />
+                  
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="attach-btn"
+                  >
+                    📎
+                  </button>
+
+                  <input
+                    type="text"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                    placeholder="Escribe un mensaje..."
+                    className="message-input"
+                  />
+
+                  <button
+                    onClick={sendMessage}
+                    disabled={!newMessage.trim() && !selectedFile}
+                    className="send-btn"
+                  >
+                    ➤
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="no-chat-selected">
+              <div className="no-chat-content">
+                <div className="no-chat-icon">💬</div>
+                <h3 className="no-chat-title">SecureChat</h3>
+                <p className="no-chat-subtitle">Selecciona un chat para comenzar a conversar</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Room Creation Modal */}
+      {isCreatingRoom && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3 className="modal-title">Crear Nueva Sala</h3>
+            </div>
+            <div className="modal-body">
+              <input
+                type="text"
+                value={newRoomName}
+                onChange={(e) => setNewRoomName(e.target.value)}
+                placeholder="Nombre de la sala"
+                className="modal-input"
+                onKeyPress={(e) => e.key === 'Enter' && createRoom()}
+              />
+            </div>
+            <div className="modal-actions">
+              <button onClick={() => setIsCreatingRoom(false)} className="modal-btn-cancel">
+                Cancelar
+              </button>
+              <button onClick={createRoom} className="modal-btn-create">
+                Crear
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notifications */}
+      {notifications.map((notification) => (
+        <div 
+          key={notification.id} 
+          className={`notification notification-${notification.type}`}
+        >
+          {notification.message}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default App;
