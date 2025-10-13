@@ -155,7 +155,7 @@ jupyterlab==4.0.9              # JupyterLab interface
 build==1.0.3                   # Build frontend
 wheel==0.42.0                  # Wheel building
 setuptools==69.0.3             # Package setup tools
-twine==4.0.2                   # Package uploading
+twine==6.2.0                   # Package uploading
 
 # Version management
 bump2version==1.0.1            # Version bumping utility
