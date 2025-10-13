@@ -1,4 +1,4 @@
-# 🛡️ AEGIS Framework - Sistema de IA Distribuida y Segura
+# 🛡️ AEGIS Framework - Sistema de IA Distribuida Segura
 
 <div align="center">
 
@@ -898,7 +898,7 @@ Este proyecto está licenciado bajo la **Licencia MIT con Cláusulas de Uso Éti
 <div align="center">
 
 **🛡️ AEGIS Framework v2.1**  
-*Desarrollado por AEGIS - Analista Experto en Gestión de Información y Seguridad*  
+*Desarrollado por KaseMaster para AEGIS - Analista Experto en Gestión de Información y Seguridad*  
 *Para uso ético únicamente*
 
 [![CI Status](https://github.com/KaseMaster/Open-A.G.I/actions/workflows/ci.yml/badge.svg)](https://github.com/KaseMaster/Open-A.G.I/actions/workflows/ci.yml)
