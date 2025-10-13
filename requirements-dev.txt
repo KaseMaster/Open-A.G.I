@@ -235,7 +235,7 @@ lingua==4.15.0                 # Translation string extraction
 
 # Terminal utilities
 colorama==0.4.6                # Cross-platform colored terminal text
-termcolor==2.4.0               # Terminal color utilities
+termcolor==3.1.0               # Terminal color utilities
 tqdm==4.66.1                   # Progress bars
 
 # System utilities
