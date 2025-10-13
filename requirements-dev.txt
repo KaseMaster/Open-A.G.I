@@ -10,7 +10,7 @@
 # Code Formatting and Linting
 black==23.12.1                 # Code formatter
 isort==5.13.2                  # Import sorter
-pylint==3.0.3                  # Code linter
+pylint==3.3.9                  # Code linter
 flake8==7.0.0                  # Style guide enforcement
 mypy==1.8.0                    # Static type checker
 bandit==1.7.5                  # Security linter
