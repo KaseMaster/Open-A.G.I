@@ -28,62 +28,16 @@ from enum import Enum
 import threading
 import queue
 import psutil
-
-# Importaciones condicionales
-try:
-    import GPUtil
-    GPUTIL_AVAILABLE = True
-except ImportError:
-    GPUtil = None
-    GPUTIL_AVAILABLE = False
-    logging.warning("GPUtil no está disponible. Funcionalidad GPU deshabilitada.")
-
-try:
-    import networkx as nx
-    NETWORKX_AVAILABLE = True
-except ImportError:
-    nx = None
-    NETWORKX_AVAILABLE = False
-    logging.warning("NetworkX no está disponible. Análisis de grafos deshabilitado.")
-
-try:
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    PLOTTING_AVAILABLE = True
-except ImportError:
-    plt = None
-    sns = None
-    PLOTTING_AVAILABLE = False
-    logging.warning("Matplotlib/Seaborn no están disponibles. Visualización deshabilitada.")
-
-try:
-    from sklearn.ensemble import IsolationForest, RandomForestRegressor
-    from sklearn.preprocessing import StandardScaler
-    from sklearn.cluster import DBSCAN
-    import joblib
-    SKLEARN_AVAILABLE = True
-except ImportError:
-    IsolationForest = None
-    RandomForestRegressor = None
-    StandardScaler = None
-    DBSCAN = None
-    joblib = None
-    SKLEARN_AVAILABLE = False
-    logging.warning("Scikit-learn no está disponible. ML deshabilitado.")
-
+import GPUtil
+import networkx as nx
 from collections import defaultdict, deque
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.ensemble import IsolationForest, RandomForestRegressor
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import DBSCAN
+import joblib
 import warnings
-
-try:
-    import lz4.frame
-    LZ4_AVAILABLE = True
-except ImportError:
-    lz4 = None
-    LZ4_AVAILABLE = False
-    logging.warning("lz4 no está disponible. Compresión deshabilitada.")
-
-import hashlib
-from concurrent.futures import ThreadPoolExecutor
 warnings.filterwarnings('ignore')
 
 # Configuración de logging
@@ -112,8 +66,6 @@ class OptimizationType(Enum):
     SCALING = "scaling"
     MEMORY_MANAGEMENT = "memory_management"
     NETWORK_OPTIMIZATION = "network_optimization"
-    BATCH_PROCESSING = "batch_processing"
-    COMPRESSION = "compression"
 
 class PerformanceLevel(Enum):
     """Niveles de rendimiento"""
@@ -129,38 +81,6 @@ class OptimizationPriority(Enum):
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
-
-@dataclass
-class BatchOperation:
-    """Operación para procesamiento en lote"""
-    operation_id: str
-    operation_type: str
-    data: Any
-    priority: int = 1
-    timestamp: float = 0.0
-    callback: Optional[Callable] = None
-    compressed: bool = False
-    checksum: str = ""
-
-@dataclass
-class CompressionStats:
-    """Estadísticas de compresión"""
-    bytes_compressed: int = 0
-    bytes_decompressed: int = 0
-    compression_ratio: float = 1.0
-    compression_time: float = 0.0
-    decompression_time: float = 0.0
-    operations_count: int = 0
-
-@dataclass
-class BatchStats:
-    """Estadísticas de procesamiento en lote"""
-    operations_processed: int = 0
-    batches_processed: int = 0
-    average_batch_size: float = 0.0
-    processing_time: float = 0.0
-    queue_size: int = 0
-    throughput: float = 0.0
 
 @dataclass
 class PerformanceMetric:
@@ -231,417 +151,6 @@ class PerformanceBaseline:
     created_at: float
     sample_count: int
     confidence_interval: float = 0.95
-
-class BatchProcessor:
-    """Procesador de operaciones en lote para optimizar rendimiento"""
-    
-    def __init__(self, batch_size: int = 100, flush_interval: float = 1.0):
-        self.batch_size = batch_size
-        self.flush_interval = flush_interval
-        self.batches: Dict[str, List[BatchOperation]] = defaultdict(list)
-        self.processors: Dict[str, Callable] = {}
-        self.running = False
-        self.stats = BatchStats()
-        self.compression_manager = CompressionManager()
-        self._lock = threading.Lock()
-        
-    def register_processor(self, operation_type: str, processor: Callable):
-        """Registra un procesador para un tipo de operación"""
-        self.processors[operation_type] = processor
-        logger.info(f"📝 Registrado procesador para operaciones tipo: {operation_type}")
-    
-    async def add_operation(self, operation: BatchOperation):
-        """Añade operación al lote correspondiente"""
-        operation.timestamp = time.time()
-        
-        # Comprimir datos si es necesario
-        if len(str(operation.data)) > 1024:  # Comprimir si > 1KB
-            compressed_data = self.compression_manager.compress_data(operation.data)
-            operation.data = compressed_data
-            operation.compressed = True
-            operation.checksum = hashlib.sha256(str(operation.data).encode()).hexdigest()[:16]
-        
-        with self._lock:
-            self.batches[operation.operation_type].append(operation)
-            self.stats.queue_size = sum(len(batch) for batch in self.batches.values())
-        
-        # Procesar inmediatamente si el lote está lleno
-        if len(self.batches[operation.operation_type]) >= self.batch_size:
-            await self._process_batch(operation.operation_type)
-    
-    async def start(self):
-        """Inicia el procesador de lotes"""
-        self.running = True
-        logger.info("🚀 Iniciando procesador de lotes inteligente")
-        
-        # Tarea de flush periódico
-        asyncio.create_task(self._periodic_flush())
-    
-    async def _periodic_flush(self):
-        """Procesa lotes periódicamente"""
-        while self.running:
-            try:
-                for operation_type in list(self.batches.keys()):
-                    if self.batches[operation_type]:
-                        await self._process_batch(operation_type)
-                
-                await asyncio.sleep(self.flush_interval)
-                
-            except Exception as e:
-                logger.error(f"❌ Error en flush periódico: {e}")
-                await asyncio.sleep(1)
-    
-    async def _process_batch(self, operation_type: str):
-        """Procesa un lote de operaciones"""
-        if operation_type not in self.processors:
-            logger.warning(f"⚠️ No hay procesador para tipo: {operation_type}")
-            return
-        
-        with self._lock:
-            batch = self.batches[operation_type].copy()
-            self.batches[operation_type].clear()
-        
-        if not batch:
-            return
-        
-        start_time = time.time()
-        
-        try:
-            # Descomprimir operaciones si es necesario
-            for operation in batch:
-                if operation.compressed:
-                    operation.data = self.compression_manager.decompress_data(operation.data)
-                    operation.compressed = False
-            
-            # Procesar lote
-            processor = self.processors[operation_type]
-            await processor(batch)
-            
-            # Actualizar estadísticas
-            processing_time = time.time() - start_time
-            self.stats.operations_processed += len(batch)
-            self.stats.batches_processed += 1
-            self.stats.processing_time += processing_time
-            self.stats.average_batch_size = (
-                self.stats.operations_processed / self.stats.batches_processed
-            )
-            self.stats.throughput = (
-                self.stats.operations_processed / self.stats.processing_time
-                if self.stats.processing_time > 0 else 0
-            )
-            
-            logger.info(f"✅ Procesado lote de {len(batch)} operaciones tipo {operation_type} en {processing_time:.3f}s")
-            
-        except Exception as e:
-            logger.error(f"❌ Error procesando lote {operation_type}: {e}")
-            # Reencolar operaciones fallidas
-            with self._lock:
-                self.batches[operation_type].extend(batch)
-
-class CompressionManager:
-    """Gestor de compresión LZ4 para datos y comunicaciones"""
-    
-    def __init__(self, compression_level: int = 1):
-        self.compression_level = compression_level
-        self.stats = CompressionStats()
-        self._lock = threading.Lock()
-    
-    def compress_data(self, data: Any) -> bytes:
-        """Comprime datos usando LZ4"""
-        start_time = time.time()
-        
-        try:
-            # Serializar a JSON si no es bytes
-            if not isinstance(data, bytes):
-                data = json.dumps(data, separators=(',', ':')).encode('utf-8')
-            
-            # Comprimir con LZ4
-            compressed = lz4.frame.compress(
-                data, 
-                compression_level=self.compression_level,
-                auto_flush=True
-            )
-            
-            # Actualizar estadísticas
-            with self._lock:
-                compression_time = time.time() - start_time
-                self.stats.bytes_compressed += len(data)
-                self.stats.compression_time += compression_time
-                self.stats.operations_count += 1
-                
-                ratio = len(compressed) / len(data) if len(data) > 0 else 1.0
-                self.stats.compression_ratio = (
-                    (self.stats.compression_ratio * (self.stats.operations_count - 1) + ratio) / 
-                    self.stats.operations_count
-                )
-            
-            logger.debug(f"🗜️ Comprimido {len(data)} bytes a {len(compressed)} bytes (ratio: {ratio:.3f})")
-            
-            return compressed
-            
-        except Exception as e:
-            logger.error(f"❌ Error comprimiendo datos: {e}")
-            return data if isinstance(data, bytes) else json.dumps(data).encode('utf-8')
-    
-    def decompress_data(self, compressed_data: bytes) -> Any:
-        """Descomprime datos LZ4"""
-        start_time = time.time()
-        
-        try:
-            # Descomprimir
-            decompressed = lz4.frame.decompress(compressed_data)
-            
-            # Actualizar estadísticas
-            with self._lock:
-                decompression_time = time.time() - start_time
-                self.stats.bytes_decompressed += len(decompressed)
-                self.stats.decompression_time += decompression_time
-            
-            # Intentar deserializar JSON
-            try:
-                return json.loads(decompressed.decode('utf-8'))
-            except (json.JSONDecodeError, UnicodeDecodeError) as e:
-                logger.warning(f"No se pudo deserializar como JSON: {e}. Retornando datos descomprimidos")
-                return decompressed
-            except Exception as e:
-                logger.error(f"Error inesperado deserializando: {e}")
-                return decompressed
-                
-        except Exception as e:
-            logger.error(f"❌ Error descomprimiendo datos: {e}")
-            return compressed_data
-
-class BatchOptimizer:
-    """Optimizador específico para procesamiento en lote"""
-    
-    def analyze(self, metrics_by_type: Dict[MetricType, List[PerformanceMetric]], 
-                anomalies: List[PerformanceAnomaly]) -> List[OptimizationRecommendation]:
-        """Analiza métricas para optimizaciones de batching"""
-        recommendations = []
-        
-        # Analizar métricas de cola
-        queue_metrics = metrics_by_type.get(MetricType.QUEUE_SIZE, [])
-        if queue_metrics:
-            recommendations.extend(self._analyze_queue_performance(queue_metrics))
-        
-        # Analizar throughput
-        throughput_metrics = metrics_by_type.get(MetricType.THROUGHPUT, [])
-        if throughput_metrics:
-            recommendations.extend(self._analyze_throughput_patterns(throughput_metrics))
-        
-        return recommendations
-    
-    def _analyze_queue_performance(self, queue_metrics: List[PerformanceMetric]) -> List[OptimizationRecommendation]:
-        """Analiza rendimiento de colas"""
-        recommendations = []
-        
-        if not queue_metrics:
-            return recommendations
-        
-        avg_queue_size = statistics.mean([m.value for m in queue_metrics])
-        max_queue_size = max([m.value for m in queue_metrics])
-        
-        # Cola muy grande - aumentar batch size o reducir flush interval
-        if avg_queue_size > 500:
-            recommendations.append(OptimizationRecommendation(
-                recommendation_id=f"batch_opt_{int(time.time())}",
-                optimization_type=OptimizationType.BATCH_PROCESSING,
-                priority=OptimizationPriority.HIGH,
-                description=f"Aumentar tamaño de lote para reducir cola (promedio: {avg_queue_size:.0f})",
-                expected_improvement=25.0,
-                implementation_cost=1.0,
-                risk_level="low",
-                target_nodes=[m.node_id for m in queue_metrics],
-                target_services=list(set([m.service_name for m in queue_metrics])),
-                parameters={
-                    "action": "increase_batch_size",
-                    "current_avg_queue": avg_queue_size,
-                    "suggested_batch_size": min(200, int(avg_queue_size * 0.3))
-                }
-            ))
-        
-        # Cola muy pequeña - optimizar para latencia
-        elif avg_queue_size < 10:
-            recommendations.append(OptimizationRecommendation(
-                recommendation_id=f"batch_opt_{int(time.time())}_latency",
-                optimization_type=OptimizationType.BATCH_PROCESSING,
-                priority=OptimizationPriority.MEDIUM,
-                description=f"Reducir flush interval para mejorar latencia (cola pequeña: {avg_queue_size:.0f})",
-                expected_improvement=15.0,
-                implementation_cost=0.5,
-                risk_level="low",
-                target_nodes=[m.node_id for m in queue_metrics],
-                target_services=list(set([m.service_name for m in queue_metrics])),
-                parameters={
-                    "action": "reduce_flush_interval",
-                    "current_avg_queue": avg_queue_size,
-                    "suggested_flush_interval": 0.5
-                }
-            ))
-        
-        return recommendations
-    
-    def _analyze_throughput_patterns(self, throughput_metrics: List[PerformanceMetric]) -> List[OptimizationRecommendation]:
-        """Analiza patrones de throughput"""
-        recommendations = []
-        
-        if len(throughput_metrics) < 10:
-            return recommendations
-        
-        throughput_values = [m.value for m in throughput_metrics]
-        avg_throughput = statistics.mean(throughput_values)
-        throughput_std = statistics.stdev(throughput_values)
-        
-        # Throughput muy variable - necesita optimización
-        if throughput_std / avg_throughput > 0.3:  # CV > 30%
-            recommendations.append(OptimizationRecommendation(
-                recommendation_id=f"throughput_opt_{int(time.time())}",
-                optimization_type=OptimizationType.BATCH_PROCESSING,
-                priority=OptimizationPriority.HIGH,
-                description=f"Estabilizar throughput variable (CV: {throughput_std/avg_throughput:.2f})",
-                expected_improvement=20.0,
-                implementation_cost=2.0,
-                risk_level="medium",
-                target_nodes=[m.node_id for m in throughput_metrics],
-                target_services=list(set([m.service_name for m in throughput_metrics])),
-                parameters={
-                    "action": "stabilize_throughput",
-                    "current_avg": avg_throughput,
-                    "current_cv": throughput_std / avg_throughput,
-                    "suggested_adaptive_batching": True
-                }
-            ))
-        
-        return recommendations
-    
-    async def implement(self, recommendation: OptimizationRecommendation) -> bool:
-        """Implementa optimización de batching"""
-        try:
-            action = recommendation.parameters.get("action")
-            
-            if action == "increase_batch_size":
-                return await self._increase_batch_size(recommendation)
-            elif action == "reduce_flush_interval":
-                return await self._reduce_flush_interval(recommendation)
-            elif action == "stabilize_throughput":
-                return await self._implement_adaptive_batching(recommendation)
-            
-            return False
-            
-        except Exception as e:
-            logger.error(f"❌ Error implementando optimización de batching: {e}")
-            return False
-    
-    async def _increase_batch_size(self, recommendation: OptimizationRecommendation) -> bool:
-        """Aumenta el tamaño de lote"""
-        logger.info(f"📈 Aumentando tamaño de lote según recomendación")
-        # Implementación específica del sistema
-        return True
-    
-    async def _reduce_flush_interval(self, recommendation: OptimizationRecommendation) -> bool:
-        """Reduce el intervalo de flush"""
-        logger.info(f"⚡ Reduciendo intervalo de flush para mejorar latencia")
-        # Implementación específica del sistema
-        return True
-    
-    async def _implement_adaptive_batching(self, recommendation: OptimizationRecommendation) -> bool:
-        """Implementa batching adaptativo"""
-        logger.info(f"🎯 Implementando batching adaptativo para estabilizar throughput")
-        # Implementación específica del sistema
-        return True
-
-class CompressionOptimizer:
-    """Optimizador específico para compresión"""
-    
-    def analyze(self, metrics_by_type: Dict[MetricType, List[PerformanceMetric]], 
-                anomalies: List[PerformanceAnomaly]) -> List[OptimizationRecommendation]:
-        """Analiza métricas para optimizaciones de compresión"""
-        recommendations = []
-        
-        # Analizar uso de memoria vs throughput
-        memory_metrics = metrics_by_type.get(MetricType.MEMORY_USAGE, [])
-        throughput_metrics = metrics_by_type.get(MetricType.THROUGHPUT, [])
-        
-        if memory_metrics and throughput_metrics:
-            recommendations.extend(self._analyze_compression_tradeoffs(memory_metrics, throughput_metrics))
-        
-        return recommendations
-    
-    def _analyze_compression_tradeoffs(self, memory_metrics: List[PerformanceMetric], 
-                                     throughput_metrics: List[PerformanceMetric]) -> List[OptimizationRecommendation]:
-        """Analiza trade-offs de compresión"""
-        recommendations = []
-        
-        avg_memory = statistics.mean([m.value for m in memory_metrics])
-        avg_throughput = statistics.mean([m.value for m in throughput_metrics])
-        
-        # Memoria alta, throughput bajo - aumentar compresión
-        if avg_memory > 80 and avg_throughput < 100:
-            recommendations.append(OptimizationRecommendation(
-                recommendation_id=f"compression_opt_{int(time.time())}",
-                optimization_type=OptimizationType.COMPRESSION,
-                priority=OptimizationPriority.HIGH,
-                description=f"Aumentar compresión para reducir uso de memoria ({avg_memory:.1f}%)",
-                expected_improvement=30.0,
-                implementation_cost=1.5,
-                risk_level="low",
-                target_nodes=[m.node_id for m in memory_metrics],
-                target_services=list(set([m.service_name for m in memory_metrics])),
-                parameters={
-                    "action": "increase_compression",
-                    "current_memory": avg_memory,
-                    "current_throughput": avg_throughput,
-                    "suggested_level": 6
-                }
-            ))
-        
-        # Memoria baja, throughput alto - reducir compresión para velocidad
-        elif avg_memory < 50 and avg_throughput > 500:
-            recommendations.append(OptimizationRecommendation(
-                recommendation_id=f"compression_speed_{int(time.time())}",
-                optimization_type=OptimizationType.COMPRESSION,
-                priority=OptimizationPriority.MEDIUM,
-                description=f"Reducir compresión para mejorar velocidad (memoria: {avg_memory:.1f}%)",
-                expected_improvement=15.0,
-                implementation_cost=0.5,
-                risk_level="low",
-                target_nodes=[m.node_id for m in memory_metrics],
-                target_services=list(set([m.service_name for m in memory_metrics])),
-                parameters={
-                    "action": "reduce_compression",
-                    "current_memory": avg_memory,
-                    "current_throughput": avg_throughput,
-                    "suggested_level": 1
-                }
-            ))
-        
-        return recommendations
-    
-    async def implement(self, recommendation: OptimizationRecommendation) -> bool:
-        """Implementa optimización de compresión"""
-        try:
-            action = recommendation.parameters.get("action")
-            
-            if action == "increase_compression":
-                return await self._increase_compression_level(recommendation)
-            elif action == "reduce_compression":
-                return await self._reduce_compression_level(recommendation)
-            
-            return False
-            
-        except Exception as e:
-            logger.error(f"❌ Error implementando optimización de compresión: {e}")
-            return False
-    
-    async def _increase_compression_level(self, recommendation: OptimizationRecommendation) -> bool:
-        """Aumenta el nivel de compresión"""
-        logger.info(f"🗜️ Aumentando nivel de compresión para ahorrar memoria")
-        return True
-    
-    async def _reduce_compression_level(self, recommendation: OptimizationRecommendation) -> bool:
-        """Reduce el nivel de compresión"""
-        logger.info(f"⚡ Reduciendo nivel de compresión para mejorar velocidad")
-        return True
 
 class MetricsCollector:
     """Recolector de métricas de rendimiento"""
@@ -2007,20 +1516,10 @@ class PerformanceOptimizerOrchestrator:
         self.performance_optimizer = PerformanceOptimizer()
         self.performance_reporter = PerformanceReporter()
         
-        # Nuevos componentes de optimización
-        self.batch_processor = BatchProcessor(batch_size=100, flush_interval=1.0)
-        self.compression_manager = CompressionManager(compression_level=1)
-        self.batch_optimizer = BatchOptimizer()
-        self.compression_optimizer = CompressionOptimizer()
-        
         # Estado del sistema
         self.is_running = False
         self.analysis_thread = None
         self.last_analysis = 0
-        
-        # Estadísticas de rendimiento
-        self.batch_stats = BatchStats()
-        self.compression_stats = CompressionStats()
         
         # Configuración
         self.config = {
@@ -2028,12 +1527,7 @@ class PerformanceOptimizerOrchestrator:
             "max_concurrent_optimizations": 3,
             "optimization_cooldown": 1800,  # 30 minutos
             "baseline_training_period": 3600,  # 1 hora
-            "anomaly_sensitivity": 0.1,
-            "enable_batching": True,
-            "enable_compression": True,
-            "batch_size": 100,
-            "compression_level": 1,
-            "compression_threshold": 1024  # bytes
+            "anomaly_sensitivity": 0.1
         }
         
         logger.info("🎯 Orquestador de optimización de rendimiento inicializado")
@@ -2049,11 +1543,6 @@ class PerformanceOptimizerOrchestrator:
             
             # Iniciar recolección de métricas
             self.metrics_collector.start_collection()
-            
-            # Iniciar procesamiento por lotes si está habilitado
-            if self.config["enable_batching"]:
-                await self.batch_processor.start()
-                logger.info("📦 Procesamiento por lotes iniciado")
             
             # Iniciar análisis periódico
             self.analysis_thread = threading.Thread(target=self._analysis_loop)
@@ -2147,41 +1636,13 @@ class PerformanceOptimizerOrchestrator:
             # Detectar anomalías
             anomalies = self.anomaly_detector.detect_anomalies(recent_metrics)
             
-            # Generar recomendaciones base
+            # Generar recomendaciones
             recommendations = self.performance_optimizer.analyze_performance(recent_metrics, anomalies)
-            
-            # Análisis adicional con nuevos optimizadores
-            metrics_by_type = {}
-            for metric in recent_metrics:
-                if metric.metric_type not in metrics_by_type:
-                    metrics_by_type[metric.metric_type] = []
-                metrics_by_type[metric.metric_type].append(metric)
-            
-            # Análisis de batching si está habilitado
-            if self.config.get("enable_batching", False) and self.batch_optimizer:
-                batch_recommendations = self.batch_optimizer.analyze(metrics_by_type, anomalies)
-                recommendations.extend(batch_recommendations)
-                logger.info(f"🔄 Recomendaciones de batching: {len(batch_recommendations)}")
-            
-            # Análisis de compresión si está habilitado
-            if self.config.get("enable_compression", False) and self.compression_optimizer:
-                compression_recommendations = self.compression_optimizer.analyze(metrics_by_type, anomalies)
-                recommendations.extend(compression_recommendations)
-                logger.info(f"🗜️ Recomendaciones de compresión: {len(compression_recommendations)}")
             
             # Generar reporte
             report = self.performance_reporter.generate_performance_report(
                 recent_metrics, anomalies, recommendations
             )
-            
-            # Agregar estadísticas de batching y compresión al reporte
-            if self.batch_processor:
-                batch_stats = self.batch_processor.get_stats()
-                report["batch_stats"] = asdict(batch_stats)
-            
-            if self.compression_manager:
-                compression_stats = self.compression_manager.get_stats()
-                report["compression_stats"] = asdict(compression_stats)
             
             # Log resumen
             logger.info(f"📊 Análisis completado:")
@@ -2189,16 +1650,6 @@ class PerformanceOptimizerOrchestrator:
             logger.info(f"   - Anomalías detectadas: {len(anomalies)}")
             logger.info(f"   - Recomendaciones generadas: {len(recommendations)}")
             logger.info(f"   - Score de rendimiento: {report.get('performance_score', {}).get('score', 'N/A')}")
-            
-            if self.batch_processor:
-                batch_stats = self.batch_processor.get_stats()
-                logger.info(f"   - Operaciones en batch: {batch_stats.operations_processed}")
-                logger.info(f"   - Throughput de batch: {batch_stats.throughput:.2f} ops/s")
-            
-            if self.compression_manager:
-                compression_stats = self.compression_manager.get_stats()
-                logger.info(f"   - Ratio de compresión: {compression_stats.compression_ratio:.2f}")
-                logger.info(f"   - Bytes comprimidos: {compression_stats.bytes_compressed}")
             
             # Implementar optimizaciones automáticas si está habilitado
             if self.config["enable_auto_optimization"]:
@@ -2224,56 +1675,6 @@ class PerformanceOptimizerOrchestrator:
             # Limitar número de optimizaciones concurrentes
             max_concurrent = self.config["max_concurrent_optimizations"]
             current_active = len(self.performance_optimizer.active_optimizations)
-            
-            available_slots = max_concurrent - current_active
-            if available_slots <= 0:
-                logger.info("⏸️ Máximo de optimizaciones concurrentes alcanzado")
-                return
-            
-            # Implementar optimizaciones por tipo
-            implemented_count = 0
-            for recommendation in auto_recommendations[:available_slots]:
-                try:
-                    success = False
-                    
-                    # Implementar según el tipo de optimización
-                    if recommendation.optimization_type == OptimizationType.BATCH_PROCESSING:
-                        if self.batch_optimizer:
-                            success = await self.batch_optimizer.implement(recommendation)
-                    
-                    elif recommendation.optimization_type == OptimizationType.COMPRESSION:
-                        if self.compression_optimizer:
-                            success = await self.compression_optimizer.implement(recommendation)
-                    
-                    elif recommendation.optimization_type == OptimizationType.RESOURCE_ALLOCATION:
-                        success = await self.performance_optimizer.resource_optimizer.implement(recommendation)
-                    
-                    elif recommendation.optimization_type == OptimizationType.LOAD_BALANCING:
-                        success = await self.performance_optimizer.load_balancer_optimizer.implement(recommendation)
-                    
-                    elif recommendation.optimization_type == OptimizationType.CACHING:
-                        success = await self.performance_optimizer.cache_optimizer.implement(recommendation)
-                    
-                    elif recommendation.optimization_type == OptimizationType.ALGORITHM_TUNING:
-                        success = await self.performance_optimizer.algorithm_optimizer.implement(recommendation)
-                    
-                    else:
-                        # Usar el optimizador general
-                        success = await self.performance_optimizer.implement_recommendation(recommendation)
-                    
-                    if success:
-                        implemented_count += 1
-                        logger.info(f"✅ Optimización implementada: {recommendation.description}")
-                    else:
-                        logger.warning(f"⚠️ Falló implementación: {recommendation.description}")
-                
-                except Exception as e:
-                    logger.error(f"❌ Error implementando optimización {recommendation.recommendation_id}: {e}")
-            
-            logger.info(f"🔧 Optimizaciones auto-implementadas: {implemented_count}/{len(auto_recommendations)}")
-            
-        except Exception as e:
-            logger.error(f"❌ Error en auto-implementación: {e}")
             
             available_slots = max_concurrent - current_active
             auto_recommendations = auto_recommendations[:available_slots]
@@ -2320,62 +1721,6 @@ class PerformanceOptimizerOrchestrator:
             
         except Exception as e:
             logger.error(f"❌ Error actualizando configuración: {e}")
-
-# Función de entrada para integración con main.py
-async def start_optimizer(config: Dict[str, Any] = None):
-    """
-    Función de entrada para inicializar el optimizador de rendimiento desde main.py
-    
-    Args:
-        config: Diccionario de configuración opcional
-        
-    Returns:
-        PerformanceOptimizerOrchestrator: Instancia del orquestador iniciado
-    """
-    if config is None:
-        config = {}
-    
-    logger.info("🚀 Iniciando Optimizador de Rendimiento AEGIS...")
-    
-    # Configuración por defecto
-    default_config = {
-        "enable_batching": True,
-        "enable_compression": True,
-        "batch_size": 100,
-        "compression_level": 6,
-        "compression_threshold": 1024,
-        "analysis_interval": 300,
-        "auto_optimize": True,
-    }
-    
-    # Combinar configuración
-    final_config = {**default_config, **config}
-    
-    # Crear y configurar orquestador
-    orchestrator = PerformanceOptimizerOrchestrator(
-        collection_interval=30,
-        analysis_interval=final_config.get("analysis_interval", 300)
-    )
-    
-    # Configurar optimizaciones específicas
-    orchestrator.update_configuration({
-        "batch_processor": {
-            "enabled": final_config.get("enable_batching", True),
-            "batch_size": final_config.get("batch_size", 100)
-        },
-        "compression": {
-            "enabled": final_config.get("enable_compression", True),
-            "level": final_config.get("compression_level", 6),
-            "threshold": final_config.get("compression_threshold", 1024)
-        },
-        "auto_optimize": final_config.get("auto_optimize", True)
-    })
-    
-    # Iniciar en modo no bloqueante
-    await orchestrator.start()
-    
-    logger.info("✅ Optimizador de Rendimiento iniciado correctamente")
-    return orchestrator
 
 # Función principal para demostración
 async def main():

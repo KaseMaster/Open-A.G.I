@@ -2,14 +2,15 @@
 # Hardened settings for local privacy and stability
 
 # SOCKS proxy restricted to localhost with circuit isolation
-SocksPort 127.0.0.1:9050 IsolateDestAddr IsolateSOCKSAuth
-SafeSocks 0
-SocksPolicy accept *
+SocksPort 127.0.0.1:9050 OnionTrafficOnly IsolateDestAddr IsolateSOCKSAuth
+SafeSocks 1
+SocksPolicy accept 127.0.0.1
+SocksPolicy reject *
 
 # ControlPort restricted to localhost with cookie auth
 ControlPort 127.0.0.1:9051
 CookieAuthentication 1
-HashedControlPassword 16:872860B76453A77D60CA2BB8C1A7042072093276A3D701AD684053EC4C
+# Only cookie-based auth (password disabled to minimize brute-force surface)
 
 # Explicit absolute paths (quoted) to avoid relative path warnings
 DataDirectory "G:\\Open A.G.I\\tor_data"
@@ -35,5 +36,3 @@ GeoIPv6File "C:\\ProgramData\\chocolatey\\lib\\tor\\tools\\data\\geoip6"
 HiddenServiceDir "G:\\Open A.G.I\\onion_service"
 HiddenServiceVersion 3
 HiddenServicePort 80 127.0.0.1:8090
-# Allow local client to access authorized onion services
-ClientOnionAuthDir "G:\\Open A.G.I\\client_onion_auth"

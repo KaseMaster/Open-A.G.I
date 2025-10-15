@@ -1,0 +1,22 @@
+{
+  "aegis_test_report": {
+    "timestamp": "20251012_165020",
+    "execution_time": 82.87541341781616,
+    "summary": {
+      "total_tests": 42,
+      "passed": 18,
+      "failed": 6,
+      "errors": 14,
+      "success_rate": 42.857142857142854,
+      "total_duration": 82.86971163749695,
+      "avg_test_duration": 1.9455585877100627,
+      "max_test_duration": 30.026651620864868
+    },
+    "suites": {},
+    "environment": {
+      "python_version": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+      "platform": "win32",
+      "working_directory": "G:\\Open A.G.I"
+    }
+  }
+}

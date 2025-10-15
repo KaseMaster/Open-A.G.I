@@ -16,8 +16,8 @@ import psutil
 import logging
 
 try:
-    from flask import Flask, render_template, jsonify, request, send_from_directory, Response, session, redirect
-    from flask_socketio import SocketIO, emit, disconnect
+    from flask import Flask, render_template, jsonify, request, send_from_directory
+    from flask_socketio import SocketIO, emit
     import plotly.graph_objs as go
     import plotly.utils
     from loguru import logger
@@ -239,150 +239,13 @@ class AEGISWebDashboard:
         self.app = Flask(__name__)
         self.app.config['SECRET_KEY'] = 'aegis-dashboard-secret-key'
         self.socketio = SocketIO(self.app, cors_allowed_origins="*")
-
-        # Configuración de autenticación
-        auth_cfg = self.config.get('authentication', {}) if isinstance(self.config, dict) else {}
-        self.auth_enabled = bool(auth_cfg.get('enabled', False))
-        self.auth_username = auth_cfg.get('username', 'admin')
-        self.auth_password = auth_cfg.get('password', 'aegis123')
-        # Sesión persistente
-        self.session_minutes = int(auth_cfg.get('session_minutes', 10080))
-        try:
-            self.app.permanent_session_lifetime = timedelta(minutes=self.session_minutes)
-        except Exception:
-            self.app.permanent_session_lifetime = timedelta(days=7)
-
-        @self.app.before_request
-        def _require_auth():
-            # Permitir archivos estáticos y login sin auth
-            if request.path.startswith('/static') or request.path == '/login':
-                return None
-            if getattr(self, 'auth_enabled', False):
-                # Sesión iniciada
-                if session.get('logged_in'):
-                    return None
-                # Soporte Basic Auth para clientes API
-                auth = request.authorization
-                if auth and (auth.username == self.auth_username and auth.password == self.auth_password):
-                    session['logged_in'] = True
-                    session['username'] = auth.username
-                    session.permanent = True
-                    return None
-                # Redirigir a login si cliente espera HTML
-                accept = request.headers.get('Accept', '')
-                if 'text/html' in accept and request.method == 'GET':
-                    return redirect('/login')
-                # Desafío Basic Auth para clientes no-HTML
-                return Response(
-                    'Autenticación requerida',
-                    401,
-                    {'WWW-Authenticate': 'Basic realm="AEGIS Dashboard"'}
-                )
-            return None
-
+        
         self._setup_routes()
         self._setup_socketio_events()
     
     def _setup_routes(self):
         """Configura las rutas de la aplicación"""
         
-        @self.app.route('/login', methods=['GET', 'POST'])
-        def login():
-            if request.method == 'GET':
-                error_block = ''
-                return f"""
-<!DOCTYPE html>
-<html lang=\"es\">
-<head>
-  <meta charset=\"UTF-8\">
-  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
-  <title>Iniciar sesión - AEGIS Dashboard</title>
-  <style>
-    body {{ font-family: Arial, sans-serif; background: #0b1221; color: #e0e6f6; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }}
-    .card {{ background: #121a2e; padding: 24px; border-radius: 12px; width: 320px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }}
-    h2 {{ margin-top: 0; }}
-    label {{ display: block; margin: 12px 0 6px; }}
-    input {{ width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #2d3a5c; background: #0e1630; color: #e0e6f6; }}
-    button {{ margin-top: 16px; width: 100%; padding: 10px; border: none; border-radius: 8px; background: #2d7ef7; color: white; font-weight: bold; cursor: pointer; }}
-    button:hover {{ background: #1f6ad6; }}
-    .error {{ color: #ff6b6b; margin-top: 8px; }}
-    .hint {{ color: #aab3cf; font-size: 12px; margin-top: 8px; }}
-  </style>
-</head>
-<body>
-  <div class=\"card\">
-    <h2>AEGIS Dashboard</h2>
-    <form method=\"POST\" action=\"/login\">
-      <label for=\"username\">Usuario</label>
-      <input id=\"username\" name=\"username\" type=\"text\" required>
-      <label for=\"password\">Contraseña</label>
-      <input id=\"password\" name=\"password\" type=\"password\" required>
-      <button type=\"submit\">Iniciar sesión</button>
-    </form>
-    {error_block}
-    <div class=\"hint\">También puedes usar autenticación básica en clientes API.</div>
-  </div>
-</body>
-</html>
-""".replace('{error_block}', error_block)
-            username = request.form.get('username') or (request.json.get('username') if request.is_json else None)
-            password = request.form.get('password') or (request.json.get('password') if request.is_json else None)
-            if username == self.auth_username and password == self.auth_password:
-                session['logged_in'] = True
-                session['username'] = username
-                session.permanent = True
-                if request.is_json:
-                    return jsonify({"status": "ok"})
-                return redirect('/')
-            else:
-                if request.is_json:
-                    return jsonify({"status": "error", "message": "Credenciales inválidas"}), 401
-                error_block = '<div class="error">Credenciales inválidas</div>'
-                return (
-                    f"""
-<!DOCTYPE html>
-<html lang=\"es\">
-<head>
-  <meta charset=\"UTF-8\">
-  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
-  <title>Iniciar sesión - AEGIS Dashboard</title>
-  <style>
-    body {{ font-family: Arial, sans-serif; background: #0b1221; color: #e0e6f6; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }}
-    .card {{ background: #121a2e; padding: 24px; border-radius: 12px; width: 320px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }}
-    h2 {{ margin-top: 0; }}
-    label {{ display: block; margin: 12px 0 6px; }}
-    input {{ width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #2d3a5c; background: #0e1630; color: #e0e6f6; }}
-    button {{ margin-top: 16px; width: 100%; padding: 10px; border: none; border-radius: 8px; background: #2d7ef7; color: white; font-weight: bold; cursor: pointer; }}
-    button:hover {{ background: #1f6ad6; }}
-    .error {{ color: #ff6b6b; margin-top: 8px; }}
-    .hint {{ color: #aab3cf; font-size: 12px; margin-top: 8px; }}
-  </style>
-</head>
-<body>
-  <div class=\"card\">
-    <h2>AEGIS Dashboard</h2>
-    <form method=\"POST\" action=\"/login\">
-      <label for=\"username\">Usuario</label>
-      <input id=\"username\" name=\"username\" type=\"text\" required>
-      <label for=\"password\">Contraseña</label>
-      <input id=\"password\" name=\"password\" type=\"password\" required>
-      <button type=\"submit\">Iniciar sesión</button>
-    </form>
-    {error_block}
-    <div class=\"hint\">También puedes usar autenticación básica en clientes API.</div>
-  </div>
-</body>
-</html>
-""".replace('{error_block}', error_block), 401)
-
-        @self.app.route('/logout', methods=['GET'])
-        def logout():
-            session.clear()
-            accept = request.headers.get('Accept', '')
-            if 'text/html' in accept:
-                return redirect('/login')
-            return jsonify({"status": "ok"})
-
         @self.app.route('/')
         def index():
             return self._render_dashboard()
@@ -413,13 +276,6 @@ class AEGISWebDashboard:
         
         @self.socketio.on('connect')
         def handle_connect():
-            # Verificar sesión antes de permitir conexión
-            if getattr(self, 'auth_enabled', False) and not session.get('logged_in'):
-                try:
-                    disconnect()
-                except Exception:
-                    pass
-                return
             logger.info("Cliente conectado al dashboard")
             emit('status', {'msg': 'Conectado al dashboard AEGIS'})
         
@@ -447,7 +303,7 @@ class AEGISWebDashboard:
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AEGIS Dashboard</title>
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
-    <script src="https://cdn.plot.ly/plotly-2.28.0.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -557,7 +413,6 @@ class AEGISWebDashboard:
                 <div>Estado: <span id="connection-status">Conectando...</span></div>
                 <div>Última actualización: <span id="last-update">--</span></div>
                 <div>Servicios activos: <span id="active-services">--</span></div>
-                <div><a href="/logout" style="color:#fff; text-decoration:none;">Cerrar sesión</a></div>
             </div>
         </div>
 

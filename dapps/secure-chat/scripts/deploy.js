@@ -1,22 +1,23 @@
-const { ethers } = require("hardhat");
+const { ethers } = require('hardhat');
 
 async function main() {
-  console.log("Deploying UserRegistry and ChatRoom...");
+  const [deployer] = await ethers.getSigners();
+  console.log('Deploying with account:', deployer.address);
 
-  const UserRegistry = await ethers.getContractFactory("UserRegistry");
-  const userRegistry = await UserRegistry.deploy();
-  await userRegistry.waitForDeployment();
-  const userRegistryAddr = await userRegistry.getAddress();
-  console.log("UserRegistry deployed at:", userRegistryAddr);
+  const ChatRoom = await ethers.getContractFactory('ChatRoom');
+  const chat = await ChatRoom.deploy();
+  await chat.waitForDeployment();
+  console.log('ChatRoom deployed at:', await chat.getAddress());
 
-  const ChatRoom = await ethers.getContractFactory("ChatRoom");
-  const chatRoom = await ChatRoom.deploy();
-  await chatRoom.waitForDeployment();
-  const chatRoomAddr = await chatRoom.getAddress();
-  console.log("ChatRoom deployed at:", chatRoomAddr);
+  const AEGISToken = await ethers.getContractFactory('AEGISToken');
+  const aegis = await AEGISToken.deploy(deployer.address);
+  await aegis.waitForDeployment();
+  console.log('AEGISToken deployed at:', await aegis.getAddress());
+
+  // Optional: configure faucet params (defaults are fine for demo)
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
 });

@@ -1,0 +1,25 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y build-essential curl git && rm -rf /var/lib/apt/lists/*
+
+RUN groupadd -r aegis && useradd -r -g aegis aegis
+
+COPY requirements.txt ./
+
+RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir flask fastapi uvicorn requests pydantic python-dotenv
+
+COPY . .
+
+COPY entrypoint.sh /app/entrypoint.sh
+
+RUN chmod +x /app/entrypoint.sh
+
+RUN chown -R aegis:aegis /app
+
+USER aegis
+
+EXPOSE 8181
+
+ENTRYPOINT ["/app/entrypoint.sh"]

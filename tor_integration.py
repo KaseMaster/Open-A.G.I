@@ -7,7 +7,6 @@ AEGIS Security Framework - Uso Ético Únicamente
 """
 
 import asyncio
-import os
 import hashlib
 import secrets
 import struct
@@ -102,12 +101,9 @@ class TorCircuit:
 class TorGateway:
     """Gateway principal para comunicaciones TOR"""
     
-    def __init__(self, control_port: int = 9051, socks_port: int = 9050, control_password: Optional[str] = None):
+    def __init__(self, control_port: int = 9051, socks_port: int = 9050):
         self.control_port = control_port
         self.socks_port = socks_port
-        # Permitir configurar la contraseña del puerto de control
-        # Prioridad: argumento -> variable de entorno -> valor por defecto
-        self.control_password = control_password or os.getenv("TOR_CONTROL_PASSWORD") or "aegis_tor_password"
         self.controller: Optional[Controller] = None
         self.circuits: Dict[str, TorCircuit] = {}
         self.onion_services: Dict[str, str] = {}  # service_id -> private_key
@@ -123,21 +119,7 @@ class TorGateway:
         """Inicializa la conexión con TOR"""
         try:
             self.controller = Controller.from_port(port=self.control_port)
-            
-            # Intentar autenticación con contraseña (si está configurada), luego cookie
-            try:
-                if self.control_password:
-                    self.controller.authenticate(password=self.control_password)
-                else:
-                    # Si no hay contraseña configurada, intentar cookie
-                    self.controller.authenticate()
-            except Exception:
-                # Intento de respaldo: probar cookie si falló la contraseña, o viceversa
-                try:
-                    self.controller.authenticate()
-                except Exception as auth_error:
-                    logger.error(f"Error de autenticación TOR: {auth_error}")
-                    return False
+            self.controller.authenticate()
             
             # Verificar que TOR esté funcionando
             if not self.controller.is_alive():
@@ -434,10 +416,8 @@ class TorGateway:
             for service_id in list(self.onion_services.keys()):
                 try:
                     self.controller.remove_ephemeral_hidden_service(service_id)
-                except (stem.ControllerError, stem.InvalidArguments) as e:
-                    logger.warning(f"Error removiendo servicio onion {service_id}: {e}")
-                except Exception as e:
-                    logger.error(f"Error inesperado removiendo servicio onion {service_id}: {e}")
+                except:
+                    pass
             
             # Cerrar controlador
             if self.controller:
@@ -458,78 +438,6 @@ async def create_secure_tor_gateway(security_level: SecurityLevel = SecurityLeve
         return gateway
     else:
         raise RuntimeError("No se pudo inicializar TOR Gateway")
-
-# Estado global simple para integración con main.py
-_TOR_GATEWAY: Optional[TorGateway] = None
-
-async def start_tor_service(config: Dict[str, Any]) -> Dict[str, Any]:
-    """Inicia el servicio TOR según configuración de la app.
-    Espera un dict con claves: control_port, socks_port, onion_routing, service_port (opcional).
-    """
-    global _TOR_GATEWAY
-    try:
-        control_port = int(config.get("control_port", int(os.getenv("TOR_CONTROL_PORT", 9051))))
-        socks_port = int(config.get("socks_port", int(os.getenv("TOR_SOCKS_PORT", 9050))))
-        control_password = config.get("control_password") or os.getenv("TOR_CONTROL_PASSWORD") or "aegis_tor_password"
-
-        gateway = TorGateway(control_port=control_port, socks_port=socks_port, control_password=control_password)
-        ok = await gateway.initialize()
-        if not ok:
-            raise RuntimeError("Inicialización de TOR fallida")
-
-        # Ajustar nivel de seguridad si está en la config
-        level_str = str(config.get("security_level", "HIGH")).upper()
-        if level_str in SecurityLevel.__members__:
-            gateway.security_level = SecurityLevel[level_str]
-
-        onion_address = None
-        service_port = int(config.get("service_port", 0))
-        target_port = int(config.get("target_port", 0)) or None
-        if config.get("onion_routing", True) and service_port:
-            onion_address = await gateway.create_onion_service(service_port, target_port or service_port)
-
-        _TOR_GATEWAY = gateway
-        logger.info(f"TOR service iniciado (ControlPort={control_port}, SocksPort={socks_port})")
-        return {
-            "running": True,
-            "control_port": control_port,
-            "socks_port": socks_port,
-            "onion_address": onion_address,
-        }
-    except Exception as e:
-        logger.error(f"Error iniciando servicio TOR: {e}")
-        return {"running": False, "error": str(e)}
-
-async def stop_tor_service() -> Dict[str, Any]:
-    """Detiene el servicio TOR si está activo."""
-    global _TOR_GATEWAY
-    try:
-        if _TOR_GATEWAY:
-            await _TOR_GATEWAY.shutdown()
-            _TOR_GATEWAY = None
-            logger.info("Servicio TOR detenido")
-            return {"stopped": True}
-        return {"stopped": False, "message": "TOR no estaba activo"}
-    except Exception as e:
-        logger.error(f"Error deteniendo TOR: {e}")
-        return {"stopped": False, "error": str(e)}
-
-async def get_tor_status() -> Dict[str, Any]:
-    """Obtiene el estado del servicio TOR actual."""
-    global _TOR_GATEWAY
-    try:
-        if not _TOR_GATEWAY:
-            return {"running": False}
-        net = await _TOR_GATEWAY.get_network_status()
-        return {
-            "running": True,
-            "network": net,
-            "circuits": list(_TOR_GATEWAY.circuits.keys()),
-            "services": list(_TOR_GATEWAY.onion_services.keys()),
-        }
-    except Exception as e:
-        logger.error(f"Error obteniendo estado de TOR: {e}")
-        return {"running": False, "error": str(e)}
 
 def generate_node_identity() -> Tuple[ed25519.Ed25519PrivateKey, str]:
     """Genera una identidad única para el nodo"""

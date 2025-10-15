@@ -1,0 +1,6 @@
+# Configuración básica de Tor para AEGIS
+SocksPort 0.0.0.0:9050
+ControlPort 0.0.0.0:9051
+CookieAuthentication 1
+DataDirectory /var/lib/tor
+Log notice stdout

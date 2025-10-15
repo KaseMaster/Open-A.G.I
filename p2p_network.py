@@ -4,6 +4,11 @@ Red P2P Distribuida - AEGIS Framework
 Implementación de red peer-to-peer con descubrimiento automático de nodos,
 gestión de topología dinámica y comunicación resiliente.
 
+Programador Principal: Jose Gómez alias KaseMaster
+Contacto: kasemaster@aegis-framework.com
+Versión: 2.0.0
+Licencia: MIT
+
 Características principales:
 - Descubrimiento automático de peers
 - Topología de red adaptativa
@@ -18,7 +23,7 @@ import json
 import socket
 import logging
 import base64
-from typing import Dict, List, Set, Any, Optional, Callable, Awaitable
+from typing import Dict, List, Set, Any, Optional
 from dataclasses import dataclass, asdict
 from enum import Enum
 from collections import defaultdict, deque
@@ -163,15 +168,11 @@ class AegisServiceListenerExt(ServiceListener):
 
     def add_service(self, zc: Zeroconf, type_: str, name: str):
         try:
-            # Evitar programar tareas si el loop ya está cerrado
-            if getattr(self.loop, "is_closed", lambda: False)():
-                logger.debug("🔄 Loop de asyncio cerrado; ignorando add_service durante shutdown")
-                return
             asyncio.run_coroutine_threadsafe(
                 self._handle_service_added(zc, type_, name), self.loop
             )
         except Exception as e:
-            logger.error(f"❌ Error programando manejo de servicio mDNS: {e!r}")
+            logger.error(f"❌ Error programando manejo de servicio mDNS: {e}")
 
     async def _handle_service_added(self, zc: Zeroconf, type_: str, name: str):
         try:
@@ -183,43 +184,32 @@ class AegisServiceListenerExt(ServiceListener):
 
     def remove_service(self, zc: Zeroconf, type_: str, name: str):
         try:
-            # Evitar programar tareas si el loop ya está cerrado
-            if getattr(self.loop, "is_closed", lambda: False)():
-                logger.debug("🔄 Loop de asyncio cerrado; ignorando remove_service durante shutdown")
-                return
             asyncio.run_coroutine_threadsafe(
                 self._handle_service_removed(zc, type_, name), self.loop
             )
         except Exception as e:
-            logger.error(f"❌ Error programando eliminación de servicio mDNS: {e!r}")
+            logger.error(f"❌ Error programando eliminación de servicio mDNS: {e}")
 
     async def _handle_service_removed(self, zc: Zeroconf, type_: str, name: str):
         try:
-            # Durante el shutdown, Zeroconf puede estar ya cerrado. Evitamos consultar get_service_info.
-            # Extraemos el node_id del nombre del servicio (formato: "<node_id>.<type>")
+            info = await asyncio.to_thread(zc.get_service_info, type_, name)
             node_id: Optional[str] = None
-            try:
-                # Ejemplo de name: "smoke_node_2._aegis._tcp.local."
-                # Tomamos la primera etiqueta antes del primer punto
-                node_id = name.split('.')[0] if name else None
-            except Exception:
-                node_id = None
-
+            if info and info.properties:
+                try:
+                    node_id = info.properties.get('node_id', b'').decode('utf-8') or None
+                except Exception:
+                    node_id = None
             await self.discovery_service._handle_service_removed(node_id)
         except Exception as e:
-            logger.error(f"❌ Error procesando eliminación de servicio mDNS: {e!r}")
+            logger.error(f"❌ Error procesando eliminación de servicio mDNS: {e}")
 
     def update_service(self, zc: Zeroconf, type_: str, name: str):
         try:
-            # Evitar programar tareas si el loop ya está cerrado
-            if getattr(self.loop, "is_closed", lambda: False)():
-                logger.debug("🔄 Loop de asyncio cerrado; ignorando update_service durante shutdown")
-                return
             asyncio.run_coroutine_threadsafe(
                 self._handle_service_updated(zc, type_, name), self.loop
             )
         except Exception as e:
-            logger.error(f"❌ Error programando actualización de servicio mDNS: {e!r}")
+            logger.error(f"❌ Error programando actualización de servicio mDNS: {e}")
 
     async def _handle_service_updated(self, zc: Zeroconf, type_: str, name: str):
         try:
@@ -241,9 +231,6 @@ class PeerDiscoveryService:
         self.zeroconf = None
         self.service_info = None
         self.discovery_active = False
-        # Referencias para una parada más limpia
-        self._mdns_browser = None
-        self._mdns_task: Optional[asyncio.Task] = None
 
         # Configuración de descubrimiento
         self.service_type = "_aegis._tcp.local."
@@ -257,12 +244,8 @@ class PeerDiscoveryService:
             logger.info(f"🔍 Iniciando descubrimiento de peers para nodo {self.node_id}")
 
             # Configurar Zeroconf si disponible
-            if HAS_ZEROCONF:
+            if HAS_ZEROCONF and HAS_NETIFACES:
                 await self._setup_zeroconf()
-                # Si durante la configuración se solicitó detener, limpiar y salir
-                if not self.discovery_active:
-                    await self.stop_discovery()
-                    return
             else:
                 logger.warning("mDNS/Zeroconf no disponible; se usarán métodos alternativos.")
 
@@ -270,8 +253,7 @@ class PeerDiscoveryService:
             tasks = []
             # Solo iniciar mDNS si Zeroconf fue configurado correctamente
             if HAS_ZEROCONF and self.zeroconf is not None:
-                self._mdns_task = asyncio.create_task(self._mdns_discovery())
-                tasks.append(self._mdns_task)
+                tasks.append(asyncio.create_task(self._mdns_discovery()))
             tasks.extend([
                 asyncio.create_task(self._bootstrap_discovery()),
                 asyncio.create_task(self._peer_maintenance()),
@@ -286,12 +268,8 @@ class PeerDiscoveryService:
     async def _setup_zeroconf(self):
         """Configura el servicio Zeroconf/mDNS"""
         try:
-            if not HAS_ZEROCONF:
+            if not (HAS_ZEROCONF and HAS_NETIFACES):
                 logger.warning("Saltando configuración Zeroconf: dependencias no disponibles.")
-                return
-            # Si se ha solicitado detener antes de configurar, salir
-            if not self.discovery_active:
-                logger.debug("🔄 Descubrimiento desactivado; omitiendo setup Zeroconf")
                 return
             # Obtener IP local
             local_ip = self._get_local_ip()
@@ -318,27 +296,9 @@ class PeerDiscoveryService:
 
             # Registrar servicio (posible I/O bloqueante): ejecutar en hilo
             self.zeroconf = Zeroconf()
-            # Verificar estado justo antes de registrar
-            if not self.discovery_active:
-                logger.debug("🔄 Descubrimiento desactivado antes de registrar; omitiendo register_service")
-                return
             await asyncio.to_thread(self.zeroconf.register_service, self.service_info)
 
             logger.info(f"📡 Servicio mDNS registrado: {service_name}")
-
-            # Si se desactivó el descubrimiento mientras se registraba, desregistrar inmediatamente
-            if not self.discovery_active and self.zeroconf and self.service_info:
-                try:
-                    await asyncio.to_thread(self.zeroconf.unregister_service, self.service_info)
-                except Exception as e:
-                    logger.debug(f"⚠️ Error al desregistrar servicio mDNS tras cancelación: {e!r}")
-                try:
-                    await asyncio.to_thread(self.zeroconf.close)
-                except Exception as e:
-                    logger.debug(f"⚠️ Error al cerrar Zeroconf tras cancelación: {e!r}")
-                finally:
-                    self.service_info = None
-                    self.zeroconf = None
 
         except Exception as e:
             logger.error(f"❌ Error configurando Zeroconf: {e}")
@@ -346,14 +306,6 @@ class PeerDiscoveryService:
     def _get_local_ip(self) -> str:
         """Obtiene la IP local del nodo"""
         try:
-            def _is_valid_ip(ip: str) -> bool:
-                try:
-                    addr = ipaddress.ip_address(ip)
-                    # Excluir loopback, link-local, no especificada (0.0.0.0) y multicast
-                    return not (addr.is_loopback or addr.is_link_local or addr.is_unspecified or addr.is_multicast)
-                except Exception:
-                    return False
-
             if HAS_NETIFACES:
                 # Intentar obtener IP de interfaces de red
                 interfaces = netifaces.interfaces()
@@ -363,28 +315,8 @@ class PeerDiscoveryService:
                     if netifaces.AF_INET in addresses:
                         for addr_info in addresses[netifaces.AF_INET]:
                             ip = addr_info['addr']
-                            if _is_valid_ip(ip):
+                            if not ip.startswith('127.') and not ip.startswith('169.254.'):
                                 return ip
-
-            # Fallback 1: resolver hostname -> IP
-            try:
-                hostname_ip = socket.gethostbyname(socket.gethostname())
-                if hostname_ip and _is_valid_ip(hostname_ip):
-                    logger.debug(f"📍 IP obtenida por hostname: {hostname_ip}")
-                    return hostname_ip
-            except Exception:
-                pass
-
-            # Fallback 2: enumerar direcciones con getaddrinfo
-            try:
-                addrs = socket.getaddrinfo(None, 0, family=socket.AF_INET)
-                for addr in addrs:
-                    ip = addr[4][0]
-                    if ip and _is_valid_ip(ip):
-                        logger.debug(f"📍 IP obtenida por getaddrinfo: {ip}")
-                        return ip
-            except Exception:
-                pass
 
             # Fallback: usar socket para conectar a servidor externo
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
@@ -404,14 +336,13 @@ class PeerDiscoveryService:
 
             # Iniciar browser
             browser = ServiceBrowser(self.zeroconf, self.service_type, listener)
-            self._mdns_browser = browser
 
             # Mantener activo mientras discovery esté habilitado
             while self.discovery_active:
                 await asyncio.sleep(10)
 
-            # No cancelar aquí para evitar doble cancelación; stop_discovery se encarga
-            self._mdns_browser = None
+            # Cancelar browser cuando se detenga el descubrimiento
+            browser.cancel()
 
         except Exception as e:
             logger.error(f"❌ Error en descubrimiento mDNS: {e}")
@@ -573,19 +504,7 @@ class PeerDiscoveryService:
 
             # Leer respuesta
             response = await asyncio.wait_for(reader.readline(), timeout=2)
-            text = response.decode(errors='ignore').strip()
-            if not text:
-                logger.debug(f"⚠️ Respuesta vacía de descubrimiento desde {ip}:{port}")
-                writer.close()
-                await writer.wait_closed()
-                return
-            try:
-                response_data = json.loads(text)
-            except json.JSONDecodeError as e:
-                logger.debug(f"⚠️ Respuesta de descubrimiento no-JSON desde {ip}:{port}: {e}")
-                writer.close()
-                await writer.wait_closed()
-                return
+            response_data = json.loads(response.decode().strip())
 
             if response_data.get('type') == 'discovery_response':
                 await self._process_scan_response(ip, port, response_data)
@@ -658,30 +577,14 @@ class PeerDiscoveryService:
 
         # Apagar Zeroconf de forma segura para evitar errores del event loop
         if HAS_ZEROCONF and self.zeroconf and self.service_info:
-            # Cancelar browser mDNS si sigue activo
-            if self._mdns_browser is not None:
-                try:
-                    self._mdns_browser.cancel()
-                except Exception as e:
-                    logger.debug(f"⚠️ Error cancelando ServiceBrowser mDNS (stop): {e!r}")
-                finally:
-                    self._mdns_browser = None
-            # Esperar a que la tarea mDNS finalice
-            if self._mdns_task is not None:
-                try:
-                    await asyncio.wait_for(self._mdns_task, timeout=5)
-                except Exception as e:
-                    logger.debug(f"⚠️ Tarea mDNS no finalizó limpiamente: {e!r}")
-                finally:
-                    self._mdns_task = None
             try:
                 await asyncio.to_thread(self.zeroconf.unregister_service, self.service_info)
             except Exception as e:
-                logger.warning(f"⚠️ Error al desregistrar servicio Zeroconf: {e!r}")
+                logger.warning(f"⚠️ Error al desregistrar servicio Zeroconf: {e}")
             try:
                 await asyncio.to_thread(self.zeroconf.close)
             except Exception as e:
-                logger.warning(f"⚠️ Error al cerrar Zeroconf: {e!r}")
+                logger.warning(f"⚠️ Error al cerrar Zeroconf: {e}")
             finally:
                 self.service_info = None
                 self.zeroconf = None
@@ -701,9 +604,6 @@ class ConnectionManager:
         self.max_connections = 50
         self.connection_timeout = 30
 
-        # Callback de aplicación para mensajes personalizados (p.ej., CONSENSUS)
-        self.app_message_callback: Optional[Callable[[str, Dict[str, Any]], Awaitable[None]]] = None
-
         # Estadísticas de conexión
         self.connection_stats = {
             "total_connections": 0,
@@ -713,44 +613,22 @@ class ConnectionManager:
             "bytes_received": 0
         }
 
-        # Métricas de latencia y seguimiento de heartbeats
-        # pending_heartbeats: marca de tiempo del último heartbeat enviado por peer
-        self.pending_heartbeats: Dict[str, float] = {}
-        # latency_by_peer: RTT medido por último heartbeat
-        self.latency_by_peer: Dict[str, float] = {}
-
     async def start_server(self):
-        """Inicia el servidor de conexiones con fallback de puerto si está en uso"""
-        candidate_ports = [self.port, 8081, 8082, 9000, 9001]
-        for candidate in candidate_ports:
-            try:
-                server = await asyncio.start_server(
-                    self._handle_incoming_connection,
-                    '0.0.0.0',
-                    candidate
-                )
+        """Inicia el servidor de conexiones"""
+        try:
+            server = await asyncio.start_server(
+                self._handle_incoming_connection,
+                '0.0.0.0',
+                self.port
+            )
 
-                # Actualizar puerto efectivo si cambiamos
-                if candidate != self.port:
-                    logger.warning(f"⚠️ Puerto {self.port} en uso; servidor P2P iniciará en puerto alternativo {candidate}")
-                    self.port = candidate
+            logger.info(f"🌐 Servidor P2P iniciado en puerto {self.port}")
 
-                logger.info(f"🌐 Servidor P2P iniciado en puerto {self.port}")
+            async with server:
+                await server.serve_forever()
 
-                async with server:
-                    await server.serve_forever()
-                return
-            except OSError as e:
-                # Manejar específicamente 'address already in use'
-                msg = str(e).lower()
-                if getattr(e, 'winerror', None) == 10048 or 'address already in use' in msg:
-                    logger.warning(f"⚠️ Puerto {candidate} en uso; intentando siguiente puerto disponible")
-                    continue
-                logger.error(f"❌ Error de OS iniciando servidor en puerto {candidate}: {e}")
-            except Exception as e:
-                logger.error(f"❌ Error iniciando servidor en puerto {candidate}: {e}")
-
-        logger.critical("🚫 No fue posible iniciar el servidor P2P: todos los puertos candidatos están en uso o fallaron")
+        except Exception as e:
+            logger.error(f"❌ Error iniciando servidor: {e}")
 
     async def _handle_incoming_connection(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         """Maneja conexión entrante"""
@@ -760,25 +638,7 @@ class ConnectionManager:
         try:
             # Leer mensaje inicial
             data = await asyncio.wait_for(reader.readline(), timeout=10)
-            text = data.decode(errors='ignore').strip()
-            if not text:
-                logger.warning(f"⚠️ Mensaje inicial vacío desde {peer_address}")
-                try:
-                    writer.write(b'{"type":"error","error":"empty_message"}\n')
-                    await writer.drain()
-                except Exception:
-                    pass
-                return
-            try:
-                message = json.loads(text)
-            except json.JSONDecodeError as e:
-                logger.warning(f"⚠️ Mensaje inicial no-JSON desde {peer_address}: {e}")
-                try:
-                    writer.write(b'{"type":"error","error":"invalid_json"}\n')
-                    await writer.drain()
-                except Exception:
-                    pass
-                return
+            message = json.loads(data.decode().strip())
 
             # Procesar según tipo de mensaje
             if message.get('type') == 'discovery':
@@ -931,17 +791,7 @@ class ConnectionManager:
 
             # Leer respuesta
             response = await asyncio.wait_for(reader.readline(), timeout=10)
-            text = response.decode(errors='ignore').strip()
-            if not text:
-                logger.warning(f"⚠️ Respuesta de handshake vacía desde {peer_info.ip_address}:{peer_info.port}")
-                await writer.wait_closed()
-                return False
-            try:
-                response_data = json.loads(text)
-            except json.JSONDecodeError as e:
-                logger.warning(f"⚠️ Respuesta de handshake no-JSON desde {peer_info.ip_address}:{peer_info.port}: {e}")
-                await writer.wait_closed()
-                return False
+            response_data = json.loads(response.decode().strip())
 
             if response_data.get('type') == 'handshake_response' and response_data.get('status') == 'accepted':
                 # Conexión exitosa
@@ -1007,15 +857,7 @@ class ConnectionManager:
 
                 # Procesar mensaje
                 try:
-                    text = data.decode(errors='ignore').strip()
-                    if not text:
-                        logger.debug(f"⚠️ Mensaje vacío recibido de {peer_id}")
-                        continue
-                    try:
-                        incoming = json.loads(text)
-                    except json.JSONDecodeError:
-                        logger.warning(f"⚠️ Mensaje JSON inválido de {peer_id}")
-                        continue
+                    incoming = json.loads(data.decode().strip())
                     # Si es un mensaje seguro, descifrar
                     if incoming.get('type') == 'secure' and self.crypto_engine and SecureMessage:
                         try:
@@ -1025,12 +867,8 @@ class ConnectionManager:
                                 secure_msg = SecureMessage.deserialize(blob)
                                 plaintext = self.crypto_engine.decrypt_message(secure_msg)
                                 if plaintext:
-                                    try:
-                                        inner = json.loads(plaintext.decode(errors='ignore'))
-                                    except json.JSONDecodeError as e:
-                                        logger.warning(f"⚠️ Payload seguro no-JSON de {peer_id}: {e}")
-                                    else:
-                                        await self._process_peer_message(peer_id, inner, is_secure=True)
+                                    inner = json.loads(plaintext.decode())
+                                    await self._process_peer_message(peer_id, inner)
                                 else:
                                     logger.warning(f"⚠️ No se pudo descifrar mensaje seguro de {peer_id}")
                             else:
@@ -1059,9 +897,9 @@ class ConnectionManager:
                                         logger.warning(f"⚠️ Firma ausente/ inválida de {peer_id}")
                             except Exception as e:
                                 logger.warning(f"⚠️ Error verificando firma de {peer_id}: {e}")
-                        await self._process_peer_message(peer_id, incoming, is_secure=False)
-                except Exception as e:
-                    logger.error(f"❌ Error procesando mensaje de {peer_id}: {e}")
+                        await self._process_peer_message(peer_id, incoming)
+                except json.JSONDecodeError:
+                    logger.warning(f"⚠️ Mensaje JSON inválido de {peer_id}")
 
         except asyncio.TimeoutError:
             logger.warning(f"⏰ Timeout en conexión con {peer_id}")
@@ -1070,39 +908,18 @@ class ConnectionManager:
         finally:
             await self._safe_disconnect_peer(peer_id)
 
-    async def _process_peer_message(self, peer_id: str, message: Dict[str, Any], is_secure: bool = False):
+    async def _process_peer_message(self, peer_id: str, message: Dict[str, Any]):
         """Procesa mensaje de peer"""
         message_type = message.get('type')
 
         if message_type == 'heartbeat':
             await self._handle_heartbeat(peer_id, message)
-        elif message_type == 'heartbeat_response':
-            await self._handle_heartbeat_response(peer_id, message)
         elif message_type == 'data':
             await self._handle_data_message(peer_id, message)
         elif message_type == 'broadcast':
             await self._handle_broadcast_message(peer_id, message)
-        elif message_type == 'consensus':
-            # Los mensajes de consenso deben recibirse por canal seguro
-            if not is_secure:
-                logger.warning(f"⚠️ Mensaje CONSENSUS recibido sin canal seguro desde {peer_id}; descartando")
-                return
-            # Entregar a la capa de aplicación si hay callback registrado
-            if self.app_message_callback:
-                try:
-                    await self.app_message_callback(peer_id, message)
-                except Exception as e:
-                    logger.warning(f"⚠️ Error en app_message_callback para CONSENSUS de {peer_id}: {e!r}")
-            else:
-                logger.debug(f"📨 CONSENSUS de {peer_id} recibido pero no hay callback registrado")
         else:
             logger.debug(f"📨 Mensaje {message_type} de {peer_id}")
-            # Entregar mensajes personalizados a la aplicación si existe callback
-            if self.app_message_callback:
-                try:
-                    await self.app_message_callback(peer_id, message)
-                except Exception as e:
-                    logger.warning(f"⚠️ Error en app_message_callback para mensaje {message_type} de {peer_id}: {e!r}")
 
     async def _handle_heartbeat(self, peer_id: str, message: Dict[str, Any]):
         """Maneja mensaje de heartbeat"""
@@ -1110,36 +927,10 @@ class ConnectionManager:
         response = {
             "type": "heartbeat_response",
             "node_id": self.node_id,
-            # timestamp local cuando respondemos
-            "timestamp": time.time(),
-            # eco del timestamp original para calcular RTT
-            "echo_timestamp": message.get("timestamp", None)
+            "timestamp": time.time()
         }
 
         await self.send_message(peer_id, response)
-
-    async def _handle_heartbeat_response(self, peer_id: str, message: Dict[str, Any]):
-        """Procesa respuesta de heartbeat y actualiza métricas de latencia (RTT)"""
-        try:
-            echo_ts = message.get('echo_timestamp')
-            now = time.time()
-            # Si no viene echo_timestamp, intentar usar el último enviado a ese peer
-            send_ts = echo_ts if isinstance(echo_ts, (int, float)) else self.pending_heartbeats.get(peer_id)
-            if isinstance(send_ts, (int, float)):
-                rtt = max(0.0, now - float(send_ts))
-                self.latency_by_peer[peer_id] = rtt
-                # Guardar también en la estructura de conexión
-                conn = self.active_connections.get(peer_id)
-                if conn is not None:
-                    conn["latency"] = rtt
-                    conn["last_activity"] = now
-                # Limpiar pending para evitar crecimiento sin control
-                self.pending_heartbeats.pop(peer_id, None)
-                logger.debug(f"⏱️ RTT con {peer_id}: {rtt:.3f}s")
-            else:
-                logger.debug(f"⚠️ No se pudo calcular RTT para {peer_id}: falta timestamp de envío")
-        except Exception as e:
-            logger.debug(f"⚠️ Error procesando heartbeat_response de {peer_id}: {e!r}")
 
     async def _handle_data_message(self, peer_id: str, message: Dict[str, Any]):
         """Maneja mensaje de datos"""
@@ -1165,22 +956,13 @@ class ConnectionManager:
             connection = self.active_connections[peer_id]
             writer = connection["writer"]
 
-            # Si es un heartbeat, registrar marca de tiempo para calcular RTT al recibir respuesta
-            try:
-                if message.get('type') == 'heartbeat':
-                    ts = message.get('timestamp')
-                    if isinstance(ts, (int, float)):
-                        self.pending_heartbeats[peer_id] = float(ts)
-            except Exception:
-                pass
-
             # Si hay canal seguro, cifrar mensaje; de lo contrario, firmar mensaje en claro si es posible
             if self.crypto_engine and hasattr(self.crypto_engine, 'ratchet_states') and peer_id in getattr(self.crypto_engine, 'ratchet_states', {}):
                 try:
                     plaintext = json.dumps(message, sort_keys=True).encode()
                     secure_msg = self.crypto_engine.encrypt_message(plaintext, peer_id)
                     if not secure_msg:
-                        raise RuntimeError("Falló el cifrado del mensaje para peer_id: {peer_id}")
+                        raise Exception("encrypt_failed")
                     blob = secure_msg.serialize()
                     wrapped = {
                         "type": "secure",
@@ -1190,9 +972,8 @@ class ConnectionManager:
                         "timestamp": time.time(),
                     }
                     message_data = json.dumps(wrapped).encode() + b'\n'
-                except (CryptoError, RuntimeError, ValueError) as e:
+                except Exception:
                     # Fallback a mensaje en claro firmado
-                    logger.warning(f"Error en cifrado seguro para {peer_id}: {e}. Usando fallback a mensaje firmado")
                     canonical = json.dumps(message, sort_keys=True).encode()
                     signature_b64 = ""
                     try:
@@ -1265,10 +1046,7 @@ class ConnectionManager:
 
     def get_connection_stats(self) -> Dict[str, Any]:
         """Obtiene estadísticas de conexión"""
-        # Incluir métricas de latencia por peer
-        stats = self.connection_stats.copy()
-        stats["latency_by_peer"] = dict(self.latency_by_peer)
-        return stats
+        return self.connection_stats.copy()
 
     async def _safe_disconnect_peer(self, peer_id: str):
         """Desconecta un peer de forma segura evitando condiciones de carrera"""
@@ -1287,10 +1065,8 @@ class ConnectionManager:
         removed = self.active_connections.pop(peer_id, None)
         if removed is not None:
             self.connection_stats["active_connections"] = max(0, self.connection_stats["active_connections"] - 1)
-            # Solo loguear desconexión cuando efectivamente se removió para evitar duplicados en condiciones de carrera
-            logger.info(f"🔌 Peer {peer_id} desconectado (safe)")
-        else:
-            logger.debug(f"⚠️ Peer {peer_id} ya estaba desconectado (race handled)")
+
+        logger.info(f"🔌 Peer {peer_id} desconectado (safe)")
 
 
 class NetworkTopologyManager:
@@ -1327,22 +1103,6 @@ class NetworkTopologyManager:
 
             logger.info("📊 Analizando topología de red")
 
-            # Para redes vacías o muy pequeñas, devolver análisis simplificado
-            if len(self.network_graph) <= 1:
-                topology = NetworkTopology(
-                    total_nodes=len(self.network_graph),
-                    connected_nodes=0,
-                    network_diameter=0,
-                    clustering_coefficient=0.0,
-                    average_path_length=0.0,
-                    node_degrees={node: 0 for node in self.network_graph},
-                    critical_nodes=[]
-                )
-                self.topology_cache = topology
-                self.last_analysis = current_time
-                logger.info(f"📊 Topología analizada: {topology.total_nodes} nodos, diámetro {topology.network_diameter}")
-                return topology
-
             # Calcular métricas básicas
             total_nodes = len(self.network_graph)
             connected_nodes = sum(1 for connections in self.network_graph.values() if connections)
@@ -1353,18 +1113,17 @@ class NetworkTopologyManager:
                 for node_id, connections in self.network_graph.items()
             }
 
-            # Para análisis rápido, usar métricas simplificadas si la red es pequeña
-            if total_nodes < 10:
-                network_diameter = await self._calculate_network_diameter()
-                clustering_coefficient = 0.0  # Simplificado para redes pequeñas
-                average_path_length = 0.0     # Simplificado para redes pequeñas
-                critical_nodes = []           # Simplificado para redes pequeñas
-            else:
-                # Análisis completo solo para redes grandes
-                network_diameter = await self._calculate_network_diameter()
-                clustering_coefficient = await self._calculate_clustering_coefficient()
-                average_path_length = await self._calculate_average_path_length()
-                critical_nodes = await self._identify_critical_nodes()
+            # Calcular diámetro de red
+            network_diameter = await self._calculate_network_diameter()
+
+            # Calcular coeficiente de clustering
+            clustering_coefficient = await self._calculate_clustering_coefficient()
+
+            # Calcular longitud promedio de camino
+            average_path_length = await self._calculate_average_path_length()
+
+            # Identificar nodos críticos
+            critical_nodes = await self._identify_critical_nodes()
 
             # Crear objeto de topología
             topology = NetworkTopology(
@@ -1581,16 +1340,9 @@ class P2PNetworkManager:
         self.crypto_engine: Optional['CryptoEngine'] = None
         try:
             if initialize_crypto:
-                # Alinear el node_id criptográfico con el node_id de red para evitar desajustes
-                self.crypto_engine = initialize_crypto({"security_level": "HIGH", "node_id": self.node_id})
+                self.crypto_engine = initialize_crypto({"security_level": "high"})
             elif create_crypto_engine:
                 self.crypto_engine = create_crypto_engine()
-                # Si se crea sin adapter, generar identidad usando el node_id de red
-                if self.crypto_engine:
-                    try:
-                        self.crypto_engine.generate_node_identity(self.node_id)
-                    except Exception as e:
-                        logger.warning(f"⚠️ No se pudo generar identidad con node_id de red: {e}")
         except Exception as e:
             logger.warning(f"⚠️ No se pudo inicializar CryptoEngine: {e}")
             self.crypto_engine = None
@@ -1606,36 +1358,6 @@ class P2PNetworkManager:
         self.auto_connect_peers = True
         self.max_peer_connections = 20
         self.heartbeat_interval = 30
-        # NAT traversal y DHT (placeholders)
-        self.nat_config: Dict[str, Any] = {
-            "stun_servers": ["stun.l.google.com:19302"],
-            "turn_servers": [],  # Configurable según despliegue (usuario/credenciales)
-        }
-        self.dht_bootstrap_seeds: List[Dict[str, Any]] = []  # e.g., [{"peer_id": "seed1", "ip": "1.2.3.4", "port": 8080}]
-        self.dht_active: bool = False
-
-        # Registro de handlers de aplicación por tipo de mensaje
-        self.message_handlers: Dict[str, List[Callable[[str, Dict[str, Any]], Awaitable[None]]]] = defaultdict(list)
-
-        # Conectar el callback de mensajes de aplicación del ConnectionManager
-        self.connection_manager.app_message_callback = self._on_app_message
-
-    def register_handler(self, message_type: MessageType, handler: Callable[[str, Dict[str, Any]], Awaitable[None]]):
-        """Registra un handler de aplicación para un tipo de mensaje específico"""
-        self.message_handlers[message_type.value].append(handler)
-
-    async def _on_app_message(self, peer_id: str, message: Dict[str, Any]):
-        """Despacha mensajes entrantes a los handlers registrados"""
-        mtype = message.get('type')
-        handlers = self.message_handlers.get(mtype, [])
-        if not handlers:
-            logger.debug(f"🔔 Mensaje de aplicación '{mtype}' de {peer_id} sin handlers registrados")
-            return
-        for h in handlers:
-            try:
-                await h(peer_id, message)
-            except Exception as e:
-                logger.warning(f"⚠️ Error ejecutando handler para '{mtype}' de {peer_id}: {e!r}")
 
     async def start_network(self):
         """Inicia la red P2P"""
@@ -1644,61 +1366,18 @@ class P2PNetworkManager:
 
             self.network_active = True
 
-            # Iniciar servicios en background sin bloquear
-            asyncio.create_task(self.discovery_service.start_discovery())
-            asyncio.create_task(self.connection_manager.start_server())
-            asyncio.create_task(self._network_maintenance_loop())
-            asyncio.create_task(self._heartbeat_loop())
-            
-            # Dar tiempo para que los servicios se inicialicen
-            await asyncio.sleep(0.1)
-            
-            logger.info(f"✅ Red P2P iniciada para nodo {self.node_id}")
+            # Iniciar servicios
+            tasks = [
+                asyncio.create_task(self.discovery_service.start_discovery()),
+                asyncio.create_task(self.connection_manager.start_server()),
+                asyncio.create_task(self._network_maintenance_loop()),
+                asyncio.create_task(self._heartbeat_loop())
+            ]
+
+            await asyncio.gather(*tasks)
 
         except Exception as e:
             logger.error(f"❌ Error iniciando red P2P: {e}")
-
-    async def initialize_nat_traversal(self):
-        """Inicializa NAT traversal (placeholders para STUN/TURN)
-        - En entornos reales, usar librerías STUN/TURN para obtener IP/PUERTO público y negociar relays
-        - Aquí, registramos configuración y realizamos pruebas mínimas de conectividad"""
-        try:
-            logger.info("🌐 Inicializando NAT traversal (placeholder)")
-            # Intento simple: resolver dirección pública vía socket (no garantiza IP pública real)
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                s.connect(("8.8.8.8", 80))
-                local_addr = s.getsockname()[0]
-                s.close()
-                logger.info(f"🛰️ Dirección local observada para NAT: {local_addr}")
-            except Exception as e:
-                logger.debug(f"⚠️ No se pudo determinar dirección local para NAT: {e!r}")
-
-            if self.nat_config.get("stun_servers"):
-                logger.info(f"🔧 STUN servers configurados: {self.nat_config['stun_servers']}")
-            if self.nat_config.get("turn_servers"):
-                logger.info(f"🔧 TURN servers configurados: {self.nat_config['turn_servers']}")
-
-            logger.info("✅ NAT traversal placeholder inicializado")
-        except Exception as e:
-            logger.warning(f"⚠️ Error inicializando NAT traversal: {e!r}")
-
-    async def initialize_dht_overlay(self):
-        """Inicializa overlay DHT (placeholders para Kademlia)
-        - En despliegue real, iniciar un nodo DHT y conectarse a bootstrap seeds
-        - Aquí, registramos seeds y marcamos DHT como activo"""
-        try:
-            logger.info("🗺️ Inicializando overlay DHT (placeholder)")
-            if not self.dht_bootstrap_seeds:
-                logger.info("ℹ️ No hay seeds DHT configurados; DHT permanecerá inactivo")
-                self.dht_active = False
-                return
-            for seed in self.dht_bootstrap_seeds:
-                logger.info(f"🌱 Seed DHT: {seed}")
-            self.dht_active = True
-            logger.info("✅ DHT placeholder inicializado y marcado activo")
-        except Exception as e:
-            logger.warning(f"⚠️ Error inicializando DHT overlay: {e!r}")
 
     async def _network_maintenance_loop(self):
         """Bucle de mantenimiento de red"""
@@ -1845,92 +1524,20 @@ class P2PNetworkManager:
             return await self.connection_manager.broadcast_message(message)
 
     async def get_network_status(self) -> Dict[str, Any]:
-        """Obtiene estado actual de la red con timeout interno"""
-        try:
-            # Obtener datos básicos sin operaciones bloqueantes
-            discovered_peers_count = len(self.peer_list) if hasattr(self, 'peer_list') else 0
-            connected_peers = self.connection_manager.get_connected_peers() if hasattr(self, 'connection_manager') else []
-            connected_peers_count = len(connected_peers)
-            
-            # Intentar obtener topología con timeout muy corto
-            topology = None
-            try:
-                topology = await asyncio.wait_for(
-                    self.topology_manager.analyze_topology(), 
-                    timeout=0.5
-                )
-            except asyncio.TimeoutError:
-                logger.debug("Timeout en analyze_topology, usando datos básicos")
-                topology = NetworkTopology(
-                    total_nodes=discovered_peers_count,
-                    connected_nodes=connected_peers_count,
-                    network_diameter=0,
-                    clustering_coefficient=0.0,
-                    average_path_length=0.0,
-                    node_degrees={},
-                    critical_nodes=[]
-                )
-            except Exception as e:
-                logger.debug(f"Error en analyze_topology: {e}")
-                topology = NetworkTopology(
-                    total_nodes=discovered_peers_count,
-                    connected_nodes=connected_peers_count,
-                    network_diameter=0,
-                    clustering_coefficient=0.0,
-                    average_path_length=0.0,
-                    node_degrees={},
-                    critical_nodes=[]
-                )
+        """Obtiene estado actual de la red"""
+        topology = await self.topology_manager.analyze_topology()
+        connection_stats = self.connection_manager.get_connection_stats()
 
-            # Obtener estadísticas de conexión de forma segura
-            connection_stats = {}
-            try:
-                connection_stats = self.connection_manager.get_connection_stats()
-            except Exception as e:
-                logger.debug(f"Error obteniendo connection_stats: {e}")
-                connection_stats = {"error": "connection_stats_unavailable"}
-
-            # Crear lista de peers de forma segura y limitada
-            peer_list_data = []
-            try:
-                if hasattr(self, 'peer_list') and len(self.peer_list) <= 50:  # Limitar a 50 peers
-                    peer_list_data = [asdict(peer) for peer in list(self.peer_list.values())[:50]]
-                else:
-                    peer_list_data = []  # Demasiados peers, omitir para evitar bloqueo
-            except Exception as e:
-                logger.debug(f"Error procesando peer_list: {e}")
-                peer_list_data = []
-
-            return {
-                "node_id": getattr(self, 'node_id', 'unknown'),
-                "node_type": getattr(self, 'node_type', NodeType.FULL).value,
-                "network_active": getattr(self, 'network_active', False),
-                "discovered_peers": discovered_peers_count,
-                "connected_peers": connected_peers_count,
-                "topology": asdict(topology),
-                "connection_stats": connection_stats,
-                "nat_config": getattr(self, 'nat_config', {}),
-                "dht_active": getattr(self, 'dht_active', False),
-                "dht_bootstrap_seeds": getattr(self, 'dht_bootstrap_seeds', []),
-                "peer_list": peer_list_data
-            }
-        except Exception as e:
-            logger.error(f"Error crítico en get_network_status: {e}")
-            # Retornar estado mínimo en caso de error
-            return {
-                "node_id": getattr(self, 'node_id', 'unknown'),
-                "node_type": "full",
-                "network_active": False,
-                "discovered_peers": 0,
-                "connected_peers": 0,
-                "topology": asdict(NetworkTopology(0, 0, 0, 0.0, 0.0, {}, [])),
-                "connection_stats": {"error": "critical_error"},
-                "nat_config": {},
-                "dht_active": False,
-                "dht_bootstrap_seeds": [],
-                "peer_list": [],
-                "error": str(e)
-            }
+        return {
+            "node_id": self.node_id,
+            "node_type": self.node_type.value,
+            "network_active": self.network_active,
+            "discovered_peers": len(self.peer_list),
+            "connected_peers": len(self.connection_manager.get_connected_peers()),
+            "topology": asdict(topology),
+            "connection_stats": connection_stats,
+            "peer_list": [asdict(peer) for peer in self.peer_list.values()]
+        }
 
     async def stop_network(self):
         """Detiene la red P2P"""

@@ -4,6 +4,11 @@ Integración Blockchain - AEGIS Framework
 Sistema blockchain distribuido para garantizar inmutabilidad de datos,
 contratos inteligentes y consenso descentralizado.
 
+Programador Principal: Jose Gómez alias KaseMaster
+Contacto: kasemaster@aegis-framework.com
+Versión: 2.0.0
+Licencia: MIT
+
 Características principales:
 - Blockchain personalizado con PoS (Proof of Stake)
 - Contratos inteligentes para IA distribuida

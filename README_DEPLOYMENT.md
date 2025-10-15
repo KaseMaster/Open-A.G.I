@@ -1,6 +1,6 @@
 # 🛡️ AEGIS Framework - Guía de Despliegue Rápido
 
-[![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)](https://github.com/KaseMaster/Open-A.G.I)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/your-repo/aegis-framework)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey.svg)](#)
 
@@ -13,7 +13,7 @@
 ### Windows (PowerShell)
 ```powershell
 # Descargar e instalar automáticamente
-git clone https://github.com/KaseMaster/Open-A.G.I.git
+git clone https://github.com/your-repo/aegis-framework.git
 cd aegis-framework
 .\scripts\auto-deploy-windows.ps1
 ```
@@ -21,7 +21,7 @@ cd aegis-framework
 ### Linux (Bash)
 ```bash
 # Descargar e instalar automáticamente
-git clone https://github.com/KaseMaster/Open-A.G.I.git
+git clone https://github.com/your-repo/aegis-framework.git
 cd aegis-framework
 chmod +x scripts/auto-deploy-linux.sh
 ./scripts/auto-deploy-linux.sh

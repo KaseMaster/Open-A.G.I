@@ -24,7 +24,7 @@ class DummyNetworkManager:
         self.sent_messages.append({"channel_type": channel_type, "payload": payload})
 
 
-async def _async_outgoing_signature_added_and_valid():
+async def test_outgoing_signature_added_and_valid():
     # Identidad local
     priv = ed25519.Ed25519PrivateKey.generate()
     node_id = "node_local"
@@ -64,7 +64,7 @@ async def _async_outgoing_signature_added_and_valid():
     pub.verify(signature_bytes, msg_bytes)
 
 
-async def _async_incoming_signature_verification():
+async def test_incoming_signature_verification():
     # Setup PBFT y handler
     priv_local = ed25519.Ed25519PrivateKey.generate()
     node_id = "node_local"
@@ -109,16 +109,6 @@ async def _async_incoming_signature_verification():
     before = len(received)
     await pbft._on_consensus_network_message(remote_id, {"payload": payload_invalid})
     assert len(received) == before, "El mensaje con firma inválida no debe ser despachado"
-
-
-def test_outgoing_signature_added_and_valid():
-    """Pytest-compatible sync wrapper for the async outgoing signature test."""
-    asyncio.run(_async_outgoing_signature_added_and_valid())
-
-
-def test_incoming_signature_verification():
-    """Pytest-compatible sync wrapper for the async incoming signature verification test."""
-    asyncio.run(_async_incoming_signature_verification())
 
 
 def run():

@@ -1,0 +1,541 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aegis-framework"
+version = "1.0.0"
+description = "Advanced Encrypted Governance and Intelligence System - A quantum-resistant distributed framework"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "AEGIS Development Team", email = "dev@aegis-project.org"},
+]
+maintainers = [
+    {name = "AEGIS Security Team", email = "security@aegis-project.org"},
+]
+keywords = [
+    "blockchain", "cryptography", "p2p", "consensus", "distributed-systems",
+    "security", "encryption", "decentralized", "network", "storage",
+    "monitoring", "dashboard", "backup", "testing", "framework",
+    "quantum-resistant", "post-quantum", "hybrid-consensus", "paxos",
+    "raft", "pbft", "tor", "onion-routing", "privacy", "anonymity"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security :: Cryptography",
+    "Topic :: System :: Distributed Computing",
+    "Topic :: System :: Networking",
+    "Topic :: Database :: Database Engines/Servers",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Security",
+    "Environment :: Console",
+    "Environment :: Web Environment",
+    "Framework :: AsyncIO",
+    "Natural Language :: English",
+    "Natural Language :: Spanish",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "cryptography>=40.0.0",
+    "pynacl>=1.5.0",
+    "aiohttp>=3.8.0",
+    "asyncio-mqtt>=0.13.0",
+    "pyyaml>=6.0",
+    "click>=8.1.0",
+    "rich>=13.0.0",
+    "loguru>=0.7.0",
+    "pydantic>=2.0.0",
+    "sqlalchemy>=2.0.0",
+    "alembic>=1.10.0",
+    "redis>=4.5.0",
+    "prometheus-client>=0.16.0",
+    "psutil>=5.9.0",
+    "jinja2>=3.1.0",
+    "websockets>=11.0.0",
+    "httpx>=0.24.0",
+    "orjson>=3.8.0",
+    "uvloop>=0.17.0; sys_platform != 'win32'",
+    "python-multipart>=0.0.6",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "python-dotenv>=1.0.0",
+    "schedule>=1.2.0",
+    "watchdog>=3.0.0",
+    "tabulate>=0.9.0",
+    "colorama>=0.4.6",
+    "tqdm>=4.65.0",
+    "requests>=2.28.0",
+    "certifi>=2022.12.7",
+    "urllib3>=1.26.0",
+    "idna>=3.4",
+    "charset-normalizer>=3.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.10.0",
+    "pytest-benchmark>=4.0.0",
+    "pytest-xdist>=3.0.0",
+    "coverage>=7.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "bandit>=1.7.0",
+    "safety>=2.3.0",
+    "pre-commit>=3.0.0",
+    "factory-boy>=3.2.0",
+    "faker>=18.0.0",
+    "hypothesis>=6.70.0",
+    "responses>=0.23.0",
+    "freezegun>=1.2.0",
+    "pytest-timeout>=2.1.0",
+    "pytest-sugar>=0.9.0",
+    "pytest-clarity>=1.0.0",
+    "pytest-html>=3.1.0",
+    "pytest-json-report>=1.5.0",
+]
+test = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.10.0",
+    "pytest-benchmark>=4.0.0",
+    "pytest-xdist>=3.0.0",
+    "coverage>=7.0.0",
+    "factory-boy>=3.2.0",
+    "faker>=18.0.0",
+]
+docs = [
+    "sphinx>=6.0.0",
+    "sphinx-rtd-theme>=1.2.0",
+    "sphinx-autodoc-typehints>=1.22.0",
+    "myst-parser>=1.0.0",
+    "sphinx-copybutton>=0.5.0",
+    "sphinx-click>=4.4.0",
+    "sphinxcontrib-mermaid>=0.8.1",
+    "sphinx-design>=0.4.0",
+]
+monitoring = [
+    "prometheus-client>=0.16.0",
+    "grafana-api>=1.0.3",
+    "elasticsearch>=8.0.0",
+    "loguru>=0.7.0",
+    "structlog>=23.0.0",
+    "sentry-sdk>=1.20.0",
+]
+security = [
+    "bandit>=1.7.0",
+    "safety>=2.3.0",
+    "semgrep>=1.0.0",
+    "cryptography>=40.0.0",
+    "pycryptodome>=3.17.0",
+    "keyring>=23.13.0",
+]
+performance = [
+    "uvloop>=0.17.0",
+    "orjson>=3.8.0",
+    "cython>=0.29.0",
+    "numba>=0.57.0",
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+]
+cloud = [
+    "boto3>=1.26.0",
+    "google-cloud-storage>=2.7.0",
+    "azure-storage-blob>=12.14.0",
+    "kubernetes>=26.1.0",
+    "docker>=6.0.0",
+]
+all = [
+    "aegis-framework[dev,test,docs,monitoring,security,performance,cloud]"
+]
+
+[project.urls]
+Homepage = "https://github.com/AEGIS-Project/AEGIS"
+Documentation = "https://aegis-project.readthedocs.io/"
+Repository = "https://github.com/AEGIS-Project/AEGIS"
+"Bug Tracker" = "https://github.com/AEGIS-Project/AEGIS/issues"
+Changelog = "https://github.com/AEGIS-Project/AEGIS/blob/main/docs/CHANGELOG.md"
+"Security Policy" = "https://github.com/AEGIS-Project/AEGIS/security/policy"
+Discussions = "https://github.com/AEGIS-Project/AEGIS/discussions"
+Wiki = "https://github.com/AEGIS-Project/AEGIS/wiki"
+
+[project.scripts]
+aegis = "main:main"
+aegis-node = "main:start_node"
+aegis-test = "run_tests:main"
+aegis-benchmark = "benchmarks.run_benchmarks:main"
+aegis-monitor = "monitoring_dashboard:main"
+aegis-backup = "backup_system:main"
+aegis-crypto = "crypto_framework:main"
+aegis-p2p = "p2p_network:main"
+aegis-consensus = "consensus_algorithm:main"
+aegis-storage = "storage_system:main"
+aegis-web = "web_dashboard:main"
+
+[tool.setuptools]
+package-dir = {"" = "."}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["*"]
+exclude = ["tests*", "benchmarks*", "docs*", "scripts*"]
+
+[tool.setuptools.package-data]
+"*" = [
+    "config/*.yml",
+    "config/*.yaml", 
+    "config/*.json",
+    "templates/*.html",
+    "templates/*.css",
+    "templates/*.js",
+    "static/*",
+    "schemas/*.json",
+    "certs/*.pem",
+    "docs/*.md",
+    "tests/fixtures/*.json",
+    "tests/fixtures/*.yml",
+]
+
+# Black configuration
+[tool.black]
+line-length = 120
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | migrations
+)/
+'''
+
+# isort configuration
+[tool.isort]
+profile = "black"
+line_length = 120
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+known_first_party = ["aegis"]
+known_third_party = ["pytest", "cryptography", "aiohttp", "pydantic", "sqlalchemy"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+
+# MyPy configuration
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+show_error_codes = true
+show_column_numbers = true
+show_error_context = true
+pretty = true
+
+[[tool.mypy.overrides]]
+module = [
+    "tests.*",
+    "benchmarks.*",
+]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+    "prometheus_client.*",
+    "redis.*",
+    "uvloop.*",
+    "orjson.*",
+    "psutil.*",
+    "watchdog.*",
+    "schedule.*",
+]
+ignore_missing_imports = true
+
+# Pytest configuration
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=.",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+    "--cov-fail-under=80",
+    "--tb=short",
+    "--maxfail=3",
+]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+    "security: marks tests as security tests",
+    "performance: marks tests as performance tests",
+    "crypto: marks tests as cryptography tests",
+    "p2p: marks tests as P2P network tests",
+    "consensus: marks tests as consensus algorithm tests",
+    "storage: marks tests as storage system tests",
+    "monitoring: marks tests as monitoring tests",
+    "web: marks tests as web dashboard tests",
+    "backup: marks tests as backup system tests",
+]
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+asyncio_mode = "auto"
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/env/*",
+    "setup.py",
+    "*/migrations/*",
+    "*/benchmarks/*",
+    "*/scripts/*",
+]
+branch = true
+parallel = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+show_missing = true
+skip_covered = false
+precision = 2
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+# Bandit security linter configuration
+[tool.bandit]
+exclude_dirs = ["tests", "benchmarks", "scripts"]
+skips = ["B101", "B601"]  # Skip assert_used and shell_injection_process_args
+
+# Ruff linter configuration (alternative to flake8)
+[tool.ruff]
+line-length = 120
+target-version = "py38"
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+    "S",  # bandit
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+    "S104",  # hardcoded bind all interfaces
+    "S108",  # probable insecure usage of temp file/directory
+]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+    "migrations",
+]
+
+[tool.ruff.per-file-ignores]
+"tests/*" = ["S101", "S106", "S107"]  # Allow assert, hardcoded passwords in tests
+"benchmarks/*" = ["S101"]  # Allow assert in benchmarks
+
+[tool.ruff.mccabe]
+max-complexity = 10
+
+# Vulture (dead code finder) configuration
+[tool.vulture]
+exclude = ["tests/", "benchmarks/", "migrations/"]
+ignore_decorators = ["@app.route", "@click.command", "@pytest.fixture"]
+ignore_names = ["_*", "test_*"]
+make_whitelist = true
+min_confidence = 60
+paths = ["."]
+sort_by_size = true
+verbose = false
+
+# Interrogate (docstring coverage) configuration
+[tool.interrogate]
+ignore-init-method = true
+ignore-init-module = false
+ignore-magic = false
+ignore-semiprivate = false
+ignore-private = false
+ignore-property-decorators = false
+ignore-module = false
+ignore-nested-functions = false
+ignore-nested-classes = true
+ignore-setters = false
+fail-under = 80
+exclude = ["setup.py", "docs", "build", "tests", "benchmarks"]
+ignore-regex = ["^get$", "^mock_.*", ".*BaseClass.*"]
+verbose = 0
+quiet = false
+whitelist-regex = []
+color = true
+omit-covered-files = false
+
+# Semantic release configuration
+[tool.semantic_release]
+version_toml = "pyproject.toml:project.version"
+branch = "main"
+changelog_file = "docs/CHANGELOG.md"
+build_command = "python -m build"
+dist_path = "dist/"
+upload_to_pypi = false
+upload_to_release = true
+remove_dist = false
+patch_without_tag = false
+major_on_zero = true
+tag_commit = true
+commit_subject = "chore(release): {version}"
+commit_message = "chore(release): {version}\n\nAutomatically generated by python-semantic-release"
+commit_parser = "angular"
+
+[tool.semantic_release.commit_parser_options]
+allowed_tags = ["build", "chore", "ci", "docs", "feat", "fix", "perf", "style", "refactor", "test"]
+minor_tags = ["feat"]
+patch_tags = ["fix", "perf"]
+
+# Commitizen configuration
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "1.0.0"
+tag_format = "v$version"
+version_files = [
+    "pyproject.toml:version",
+    "setup.py:version",
+]
+bump_message = "chore(release): bump version $current_version → $new_version"
+changelog_file = "docs/CHANGELOG.md"
+changelog_format = "## $version ($date)\n\n$changes"
+changelog_incremental = true
+check_consistency = true
+
+# Pre-commit hooks configuration
+[tool.pre-commit]
+repos = [
+    {
+        repo = "https://github.com/pre-commit/pre-commit-hooks",
+        rev = "v4.4.0",
+        hooks = [
+            {id = "trailing-whitespace"},
+            {id = "end-of-file-fixer"},
+            {id = "check-yaml"},
+            {id = "check-added-large-files"},
+            {id = "check-json"},
+            {id = "check-toml"},
+            {id = "check-xml"},
+            {id = "check-merge-conflict"},
+            {id = "debug-statements"},
+            {id = "check-docstring-first"},
+        ]
+    },
+    {
+        repo = "https://github.com/psf/black",
+        rev = "23.3.0",
+        hooks = [{id = "black"}]
+    },
+    {
+        repo = "https://github.com/pycqa/isort",
+        rev = "5.12.0",
+        hooks = [{id = "isort"}]
+    },
+    {
+        repo = "https://github.com/charliermarsh/ruff-pre-commit",
+        rev = "v0.0.261",
+        hooks = [{id = "ruff", args = ["--fix"]}]
+    },
+    {
+        repo = "https://github.com/pre-commit/mirrors-mypy",
+        rev = "v1.2.0",
+        hooks = [{id = "mypy", additional_dependencies = ["types-all"]}]
+    },
+    {
+        repo = "https://github.com/PyCQA/bandit",
+        rev = "1.7.5",
+        hooks = [{id = "bandit", args = ["-c", "pyproject.toml"]}]
+    },
+]

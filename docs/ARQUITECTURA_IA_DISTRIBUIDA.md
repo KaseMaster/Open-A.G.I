@@ -205,7 +205,7 @@ def allocate_resources(task, available_nodes):
   - Estado: Tor en ejecución con Onion Service v3, client authorization cargada, SocksPort sólo .onion, ControlPort con CookieAuthentication, firewall aplicado y rotación de logs programada.
 - [ ] Sistema básico de P2P networking (en progreso alto)
   - Referencias: `p2p_network.py`
-  - Estado: descubrimiento (mDNS/Zeroconf) operativo sin dependencia estricta de `netifaces`, detección de IP local endurecida (filtro de loopback/link-local/0.0.0.0/multicast), mantenimiento de peers, múltiples protocolos (TCP/UDP/WebSocket/HTTP), heartbeat y topología; validado con `tests/test_mdns_start_stop.py`. Pendiente integración completa con consenso/crypto y pruebas en red.
+  - Estado: descubrimiento (mDNS/Zeroconf), mantenimiento de peers, múltiples protocolos (TCP/UDP/WebSocket/HTTP), heartbeat y topología; pendiente integración total con consenso/crypto y pruebas en red.
 - [ ] Framework criptográfico fundamental (en progreso alto)
   - Referencias: `crypto_framework.py`
   - Estado: Ed25519/X25519, ChaCha20-Poly1305, Double Ratchet, HKDF/PBKDF2, identidades de nodo; pendiente integración aplicada y almacenamiento seguro de claves.
@@ -213,7 +213,7 @@ def allocate_resources(task, available_nodes):
 #### Fase 2: Consenso y Sincronización (Semanas 5-8)
 - [ ] Protocolo de consenso híbrido (en progreso alto)
   - Referencias: `consensus_algorithm.py`, `consensus_protocol.py`
-  - Estado: PBFT optimizado + PoC implementados; integración con transporte P2P en canal `CONSENSUS` activa, handler registrado y soporte de asignación tardía del network manager. Firma y verificación Ed25519 incorporadas en el canal `CONSENSUS` (salida firmada y entrada verificada); validados con `tests/test_consensus_bridge.py` y `tests/test_consensus_signature.py`. Pendiente casos de uso con persistencia y agregación.
+  - Estado: PBFT optimizado + PoC implementados; pendiente integración con transporte P2P, firma/verificación y casos de uso con persistencia.
 - [ ] Base de conocimiento distribuida (pendiente)
   - Referencias: (MVP por implementar)
   - Estado: definir almacén direccionado por contenido con versionado ligero y sincronización P2P básica.

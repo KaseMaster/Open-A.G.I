@@ -142,7 +142,7 @@ class ComputeTask:
         base_urgency = 6 - self.priority.value  # Invertir prioridad
         
         if self.deadline:
-        time_left = (self.deadline - datetime.now(timezone.utc)).total_seconds()
+            time_left = (self.deadline - datetime.now(timezone.utc)).total_seconds()
             if time_left <= 0:
                 return 10.0  # Máxima urgencia
             
@@ -372,16 +372,14 @@ class LoadBalancer:
         
         if assigned_node:
             task.assigned_node = assigned_node
-        task.started_at = datetime.now(timezone.utc)
-            
+            task.started_at = datetime.now(timezone.utc)
             # Registrar asignación
             self.assignment_history.append({
                 'task_id': task.task_id,
                 'node_id': assigned_node,
-            'timestamp': datetime.now(timezone.utc),
+                'timestamp': datetime.now(timezone.utc),
                 'strategy': self.current_strategy
             })
-            
             logger.info(f"Tarea {task.task_id} asignada a nodo {assigned_node}")
         
         return assigned_node
@@ -552,8 +550,8 @@ class ResourceManager:
         self.monitor.stop_monitoring()
         
         # Completar tareas activas
-        for task in self.active_tasks.values():
-        task.completed_at = datetime.now(timezone.utc)
+        for task in list(self.active_tasks.values()):
+            task.completed_at = datetime.now(timezone.utc)
             self.completed_tasks.append(task)
         
         self.active_tasks.clear()
@@ -637,15 +635,13 @@ class ResourceManager:
             if self.task_executor:
                 result = await self.task_executor(task)
                 task.result_data = result
-            
-        task.completed_at = datetime.now(timezone.utc)
+            task.completed_at = datetime.now(timezone.utc)
             self.completed_tasks.append(task)
-            
             logger.info(f"Tarea {task.task_id} completada localmente")
             
         except Exception as e:
             logger.error(f"Error ejecutando tarea {task.task_id}: {e}")
-        task.completed_at = datetime.now(timezone.utc)
+            task.completed_at = datetime.now(timezone.utc)
             
         finally:
             self.active_tasks.pop(task.task_id, None)
@@ -655,7 +651,7 @@ class ResourceManager:
         while self.running:
             try:
                 # Limpiar tareas expiradas
-        current_time = datetime.now(timezone.utc)
+                current_time = datetime.now(timezone.utc)
                 expired_tasks = [
                     task_id for task_id, task in self.active_tasks.items()
                     if task.is_expired()

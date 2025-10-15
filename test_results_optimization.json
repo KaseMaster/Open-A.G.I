@@ -1,0 +1,42 @@
+{
+  "tor_config": true,
+  "tor_connection_time": 0.50421142578125,
+  "tor_status": "optimized",
+  "p2p_optimization_time": 0.0008008480072021484,
+  "p2p_peer_count": 5,
+  "p2p_best_peers": 5,
+  "p2p_status": "optimized",
+  "integration_modes": {
+    "tor_only": {
+      "success": false,
+      "time": 0.00048279762268066406,
+      "status": "ok"
+    },
+    "p2p_only": {
+      "success": false,
+      "time": 0.0002779960632324219,
+      "status": "ok"
+    },
+    "hybrid": {
+      "success": false,
+      "time": 0.0003731250762939453,
+      "status": "ok"
+    },
+    "adaptive": {
+      "success": false,
+      "time": 0.0018696784973144531,
+      "status": "ok"
+    }
+  },
+  "performance_monitoring": {
+    "health_check": true,
+    "metrics_available": true,
+    "status": "ok"
+  },
+  "test_summary": {
+    "total_time": 0.5123031139373779,
+    "timestamp": 1760314811.951951,
+    "tests_completed": 2,
+    "overall_status": "optimized"
+  }
+}

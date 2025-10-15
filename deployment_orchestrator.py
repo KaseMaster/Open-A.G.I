@@ -28,47 +28,14 @@ import socket
 import threading
 from typing import Dict, List, Set, Optional, Any, Tuple
 from dataclasses import dataclass, asdict, field
-from pathlib import Path
-try:
-    import docker
-    DOCKER_AVAILABLE = True
-except ImportError:
-    DOCKER_AVAILABLE = False
-    logger = logging.getLogger(__name__)
-    logger.warning("Docker no está disponible. Funcionalidad Docker deshabilitada.")
-try:
-    import kubernetes
-    from kubernetes import client, config
-    KUBERNETES_AVAILABLE = True
-except ImportError:
-    KUBERNETES_AVAILABLE = False
-    logger = logging.getLogger(__name__)
-    logger.warning("Kubernetes no está disponible. Funcionalidad K8s deshabilitada.")
 from enum import Enum
-try:
-    import consul
-    CONSUL_AVAILABLE = True
-except ImportError:
-    CONSUL_AVAILABLE = False
-    logger = logging.getLogger(__name__)
-    logger.warning("Consul no está disponible. Funcionalidad Consul deshabilitada.")
-
-try:
-    import etcd3
-    ETCD_AVAILABLE = True
-except ImportError:
-    ETCD_AVAILABLE = False
-    logger = logging.getLogger(__name__)
-    logger.warning("etcd3 no está disponible. Funcionalidad etcd deshabilitada.")
+import docker
+import kubernetes
+from kubernetes import client, config
+import consul
+import etcd3
 import requests
-try:
-    import paramiko
-    PARAMIKO_AVAILABLE = True
-except ImportError:
-    PARAMIKO_AVAILABLE = False
-    logger = logging.getLogger(__name__)
-    logger.warning("paramiko no está disponible. Funcionalidad SSH deshabilitada.")
-
+import paramiko
 import jinja2
 from pathlib import Path
 import hashlib
@@ -186,11 +153,6 @@ class ContainerManager:
     """Gestor de contenedores Docker"""
     
     def __init__(self):
-        if not DOCKER_AVAILABLE:
-            logger.error("❌ Docker no está disponible. Instale docker con: pip install docker")
-            self.client = None
-            return
-            
         try:
             self.client = docker.from_env()
             logger.info("✅ Cliente Docker inicializado")
@@ -202,7 +164,7 @@ class ContainerManager:
         """Construye imagen Docker"""
         try:
             if not self.client:
-                raise RuntimeError("Cliente Docker no disponible")
+                raise Exception("Cliente Docker no disponible")
             
             logger.info(f"🔨 Construyendo imagen: {image_name}:{tag}")
             
@@ -222,7 +184,7 @@ class ContainerManager:
             logger.info(f"✅ Imagen construida: {image.id[:12]}")
             return True
             
-        except (docker.errors.BuildError, docker.errors.APIError, RuntimeError) as e:
+        except Exception as e:
             logger.error(f"❌ Error construyendo imagen: {e}")
             return False
     
@@ -230,7 +192,7 @@ class ContainerManager:
         """Sube imagen a registro"""
         try:
             if not self.client:
-                raise RuntimeError("Cliente Docker no disponible")
+                raise Exception("Cliente Docker no disponible")
             
             full_name = f"{registry}/{image_name}:{tag}" if registry else f"{image_name}:{tag}"
             
@@ -244,7 +206,7 @@ class ContainerManager:
             logger.info(f"✅ Imagen subida: {full_name}")
             return True
             
-        except (docker.errors.APIError, docker.errors.ImageNotFound, RuntimeError) as e:
+        except Exception as e:
             logger.error(f"❌ Error subiendo imagen: {e}")
             return False
     
@@ -252,7 +214,7 @@ class ContainerManager:
         """Ejecuta contenedor"""
         try:
             if not self.client:
-                raise RuntimeError("Cliente Docker no disponible")
+                raise Exception("Cliente Docker no disponible")
             
             container_name = f"{service_config.service_name}_{node_config.node_id}"
             
@@ -318,9 +280,6 @@ class KubernetesManager:
     """Gestor de Kubernetes"""
     
     def __init__(self, kubeconfig_path: str = None):
-        if not KUBERNETES_AVAILABLE:
-            raise RuntimeError("Kubernetes no está disponible. Instale kubernetes con: pip install kubernetes")
-        
         try:
             if kubeconfig_path:
                 config.load_kube_config(config_file=kubeconfig_path)
@@ -419,11 +378,8 @@ class KubernetesManager:
             logger.error(f"❌ Error desplegando servicio: {e}")
             return False
     
-    def _create_deployment_manifest(self, service_config: ServiceConfiguration):
+    def _create_deployment_manifest(self, service_config: ServiceConfiguration) -> client.V1Deployment:
         """Crea manifiesto de Deployment"""
-        if not KUBERNETES_AVAILABLE:
-            raise RuntimeError("Kubernetes no está disponible para crear manifiestos")
-            
         # Configurar contenedor
         container = client.V1Container(
             name=service_config.service_name,
@@ -482,11 +438,8 @@ class KubernetesManager:
         
         return deployment
     
-    def _create_service_manifest(self, service_config: ServiceConfiguration):
+    def _create_service_manifest(self, service_config: ServiceConfiguration) -> client.V1Service:
         """Crea manifiesto de Service"""
-        if not KUBERNETES_AVAILABLE:
-            raise RuntimeError("Kubernetes no está disponible para crear manifiestos")
-            
         # Configurar puertos
         ports = [
             client.V1ServicePort(

@@ -1,73 +1,81 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-/// @title ChatRoom - Metadatos de salas y eventos on-chain para mensajes/archivos cifrados en IPFS
 contract ChatRoom {
     struct Room {
-        address admin;
         uint256 id;
-        bool exists;
-        mapping(address => bool) participants;
+        string name;
+        string ipfsHash;
+        address creator;
+        uint256 memberCount;
     }
 
-    uint256 public nextRoomId;
-    mapping(uint256 => Room) private rooms;
+    struct Message {
+        address sender;
+        string ipfsHash;
+        uint256 timestamp;
+    }
 
-    event RoomCreated(uint256 indexed roomId, address indexed admin, address[] participants);
-    event MessagePosted(uint256 indexed roomId, address indexed sender, string cid, bytes32 contentHash);
-    event FileShared(
-        uint256 indexed roomId,
-        address indexed sender,
-        string cid,
-        bytes32 contentHash,
-        string filename,
-        uint256 size
-    );
+    event RoomCreated(uint256 indexed roomId, string name, address creator);
+    event MessageSent(uint256 indexed roomId, address sender, string ipfsHash);
+    event MemberJoined(uint256 indexed roomId, address member);
 
-    function createRoom(address[] calldata participants) external returns (uint256) {
-        uint256 id = ++nextRoomId;
-        Room storage r = rooms[id];
-        r.admin = msg.sender;
-        r.id = id;
-        r.exists = true;
-        r.participants[msg.sender] = true;
-        for (uint256 i = 0; i < participants.length; i++) {
-            r.participants[participants[i]] = true;
+    Room[] private rooms;
+    mapping(uint256 => address[]) private roomMembers;
+    mapping(uint256 => Message[]) private roomMessages;
+    mapping(uint256 => mapping(address => bool)) private isMember;
+
+    function createRoom(string memory name, string memory ipfsHash) public {
+        uint256 id = rooms.length;
+        rooms.push(Room({
+            id: id,
+            name: name,
+            ipfsHash: ipfsHash,
+            creator: msg.sender,
+            memberCount: 1
+        }));
+
+        roomMembers[id].push(msg.sender);
+        isMember[id][msg.sender] = true;
+
+        emit RoomCreated(id, name, msg.sender);
+    }
+
+    function joinRoom(uint256 roomId) public {
+        require(roomId < rooms.length, "Invalid room");
+        if (!isMember[roomId][msg.sender]) {
+            roomMembers[roomId].push(msg.sender);
+            isMember[roomId][msg.sender] = true;
+            rooms[roomId].memberCount += 1;
+            emit MemberJoined(roomId, msg.sender);
         }
-        emit RoomCreated(id, msg.sender, participants);
-        return id;
     }
 
-    modifier onlyParticipant(uint256 roomId) {
-        require(rooms[roomId].exists, "room-not-found");
-        require(rooms[roomId].participants[msg.sender], "not-participant");
-        _;
+    function sendMessage(uint256 roomId, string memory ipfsHash) public {
+        require(roomId < rooms.length, "Invalid room");
+        // Allow non-members to send; or enforce membership:
+        if (!isMember[roomId][msg.sender]) {
+            joinRoom(roomId);
+        }
+        roomMessages[roomId].push(Message({
+            sender: msg.sender,
+            ipfsHash: ipfsHash,
+            timestamp: block.timestamp
+        }));
+        emit MessageSent(roomId, msg.sender, ipfsHash);
     }
 
-    function addParticipant(uint256 roomId, address user) external {
-        Room storage r = rooms[roomId];
-        require(r.exists, "room-not-found");
-        require(r.admin == msg.sender, "not-admin");
-        r.participants[user] = true;
+    function getRooms() public view returns (Room[] memory) {
+        return rooms;
     }
 
-    function postMessage(uint256 roomId, string calldata cid, bytes32 contentHash) external onlyParticipant(roomId) {
-        emit MessagePosted(roomId, msg.sender, cid, contentHash);
+    function getRoomMessages(uint256 roomId) public view returns (Message[] memory) {
+        require(roomId < rooms.length, "Invalid room");
+        return roomMessages[roomId];
     }
 
-    function shareFile(
-        uint256 roomId,
-        string calldata cid,
-        bytes32 contentHash,
-        string calldata filename,
-        uint256 size
-    ) external onlyParticipant(roomId) {
-        emit FileShared(roomId, msg.sender, cid, contentHash, filename, size);
-    }
-
-    function isParticipant(uint256 roomId, address user) external view returns (bool) {
-        Room storage r = rooms[roomId];
-        if (!r.exists) return false;
-        return r.participants[user];
+    function getRoomMembers(uint256 roomId) public view returns (address[] memory) {
+        require(roomId < rooms.length, "Invalid room");
+        return roomMembers[roomId];
     }
 }

@@ -3,9 +3,10 @@ import { ethers } from 'ethers';
 import { create } from 'ipfs-http-client';
 import nacl from 'tweetnacl';
 import './App.css';
+import StatusBar from './components/StatusBar';
 
-// Base58 encoding/decoding
-const base58Alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+// Base58 implementation
+const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 
 function base58Encode(buffer) {
   if (buffer.length === 0) return '';
@@ -29,17 +30,17 @@ function base58Encode(buffer) {
     leadingZeros++;
   }
   
-  return '1'.repeat(leadingZeros) + digits.reverse().map(d => base58Alphabet[d]).join('');
+  return '1'.repeat(leadingZeros) + digits.reverse().map(d => BASE58_ALPHABET[d]).join('');
 }
 
 function base58Decode(str) {
-  if (str.length === 0) return new Uint8Array(0);
+  if (str.length === 0) return new Uint8Array();
   
   let bytes = [0];
   for (let i = 0; i < str.length; i++) {
     const char = str[i];
-    const charIndex = base58Alphabet.indexOf(char);
-    if (charIndex === -1) throw new Error('Invalid base58 character');
+    const charIndex = BASE58_ALPHABET.indexOf(char);
+    if (charIndex === -1) throw new Error('Invalid Base58 character');
     
     let carry = charIndex;
     for (let j = 0; j < bytes.length; j++) {
@@ -53,47 +54,42 @@ function base58Decode(str) {
     }
   }
   
-  let leadingOnes = 0;
+  let leadingZeros = 0;
   for (let i = 0; i < str.length && str[i] === '1'; i++) {
-    leadingOnes++;
+    leadingZeros++;
   }
   
-  return new Uint8Array([...Array(leadingOnes).fill(0), ...bytes.reverse()]);
+  return new Uint8Array(leadingZeros + bytes.reverse().length).fill(0, 0, leadingZeros).set(bytes, leadingZeros);
 }
 
-  // Contract addresses (actualizadas después del despliegue)
-  const CHAT_CONTRACT_ADDRESS = "0x4A679253410272dd5232B3Ff7cF5dbB88f295319";
-  const AEGIS_TOKEN_ADDRESS = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
+// Contract addresses and ABIs
+const CHAT_CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+const AEGIS_TOKEN_ADDRESS = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
 
 const CHAT_ABI = [
-  "function createRoom(string memory name) public",
+  "function createRoom(string memory name, string memory ipfsHash) public",
   "function joinRoom(uint256 roomId) public",
-  "function sendMessage(uint256 roomId, string memory messageHash) public",
-  "function getRooms() public view returns (tuple(uint256 id, string name, address creator, uint256 memberCount)[])",
-  "function getRoomMessages(uint256 roomId) public view returns (tuple(address sender, string messageHash, uint256 timestamp)[])",
-  "event RoomCreated(uint256 indexed roomId, string name, address indexed creator)",
-  "event MessageSent(uint256 indexed roomId, address indexed sender, string messageHash, uint256 timestamp)"
+  "function sendMessage(uint256 roomId, string memory ipfsHash) public",
+  "function getRooms() public view returns (tuple(uint256 id, string name, string ipfsHash, address creator, uint256 memberCount)[])",
+  "function getRoomMessages(uint256 roomId) public view returns (tuple(address sender, string ipfsHash, uint256 timestamp)[])",
+  "function getRoomMembers(uint256 roomId) public view returns (address[])",
+  "event RoomCreated(uint256 indexed roomId, string name, address creator)",
+  "event MessageSent(uint256 indexed roomId, address sender, string ipfsHash)",
+  "event MemberJoined(uint256 indexed roomId, address member)"
 ];
 
 const AEGIS_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
   "function transfer(address to, uint256 amount) returns (bool)",
-  "function approve(address spender, uint256 amount) returns (bool)",
-  "function allowance(address owner, address spender) view returns (uint256)"
+  "function mint(address to, uint256 amount) public",
+  "function requestTokens() public",
+  "function donate(address to, uint256 amount) public",
+  "event Transfer(address indexed from, address indexed to, uint256 value)"
 ];
 
-// IPFS client con fallback a gateway público
-let ipfsClient;
-try {
-  ipfsClient = create({
-    host: 'localhost',
-    port: 5001,
-    protocol: 'http'
-  });
-} catch (error) {
-  console.warn('IPFS local no disponible, usando gateway público');
-  ipfsClient = null;
-}
+// IPFS client setup (use Vite proxy to avoid CORS in dev)
+const ipfsBaseUrl = (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173') + '/ipfs-api';
+const ipfsClient = create({ url: ipfsBaseUrl });
 
 // Encryption utilities
 function encryptMessage(message, recipientPublicKey, senderSecretKey) {
@@ -132,49 +128,24 @@ function decryptMessage(encryptedMessage, senderPublicKey, recipientSecretKey) {
 // IPFS utilities
 async function uploadToIPFS(data) {
   try {
-    if (ipfsClient) {
-      // Intentar usar nodo IPFS local
-      const result = await ipfsClient.add(JSON.stringify(data));
-      return result.path;
-    } else {
-      // Fallback: simular hash para desarrollo sin IPFS
-      const dataStr = JSON.stringify(data);
-      const hash = 'Qm' + btoa(dataStr).replace(/[^a-zA-Z0-9]/g, '').substring(0, 44);
-      console.warn('IPFS no disponible, usando hash simulado:', hash);
-      
-      // Guardar en localStorage como fallback temporal
-      localStorage.setItem(`ipfs_${hash}`, dataStr);
-      return hash;
-    }
+    const result = await ipfsClient.add(JSON.stringify(data));
+    return result.path;
   } catch (error) {
     console.error('IPFS upload error:', error);
-    // Fallback en caso de error
-    const dataStr = JSON.stringify(data);
-    const hash = 'Qm' + btoa(dataStr).replace(/[^a-zA-Z0-9]/g, '').substring(0, 44);
-    localStorage.setItem(`ipfs_${hash}`, dataStr);
-    return hash;
+    throw error;
   }
 }
 
 async function fetchFromIPFS(hash) {
   try {
-    if (ipfsClient) {
-      // Intentar usar nodo IPFS local
-      let data = '';
-      for await (const chunk of ipfsClient.cat(hash)) {
-        data += new TextDecoder().decode(chunk);
-      }
-      return JSON.parse(data);
-    } else {
-      // Fallback: buscar en localStorage
-      const data = localStorage.getItem(`ipfs_${hash}`);
-      return data ? JSON.parse(data) : null;
+    let data = '';
+    for await (const chunk of ipfsClient.cat(hash)) {
+      data += new TextDecoder().decode(chunk);
     }
+    return JSON.parse(data);
   } catch (error) {
     console.error('IPFS fetch error:', error);
-    // Fallback: buscar en localStorage
-    const data = localStorage.getItem(`ipfs_${hash}`);
-    return data ? JSON.parse(data) : null;
+    return null;
   }
 }
 
@@ -192,43 +163,16 @@ function App() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [aegisBalance, setAegisBalance] = useState('0');
-  // Dark mode toggle with localStorage persistence
-  const [darkMode, setDarkMode] = useState(() => {
-    const saved = localStorage.getItem('secureChat-darkMode');
-    return saved !== null ? JSON.parse(saved) : true;
-  });
-
-  // Save dark mode preference
-  useEffect(() => {
-    localStorage.setItem('secureChat-darkMode', JSON.stringify(darkMode));
-    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
-  }, [darkMode]);
-
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    setDarkMode(prev => !prev);
-  };
+  const [darkMode, setDarkMode] = useState(true);
   const [activeTab, setActiveTab] = useState('chat');
   const [notifications, setNotifications] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
   const [parallaxOffset, setParallaxOffset] = useState(0);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [ipfsOk, setIpfsOk] = useState(false);
+  const [chainOk, setChainOk] = useState(false);
   
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
-
-  // Detectar si es móvil
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   // Default rooms for demo
   const defaultRooms = [
@@ -250,95 +194,30 @@ function App() {
 
   // Wallet connection
   const connectWallet = async () => {
-    console.log('🔗 Iniciando conexión de wallet...');
-    
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        console.log('🦊 MetaMask detectado, solicitando conexión...');
-        
-        // Request account access
-        const accounts = await window.ethereum.request({ 
-          method: 'eth_requestAccounts' 
-        });
-        
-        console.log('📋 Cuentas obtenidas:', accounts);
-        
-        if (accounts.length === 0) {
-          throw new Error('No se seleccionó ninguna cuenta');
-        }
-
-        // Create provider and signer
+    try {
+      if (typeof window.ethereum !== 'undefined') {
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
         const provider = new ethers.BrowserProvider(window.ethereum);
-        console.log('🌐 Provider creado:', provider);
-        
         const signer = await provider.getSigner();
         const address = await signer.getAddress();
-        console.log('✍️ Signer obtenido:', address);
-
-        // Create contract instances
-        console.log('📄 Creando instancias de contratos...');
-        console.log('   - Chat Contract Address:', CHAT_CONTRACT_ADDRESS);
-        console.log('   - AEGIS Token Address:', AEGIS_TOKEN_ADDRESS);
+        
+        setProvider(provider);
+        setSigner(signer);
+        setAccount(address);
         
         const chatContract = new ethers.Contract(CHAT_CONTRACT_ADDRESS, CHAT_ABI, signer);
         const aegisContract = new ethers.Contract(AEGIS_TOKEN_ADDRESS, AEGIS_ABI, signer);
         
-        console.log('✅ Contratos creados exitosamente');
-
-        // Update state
-        setProvider(provider);
-        setSigner(signer);
-        setAccount(address);
         setChatContract(chatContract);
         setAegisContract(aegisContract);
-
-        console.log('🎉 Wallet conectada exitosamente:', address);
+        
         showNotification('Wallet conectado exitosamente', 'success');
-
-        // Load data immediately after connection
-        setTimeout(() => {
-          console.log('⏰ Cargando datos después de la conexión...');
-          // No llamar aquí, el useEffect se encargará cuando los estados se actualicen
-        }, 1000);
-
-      } catch (error) {
-        console.error('❌ Error conectando wallet:', error);
-        
-        if (error.code === 4001) {
-          showNotification('Conexión cancelada por el usuario', 'error');
-        } else if (error.code === -32002) {
-          showNotification('Ya hay una solicitud de conexión pendiente', 'warning');
-        } else {
-          showNotification(`Error conectando wallet: ${error.message}`, 'error');
-        }
+      } else {
+        showNotification('MetaMask no encontrado', 'error');
       }
-    } else {
-      console.error('🚫 MetaMask no está instalado');
-      showNotification('MetaMask no encontrado. Por favor instala MetaMask.', 'error');
-    }
-  };
-
-  // Check if wallet is already connected
-  const checkWalletConnection = async () => {
-    console.log('🔍 Verificando conexión de wallet existente...');
-    
-    if (typeof window.ethereum !== 'undefined') {
-      try {
-        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-        console.log('📋 Cuentas encontradas:', accounts);
-        
-        if (accounts.length > 0) {
-          console.log('✅ Wallet ya conectada, inicializando...');
-          await connectWallet();
-        } else {
-          console.log('ℹ️ No hay wallet conectada');
-        }
-      } catch (error) {
-        console.error('❌ Error verificando wallet:', error);
-      }
-    } else {
-      console.warn('⚠️ MetaMask no detectado en el navegador');
-      showNotification('MetaMask no está instalado. Por favor, instala MetaMask para usar esta aplicación.', 'error');
+    } catch (error) {
+      console.error('Error connecting wallet:', error);
+      showNotification('Error conectando wallet', 'error');
     }
   };
 
@@ -357,16 +236,10 @@ function App() {
 
   // Load rooms
   const loadRooms = async () => {
-    if (!chatContract) {
-      console.log('No se pueden cargar salas: contrato no disponible');
-      return;
-    }
+    if (!chatContract) return;
     
     try {
-      console.log('Cargando salas del contrato...');
       const contractRooms = await chatContract.getRooms();
-      console.log('Salas del contrato:', contractRooms);
-      
       const formattedRooms = contractRooms.map(room => ({
         id: Number(room.id),
         name: room.name,
@@ -375,14 +248,9 @@ function App() {
         isDefault: false
       }));
       
-      const allRooms = [...defaultRooms, ...formattedRooms];
-      console.log('Todas las salas:', allRooms);
-      setRooms(allRooms);
+      setRooms([...defaultRooms, ...formattedRooms]);
     } catch (error) {
       console.error('Error loading rooms:', error);
-      showNotification('Error cargando salas', 'error');
-      // Usar salas por defecto si hay error
-      setRooms(defaultRooms);
     }
   };
 
@@ -452,31 +320,6 @@ function App() {
       setIsCreatingRoom(false);
       console.error('Error creating room:', error);
       showNotification('Error creando sala', 'error');
-    }
-  };
-
-  // Mobile sidebar toggle
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  // Close sidebar when selecting a room on mobile
-  const selectRoom = async (room) => {
-    try {
-      await joinRoom(room);
-      if (isMobile) {
-        setSidebarOpen(false);
-      }
-    } catch (error) {
-      console.error('Error selecting room:', error);
-    }
-  };
-
-  // Handle back button on mobile
-  const handleBackToRooms = () => {
-    setCurrentRoom(null);
-    if (isMobile) {
-      setSidebarOpen(true);
     }
   };
 
@@ -554,20 +397,13 @@ function App() {
 
   // AEGIS token functions
   const loadAegisBalance = async () => {
-    if (!aegisContract || !account) {
-      console.log('No se puede cargar balance AEGIS: contrato o cuenta no disponible');
-      return;
-    }
+    if (!aegisContract || !account) return;
     
     try {
-      console.log('Cargando balance AEGIS para:', account);
       const balance = await aegisContract.balanceOf(account);
-      const formattedBalance = ethers.formatEther(balance);
-      console.log('Balance AEGIS cargado:', formattedBalance);
-      setAegisBalance(formattedBalance);
+      setAegisBalance(ethers.formatEther(balance));
     } catch (error) {
       console.error('Error loading AEGIS balance:', error);
-      showNotification('Error cargando balance AEGIS', 'error');
     }
   };
 
@@ -613,34 +449,43 @@ function App() {
 
   // Effects
   useEffect(() => {
-    // Check if wallet is already connected on app load
-    checkWalletConnection();
-  }, []);
-
-  useEffect(() => {
-    if (account && chatContract && aegisContract) {
-      console.log('✅ Cuenta y contratos disponibles, cargando datos...');
-      console.log('   - Account:', account);
-      console.log('   - Chat Contract:', chatContract?.target || chatContract?.address);
-      console.log('   - AEGIS Contract:', aegisContract?.target || aegisContract?.address);
-      
-      // Pequeño delay para asegurar que los contratos estén completamente inicializados
-      setTimeout(() => {
-        console.log('🔄 Ejecutando carga de datos...');
-        loadRooms();
-        loadAegisBalance();
-      }, 500);
-    } else {
-      console.log('⏳ Esperando inicialización completa...');
-      console.log('   - Account:', !!account);
-      console.log('   - Chat Contract:', !!chatContract);
-      console.log('   - AEGIS Contract:', !!aegisContract);
+    if (account) {
+      loadRooms();
+      loadAegisBalance();
     }
   }, [account, chatContract, aegisContract]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Check IPFS API availability
+  useEffect(() => {
+    (async () => {
+      try {
+        await ipfsClient.version();
+        setIpfsOk(true);
+      } catch (e) {
+        setIpfsOk(false);
+      }
+    })();
+  }, []);
+
+  // Check chain/provider availability
+  useEffect(() => {
+    (async () => {
+      try {
+        if (provider) {
+          const net = await provider.getNetwork();
+          setChainOk(!!net);
+        } else {
+          setChainOk(false);
+        }
+      } catch (e) {
+        setChainOk(false);
+      }
+    })();
+  }, [provider]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -654,7 +499,9 @@ function App() {
   // Render wallet connection screen
   if (!account) {
     return (
-      <div className={`min-h-screen flex items-center justify-center transition-all duration-500 ${darkMode ? 'bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900' : 'bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50'}`}>
+      <>
+        <StatusBar ipfsOk={ipfsOk} chainOk={chainOk} account={account} aegisBalance={aegisBalance} />
+        <div className={`min-h-screen flex items-center justify-center transition-all duration-500 ${darkMode ? 'bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900' : 'bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50'}`}>
         <div className="text-center space-y-8 p-8 animate-fade-in-up">
           <div className="animate-bounce mb-4 animate-heartbeat">
             <span className="text-8xl">🔐</span>
@@ -672,93 +519,52 @@ function App() {
             Conectar Wallet
           </button>
         </div>
-      </div>
+        </div>
+      </>
     );
   }
 
   // Main app render
   return (
-    <div className={`app-container ${darkMode ? 'dark' : 'light'}`}>
-      {/* Mobile Header - Solo visible en móvil */}
-      <div className="mobile-header">
-        <div className="mobile-header-content">
+    <>
+      <StatusBar ipfsOk={ipfsOk} chainOk={chainOk} account={account} aegisBalance={aegisBalance} />
+      <div className={`min-h-screen transition-all duration-500 ${darkMode ? 'bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900' : 'bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50'}`}>
+      {/* Header */}
+      <div className="app-header">
+        <div className="brand">
+          <span>🔐</span>
+          <div>
+            <div className="brand-title">SecureChat</div>
+            <div className="brand-sub">{formatAddress(account)}</div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-12">
+          <div className="badge">
+            <span>💎</span> {aegisBalance} AEGIS
+          </div>
+
           <button
-            className="hamburger-btn"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+            onClick={() => setDarkMode(!darkMode)}
+            className="button"
           >
-            <span></span>
-            <span></span>
-            <span></span>
+            {darkMode ? '☀️' : '🌙'}
           </button>
-          
-          <div className="mobile-header-title">
-            <span className="mobile-header-icon">🔐</span>
-            <h1>SecureChat</h1>
-          </div>
-          
-          <div className="mobile-header-actions">
-            <button
-              onClick={toggleDarkMode}
-              className="icon-btn dark-mode-toggle"
-              title={darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-            >
-              <span className="theme-icon">
-                {darkMode ? '☀️' : '🌙'}
-              </span>
-            </button>
-          </div>
+
+          <button
+            onClick={disconnectWallet}
+            className="button"
+          >
+            Desconectar
+          </button>
         </div>
       </div>
 
-      {/* Sidebar Overlay para móvil */}
-      {sidebarOpen && isMobile && (
-        <div 
-          className="sidebar-overlay"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
       <div className="app-main">
         {/* Sidebar */}
-        <div className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
-          {/* Desktop Header - Solo visible en desktop */}
-          <div className="desktop-header">
-            <div className="desktop-header-content">
-              <div className="desktop-header-title">
-                <span className="desktop-header-icon">🔐</span>
-                <div>
-                  <h1>SecureChat</h1>
-                  <p>{formatAddress(account)}</p>
-                </div>
-              </div>
-              
-              <div className="desktop-header-actions">
-                <div className="aegis-balance">
-                  <span>💎</span>
-                  {aegisBalance} AEGIS
-                </div>
-                
-                <button
-                  onClick={toggleDarkMode}
-                  className="icon-btn dark-mode-toggle"
-                  title={darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-                >
-                  <span className="theme-icon">
-                    {darkMode ? '☀️' : '🌙'}
-                  </span>
-                </button>
-                
-                <button
-                  onClick={disconnectWallet}
-                  className="disconnect-btn"
-                >
-                  Desconectar
-                </button>
-              </div>
-            </div>
-          </div>
+        <div className="sidebar">
           {/* Tabs */}
-          <div className="sidebar-tabs">
+          <div className="sidebar-header">
             {[
               { id: 'chat', label: 'Chat', icon: '💬' },
               { id: 'discover', label: 'Descubrir', icon: '🔍' },
@@ -767,42 +573,44 @@ function App() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`sidebar-tab ${activeTab === tab.id ? 'sidebar-tab-active' : ''}`}
+                className={`button ${
+                  activeTab === tab.id
+                    ? darkMode
+                      ? 'bg-purple-600/20 text-purple-300 border-b-2 border-purple-500'
+                      : 'bg-purple-100 text-purple-700 border-b-2 border-purple-500'
+                    : darkMode
+                    ? 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
               >
-                <span className="sidebar-tab-icon">{tab.icon}</span>
-                <div className="sidebar-tab-label">{tab.label}</div>
+                <span className="text-lg animate-bounce-in-soft">{tab.icon}</span>
+                <div className="text-sm mt-1">{tab.label}</div>
               </button>
             ))}
           </div>
 
           {/* Chat Tab */}
           {activeTab === 'chat' && (
-            <div className="sidebar-content">
-              <div className="create-room-section">
+            <div className="flex-1 overflow-hidden">
+              <div className="sidebar-header">
                 <button
                   onClick={() => setIsCreatingRoom(!isCreatingRoom)}
-                  className="create-room-btn"
+                  className="button button-primary"
                 >
                   {isCreatingRoom ? 'Cancelar' : 'Crear Sala'}
                 </button>
               </div>
 
-              <div className="rooms-list">
+              <div className="rooms">
                 {rooms.map((room) => (
                   <div
                     key={room.id}
-                    onClick={() => selectRoom(room)}
-                    className={`room-item ${currentRoom?.id === room.id ? 'room-item-active' : ''}`}
+                    onClick={() => joinRoom(room)}
+                    className="room-item"
                   >
-                    <div className="room-avatar">
-                      <span>{room.name.charAt(0).toUpperCase()}</span>
-                    </div>
-                    <div className="room-info">
-                      <h3 className="room-name">{room.name}</h3>
-                      <p className="room-members">{room.memberCount} miembros</p>
-                    </div>
-                    <div className="room-status">
-                      <div className="online-indicator"></div>
+                    <div>
+                      <div className="room-name">{room.name}</div>
+                      <div className="room-meta">{room.memberCount} miembros</div>
                     </div>
                   </div>
                 ))}
@@ -813,14 +621,9 @@ function App() {
           {/* Discover Tab */}
           {activeTab === 'discover' && (
             <div className="flex-1 p-6">
-              <div className="text-center space-y-4">
-                <div className="text-6xl animate-bounce-in-soft animate-heartbeat">🔍</div>
-                <h3 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  Descubrir Salas
-                </h3>
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Próximamente: Explora salas públicas y únete a conversaciones interesantes
-                </p>
+              <div className="text-center">
+                <div className="chat-title">Descubrir Salas</div>
+                <div className="chat-sub">Próximamente: Explora salas públicas y únete</div>
               </div>
             </div>
           )}
@@ -828,38 +631,16 @@ function App() {
           {/* Profile Tab */}
           {activeTab === 'profile' && (
             <div className="flex-1 p-6">
-              <div className="max-w-md mx-auto space-y-6">
-                <div className="text-center">
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 flex items-center justify-center animate-bounce-in-soft hover-glow animate-heartbeat">
-                    <span className="text-3xl">👤</span>
-                  </div>
-                  <h2 className={`text-2xl font-bold mb-2 animate-fade-in-up ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                    Tu Perfil
-                  </h2>
-                  <p className={`text-sm animate-slide-in-right ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    {formatAddress(account)}
-                  </p>
-                </div>
-
-                <div className={`p-6 rounded-2xl shadow-lg backdrop-blur-lg border glass-advanced hover-lift animate-fade-in-up ${darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white/70 border-gray-200'}`}>
-                  <h3 className={`text-lg font-bold mb-4 animate-fade-in-up ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                    Tokens AEGIS
-                  </h3>
-                  
-                  <div className="space-y-4">
-                    <div className={`p-4 rounded-xl text-center glass-advanced animate-pulse-advanced ${darkMode ? 'bg-purple-600/20' : 'bg-purple-100'}`}>
-                      <div className={`text-3xl font-bold text-gradient-animated animate-shimmer-advanced ${darkMode ? 'text-purple-300' : 'text-purple-700'}`}>
-                        {aegisBalance}
-                      </div>
-                      <div className={`text-sm animate-fade-in-up ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        AEGIS Tokens
-                      </div>
-                    </div>
-                    
-                    <button
-                      onClick={requestAegisTokens}
-                      className="w-full p-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium shadow-lg hover:shadow-green-500/25 transition-all duration-300 transform hover:scale-105 ripple-button hover-glow animate-float-soft"
-                    >
+              <div className="text-center">
+                <div className="chat-title">Tu Perfil</div>
+                <div className="chat-sub">{formatAddress(account)}</div>
+              </div>
+              <div className="rooms" style={{ maxWidth: 420, margin: '0 auto' }}>
+                <div className="message" style={{ width: '100%' }}>
+                  <div className="room-name">Tokens AEGIS</div>
+                  <div className="room-meta">Balance: {aegisBalance}</div>
+                  <div style={{ marginTop: 12 }}>
+                    <button onClick={requestAegisTokens} className="button button-primary" style={{ width: '100%' }}>
                       Solicitar Tokens
                     </button>
                   </div>
@@ -870,85 +651,51 @@ function App() {
         </div>
 
         {/* Main Chat Area */}
-        <div className="chat-area">
+        <div className="chat">
           {currentRoom ? (
             <>
               {/* Chat Header */}
               <div className="chat-header">
-                <div className="chat-header-content">
-                  <button
-                    onClick={handleBackToRooms}
-                    className="back-btn"
-                  >
-                    ←
-                  </button>
-                  <div className="chat-avatar">
-                    <span>{currentRoom.name.charAt(0).toUpperCase()}</span>
-                  </div>
-                  <div className="chat-info">
-                    <h2 className="chat-title">{currentRoom.name}</h2>
-                    <p className="chat-status">{currentRoom.memberCount} miembros activos</p>
-                  </div>
-                </div>
+                <button onClick={() => setCurrentRoom(null)} className="button">←</button>
+                <span className="chat-title">{currentRoom.name}</span>
+                <span className="chat-sub">{currentRoom.memberCount} miembros activos</span>
               </div>
 
               {/* Messages */}
-              <div className="messages-container">
+              <div className="messages" style={{ transform: `translateY(${parallaxOffset}px)` }}>
                 {messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`message ${message.sender === account ? 'message-sent' : 'message-received'}`}
-                  >
-                    <div className="message-avatar">
-                      <span>
-                        {message.sender === account ? 'Tú' : message.sender.slice(0, 2).toUpperCase()}
-                      </span>
-                    </div>
-                    
-                    <div className="message-content">
-                      <div className="message-sender">
-                        {message.sender === account ? 'Tú' : formatAddress(message.sender)}
-                      </div>
-                      
-                      <div className="message-bubble">
-                        {message.type === 'file' && message.file ? (
-                          <div className="message-file">
-                            <div className="file-preview">
-                              <div className="file-icon">📎</div>
-                              <div className="file-info">
-                                <div className="file-name">{message.file.name}</div>
-                                <div className="file-size">{(message.file.size / 1024 / 1024).toFixed(2)} MB</div>
-                              </div>
-                              <button className="file-download">⬇️</button>
-                            </div>
-                            {message.text && <p className="file-caption">{message.text}</p>}
+                  <div key={index} className={`message ${message.sender === account ? 'message--self' : ''}`}>
+                    <div>{message.sender === account ? 'Tú' : formatAddress(message.sender)}</div>
+                    <div>
+                      {message.type === 'file' && message.file ? (
+                        <div>
+                          <div>
+                            {message.file.name} ({(message.file.size / 1024 / 1024).toFixed(2)} MB)
                           </div>
-                        ) : (
-                          <p className="message-text">{message.text}</p>
-                        )}
-                      </div>
-                      
-                      <div className="message-meta">
-                        <span className="message-time">{formatTime(message.timestamp)}</span>
-                        {message.sender === account && (
-                          <span className="message-status">✓✓</span>
-                        )}
-                      </div>
+                          {message.text && (<p>{message.text}</p>)}
+                        </div>
+                      ) : (
+                        <p>{message.text}</p>
+                      )}
+                    </div>
+                    <div className="message-meta">
+                      <span>{formatTime(message.timestamp)}</span>
+                      {message.sender === account && (<span>✓✓</span>)}
                     </div>
                   </div>
                 ))}
 
                 {/* Typing Indicator */}
                 {isTyping && (
-                  <div className="typing-indicator">
-                    <div className="typing-avatar">
-                      <span>...</span>
+                  <div className="flex space-x-3 animate-fade-in animate-slide-in-left">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center shadow-lg animate-bounce-in-soft hover-glow animate-heartbeat">
+                      <span className="text-white text-xs">...</span>
                     </div>
-                    <div className="typing-bubble">
-                      <div className="typing-dots">
-                        <span></span>
-                        <span></span>
-                        <span></span>
+                    <div className={`p-3 rounded-2xl shadow-lg backdrop-blur-lg border glass-advanced animate-pulse-advanced ${darkMode ? 'bg-gray-700/50 border-gray-600' : 'bg-white/70 border-gray-200'}`}>
+                      <div className="flex space-x-1 animate-bounce">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce animate-heartbeat" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce animate-heartbeat" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce animate-heartbeat" style={{ animationDelay: '300ms' }}></div>
                       </div>
                     </div>
                   </div>
@@ -958,63 +705,81 @@ function App() {
               </div>
 
               {/* Message Input */}
-              <div className="message-input-container">
+              <div className="input-bar">
                 {selectedFile && (
-                  <div className="file-preview-container">
-                    <div className="file-preview-item">
-                      <div className="file-icon">📎</div>
-                      <div className="file-info">
-                        <span className="file-name">{selectedFile.name}</span>
-                        <span className="file-size">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</span>
+                  <div className="message">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center animate-bounce">
+                          <span className="text-white text-sm">📎</span>
+                        </div>
+                        <div>
+                          <div className="text-sm">
+                            {selectedFile.name}
+                          </div>
+                          <div className="text-xs">
+                            {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                          </div>
+                        </div>
                       </div>
-                      <button onClick={cancelFileSelection} className="file-remove">
-                        ✕
-                      </button>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={sendMessage}
+                          className="button button-primary"
+                        >
+                          Compartir
+                        </button>
+                        <button
+                          onClick={cancelFileSelection}
+                          className="button"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
 
-                <div className="message-input-bar">
+                <div className="grid grid-cols-[auto,1fr,auto] gap-2">
                   <input
                     type="file"
                     ref={fileInputRef}
                     onChange={handleFileSelect}
-                    className="file-input-hidden"
-                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
+                    className="hidden"
+                    accept="*/*"
                   />
                   
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="attach-btn"
+                    className="button"
                   >
                     📎
                   </button>
-
+                  
                   <input
                     type="text"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                    placeholder="Escribe un mensaje..."
-                    className="message-input"
+                    placeholder="Escribe tu mensaje..."
+                    className="input"
                   />
-
+                  
                   <button
                     onClick={sendMessage}
                     disabled={!newMessage.trim() && !selectedFile}
-                    className="send-btn"
+                    className="button button-primary"
                   >
-                    ➤
+                    🚀
                   </button>
                 </div>
               </div>
             </>
           ) : (
-            <div className="no-chat-selected">
-              <div className="no-chat-content">
-                <div className="no-chat-icon">💬</div>
-                <h3 className="no-chat-title">SecureChat</h3>
-                <p className="no-chat-subtitle">Selecciona un chat para comenzar a conversar</p>
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <div className="chat-title">Selecciona una sala</div>
+                <div className="chat-sub">Elige una sala para comenzar a conversar</div>
               </div>
             </div>
           )}
@@ -1023,27 +788,31 @@ function App() {
 
       {/* Room Creation Modal */}
       {isCreatingRoom && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3 className="modal-title">Crear Nueva Sala</h3>
-            </div>
-            <div className="modal-body">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+          <div className={`p-6 rounded-2xl shadow-2xl backdrop-blur-lg border max-w-md w-full mx-4 glass-advanced animate-scale-in ${darkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/90 border-gray-200'}`}>
+            <div className="chat-title">Crear Nueva Sala</div>
+            <div style={{ marginTop: 12 }}>
               <input
                 type="text"
                 value={newRoomName}
                 onChange={(e) => setNewRoomName(e.target.value)}
-                placeholder="Nombre de la sala"
-                className="modal-input"
-                onKeyPress={(e) => e.key === 'Enter' && createRoom()}
+                placeholder="Nombre de la sala..."
+                className="input"
               />
             </div>
-            <div className="modal-actions">
-              <button onClick={() => setIsCreatingRoom(false)} className="modal-btn-cancel">
-                Cancelar
-              </button>
-              <button onClick={createRoom} className="modal-btn-create">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 12 }}>
+              <button
+                onClick={createRoom}
+                disabled={!newRoomName.trim()}
+                className="button button-primary"
+              >
                 Crear
+              </button>
+              <button
+                onClick={() => setIsCreatingRoom(false)}
+                className="button"
+              >
+                Cancelar
               </button>
             </div>
           </div>
@@ -1051,15 +820,24 @@ function App() {
       )}
 
       {/* Notifications */}
-      {notifications.map((notification) => (
-        <div 
-          key={notification.id} 
-          className={`notification notification-${notification.type}`}
-        >
-          {notification.message}
-        </div>
-      ))}
-    </div>
+      <div className="fixed top-4 right-4 space-y-2 z-50">
+        {notifications.map((notification) => (
+          <div
+            key={notification.id}
+            className={`p-4 rounded-xl shadow-lg backdrop-blur-lg border animate-slide-in-right glass-advanced ${
+              notification.type === 'success'
+                ? 'bg-green-500/20 border-green-500/50 text-green-300'
+                : notification.type === 'error'
+                ? 'bg-red-500/20 border-red-500/50 text-red-300'
+                : 'bg-blue-500/20 border-blue-500/50 text-blue-300'
+            }`}
+          >
+            {notification.message}
+          </div>
+        ))}
+      </div>
+      </div>
+    </>
   );
 }
 
