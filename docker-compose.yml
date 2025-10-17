@@ -1,0 +1,178 @@
+version: '3.8'
+
+services:
+  # TOR Service para comunicaciones anónimas
+  tor:
+    build:
+      context: .
+      dockerfile: Dockerfile.tor
+    container_name: aegis-tor
+    ports:
+      - "9050:9050"   # SOCKS proxy
+      - "9051:9051"   # Control port
+    volumes:
+      - ./data/tor:/var/lib/tor
+      - ./config/torrc:/etc/tor/torrc:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-s", "http://localhost:9051/tor/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis para cache y sesiones
+  redis:
+    image: redis:7-alpine
+    container_name: aegis-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data/redis:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Base de datos SQLite para datos persistentes
+  database:
+    image: alpine:latest
+    container_name: aegis-database
+    volumes:
+      - ./data/database:/data
+      - ./scripts/init-db.sh:/init-db.sh:ro
+    command: sh /init-db.sh
+    restart: "no"
+
+  # Nodo principal AEGIS
+  aegis-node:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aegis-node
+    depends_on:
+      tor:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      database:
+        condition: service_completed_successfully
+    ports:
+      - "8080:8080"   # Dashboard principal
+      - "8081:8081"   # API REST
+      - "8082:8082"   # P2P network
+    volumes:
+      - ./config:/app/config:ro
+      - ./keys:/app/keys:ro
+      - ./logs:/app/logs
+      - ./data:/app/data
+    environment:
+      - AEGIS_CONFIG=/app/config/app_config.json
+      - AEGIS_LOG_LEVEL=INFO
+      - AEGIS_DASHBOARD_PORT=8080
+      - TOR_SOCKS_PORT=9050
+      - TOR_CONTROL_PORT=9051
+      - REDIS_URL=redis://redis:6379
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import main; print('OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Dashboard web independiente
+  web-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: aegis-web-dashboard
+    depends_on:
+      aegis-node:
+        condition: service_healthy
+    ports:
+      - "8051:8051"   # Dashboard web
+    volumes:
+      - ./web:/app/web:ro
+      - ./templates:/app/templates:ro
+      - ./static:/app/static:ro
+    environment:
+      - AEGIS_WEB_PORT=8051
+      - AEGIS_NODE_URL=http://aegis-node:8081
+    restart: unless-stopped
+
+  # Monitoring y métricas
+  monitoring:
+    build:
+      context: .
+      dockerfile: Dockerfile.monitoring
+    container_name: aegis-monitoring
+    depends_on:
+      aegis-node:
+        condition: service_healthy
+    ports:
+      - "9090:9090"   # Prometheus metrics
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus", "--web.console.libraries=/etc/prometheus/console_libraries", "--web.console.templates=/etc/prometheus/consoles"]
+    restart: unless-stopped
+
+  # Nginx reverse proxy y load balancer
+  nginx:
+    image: nginx:alpine
+    container_name: aegis-nginx
+    depends_on:
+      aegis-node:
+        condition: service_healthy
+      web-dashboard:
+        condition: service_started
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+
+  # Log aggregation con Fluentd
+  fluentd:
+    image: fluent/fluentd:v1.16-debian-1
+    container_name: aegis-fluentd
+    depends_on:
+      - aegis-node
+      - web-dashboard
+    volumes:
+      - ./config/fluentd.conf:/fluentd/etc/fluent.conf:ro
+      - ./logs:/var/log/aegis
+    ports:
+      - "24224:24224"
+    restart: unless-stopped
+
+  # Watchdog para reinicio automático de servicios
+  watchdog:
+    build:
+      context: .
+      dockerfile: Dockerfile.watchdog
+    container_name: aegis-watchdog
+    depends_on:
+      - tor
+      - redis
+      - aegis-node
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./scripts/watchdog.sh:/watchdog.sh:ro
+    command: ["sh", "/watchdog.sh"]
+    restart: unless-stopped
+
+volumes:
+  tor_data:
+  redis_data:
+  database_data:
+  logs:
+
+networks:
+  default:
+    name: aegis-network
+    driver: bridge
