@@ -1,0 +1,119 @@
+# AEGIS Framework - Production Configuration
+# Configuración optimizada para entornos de producción
+
+app:
+  node_id: "aegis_prod_node"
+  log_level: "WARNING"  # Menos verboso en producción
+  enable:
+    tor: true
+    p2p: true
+    crypto: true
+    identity: true
+    consensus: true
+    state_persistence: true
+    monitoring: true
+    resource_manager: true
+
+# Configuración de red TOR
+tor:
+  enabled: true
+  socks_port: 9050
+  control_port: 9051
+  onion_routing: true
+  hidden_service: true
+  hidden_service_port: 8080
+
+# Configuración P2P optimizada para producción
+p2p:
+  discovery: "zeroconf"
+  heartbeat_interval_sec: 60  # Menos frecuente en producción
+  max_connections: 100  # Más conexiones en producción
+  connection_timeout_sec: 30
+  message_ttl: 3600  # 1 hora
+  enable_compression: true
+
+# Configuración criptográfica de alta seguridad
+crypto:
+  security_level: "HIGH"
+  key_rotation_interval_hours: 24
+  hash: "blake3"
+  symmetric: "chacha20-poly1305"
+  enable_forward_secrecy: true
+  ratchet_advance_threshold: 100
+
+# Configuración de gestión de identidades
+identity:
+  trust_threshold: 0.8  # Umbral más alto en producción
+  max_failed_attempts: 3  # Menos tolerante con fallos
+  identity_cache_size: 1000
+  enable_identity_validation: true
+
+# Configuración de consenso optimizada
+consensus:
+  algorithm: "PoC+PBFT"
+  poc_interval_sec: 600  # Más frecuente para mejor seguridad
+  min_computation_score: 75.0  # Umbral más alto
+  view_change_timeout_sec: 300
+  max_proposals_per_round: 10
+
+# Configuración de persistencia de estado
+state_persistence:
+  max_chunk_size: 2097152  # 2MB para mejor rendimiento
+  replication_factor: 5  # Más réplicas en producción
+  checkpoint_interval_sec: 1800  # Más frecuente
+  compression_enabled: true
+  storage_backend: "rocksdb"  # Base de datos optimizada
+  backup_enabled: true
+  backup_interval_hours: 24
+
+# Configuración de monitoreo para producción
+monitoring:
+  dashboard_port: 8443  # Puerto SSL
+  enable_ssl: true
+  metrics_retention_days: 30
+  alert_email_enabled: true
+  enable_socketio: true
+  prometheus_enabled: true
+  grafana_enabled: true
+
+# Configuración de recursos
+resource_manager:
+  memory_limit_gb: 8
+  cpu_limit_cores: 4
+  storage_limit_gb: 100
+  enable_auto_scaling: true
+  health_check_interval_sec: 30
+
+# Configuración de seguridad
+security:
+  rate_limit_per_minute: 100
+  validate_peer_input: true
+  enable_intrusion_detection: true
+  max_concurrent_connections: 1000
+  session_timeout_min: 30
+  enable_audit_logging: true
+
+# Configuración de despliegue
+deployment:
+  environment: "production"
+  replicas: 3
+  health_check_grace_period_sec: 300
+  rolling_update_enabled: true
+  backup_before_update: true
+
+# Configuración de logging para producción
+logging:
+  level: "WARNING"
+  format: "json"
+  enable_syslog: true
+  log_retention_days: 90
+  enable_log_rotation: true
+  max_log_size_mb: 100
+
+# Configuración de métricas y observabilidad
+observability:
+  enable_tracing: true
+  trace_sampling_rate: 0.1
+  enable_metrics_export: true
+  metrics_format: "prometheus"
+  alert_webhook_enabled: true

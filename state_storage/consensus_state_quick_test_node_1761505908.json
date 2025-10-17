@@ -1,0 +1,26 @@
+{
+  "checkpoint_id": "consensus_state_quick_test_node_1761505908",
+  "node_id": "quick_test_node",
+  "timestamp": 1761505908.7687654,
+  "sequence_number": 1,
+  "metadata": {
+    "state_type": "consensus_state",
+    "compression_enabled": false,
+    "node_version": "1.0.0"
+  },
+  "chunks": {
+    "consensus_state_1_94a45c4fd5677de0": {
+      "chunk_id": "consensus_state_1_94a45c4fd5677de0",
+      "state_type": "consensus_state",
+      "node_id": "quick_test_node",
+      "sequence_number": 1,
+      "data": {
+        "test": "integration_successful"
+      },
+      "checksum": "2a526874d205c972d471daf5f568009498d4292fe7854897f38516a85565a7d9",
+      "timestamp": 1761505908.7688096,
+      "compressed": false,
+      "size_bytes": 34
+    }
+  }
+}

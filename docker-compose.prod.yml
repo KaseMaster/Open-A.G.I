@@ -1,0 +1,398 @@
+version: '3.8'
+
+services:
+  # TOR Service para comunicaciones anónimas - Producción
+  tor:
+    build:
+      context: .
+      dockerfile: Dockerfile.tor
+    container_name: aegis-tor-prod
+    ports:
+      - "127.0.0.1:9050:9050"   # SOCKS proxy - bind to localhost only
+      - "127.0.0.1:9051:9051"   # Control port - bind to localhost only
+    volumes:
+      - ./data/tor:/var/lib/tor
+      - ./config/torrc.prod:/etc/tor/torrc:ro
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "curl", "-s", "http://localhost:9051/tor/status"]
+      interval: 60s
+      timeout: 30s
+      retries: 5
+      start_period: 120s
+
+  # Redis con persistencia y seguridad
+  redis:
+    image: redis:7-alpine
+    container_name: aegis-redis-prod
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./config/redis.conf:/etc/redis/redis.conf:ro
+    command: ["redis-server", "/etc/redis/redis.conf"]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 60s
+      timeout: 30s
+      retries: 5
+
+  # Base de datos con backup automático
+  database:
+    image: postgres:15-alpine
+    container_name: aegis-postgres-prod
+    environment:
+      POSTGRES_DB: aegis_prod
+      POSTGRES_USER: aegis_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./config/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./backups:/backups
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aegis_user -d aegis_prod"]
+      interval: 60s
+      timeout: 30s
+      retries: 5
+
+  # Nodo principal AEGIS - Producción
+  aegis-node:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: aegis-node-prod
+    depends_on:
+      tor:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8443:8443"   # Dashboard HTTPS
+      - "127.0.0.1:8081:8081"   # API REST
+      - "127.0.0.1:8082:8082"   # P2P network
+    volumes:
+      - ./config:/app/config:ro
+      - ./keys:/app/keys:ro
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./backups:/app/backups
+    environment:
+      - AEGIS_CONFIG=/app/config/production_config.json
+      - AEGIS_LOG_LEVEL=WARNING
+      - AEGIS_DASHBOARD_PORT=8443
+      - AEGIS_ENVIRONMENT=production
+      - TOR_SOCKS_PORT=9050
+      - TOR_CONTROL_PORT=9051
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://aegis_user@database:5432/aegis_prod
+      - PROMETHEUS_MULTIPROC_DIR=/tmp
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+        reservations:
+          cpus: '2.0'
+          memory: 4G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "https://localhost:8443/api/health"]
+      interval: 60s
+      timeout: 30s
+      retries: 5
+      start_period: 300s
+
+  # Dashboard web con SSL
+  web-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.web.prod
+    container_name: aegis-web-dashboard-prod
+    depends_on:
+      aegis-node:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8444:8444"   # Dashboard web HTTPS
+    volumes:
+      - ./web:/app/web:ro
+      - ./templates:/app/templates:ro
+      - ./static:/app/static:ro
+      - ./certs:/app/certs:ro
+    environment:
+      - AEGIS_WEB_PORT=8444
+      - AEGIS_WEB_SSL=true
+      - AEGIS_NODE_URL=https://aegis-node:8443
+      - AEGIS_ENVIRONMENT=production
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Prometheus para métricas
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: aegis-prometheus-prod
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./config/prometheus.prod.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # Grafana para dashboards
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: aegis-grafana-prod
+    depends_on:
+      - prometheus
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD_FILE=/run/secrets/grafana_password
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-worldmap-panel
+    secrets:
+      - grafana_password
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Nginx con SSL termination
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: aegis-nginx-prod
+    depends_on:
+      aegis-node:
+        condition: service_healthy
+      web-dashboard:
+        condition: service_started
+      grafana:
+        condition: service_started
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./config/nginx/ssl:/etc/nginx/ssl:ro
+      - ./certs:/etc/nginx/certs:ro
+      - ./logs/nginx:/var/log/nginx
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  # Fluentd para log aggregation
+  fluentd:
+    image: fluent/fluentd:v1.16-debian-1
+    container_name: aegis-fluentd-prod
+    depends_on:
+      - aegis-node
+      - web-dashboard
+    volumes:
+      - ./config/fluentd.prod.conf:/fluentd/etc/fluent.conf:ro
+      - ./logs:/var/log/aegis
+      - ./logs/fluentd:/fluentd/log
+    ports:
+      - "127.0.0.1:24224:24224"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # Watchdog con monitoring avanzado
+  watchdog:
+    build:
+      context: .
+      dockerfile: Dockerfile.watchdog.prod
+    container_name: aegis-watchdog-prod
+    depends_on:
+      - tor
+      - redis
+      - aegis-node
+      - prometheus
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./scripts/watchdog.prod.sh:/watchdog.sh:ro
+      - ./logs/watchdog:/var/log/watchdog
+    environment:
+      - DOCKER_API_VERSION=1.43
+      - WATCHDOG_INTERVAL=30
+      - ALERT_WEBHOOK_URL=https://api.pagerduty.com/v2/enqueue
+    command: ["sh", "/watchdog.sh"]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+  # Backup service
+  backup:
+    build:
+      context: .
+      dockerfile: Dockerfile.backup
+    container_name: aegis-backup-prod
+    depends_on:
+      - database
+      - aegis-node
+    volumes:
+      - ./backups:/backups
+      - ./data:/data:ro
+      - ./config/backup.conf:/app/backup.conf:ro
+    environment:
+      - BACKUP_INTERVAL_HOURS=24
+      - RETENTION_DAYS=30
+      - S3_BUCKET=aegis-backups-prod
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  grafana_password:
+    file: ./secrets/grafana_password.txt
+
+volumes:
+  redis_data:
+    driver: local
+  postgres_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  default:
+    name: aegis-network-prod
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
