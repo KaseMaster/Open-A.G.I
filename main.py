@@ -56,11 +56,14 @@ def module_call(mod: object, func_name: str, *args, **kwargs):
 DEFAULT_CONFIG: Dict[str, Any] = {
     "app": {
         "log_level": "INFO",
+        "node_id": "aegis_node",
         "enable": {
             "tor": True,
             "p2p": True,
             "crypto": True,
+            "identity": True,
             "consensus": True,
+            "state_persistence": True,
             "monitoring": True,
             "resource_manager": True,
         },
@@ -79,9 +82,21 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "rotate_interval_hours": 24,
         "hash": "blake3",
         "symmetric": "chacha20-poly1305",
+        "security_level": "HIGH",
+    },
+    "identity": {
+        "trust_threshold": 0.7,
+        "max_failed_attempts": 5,
     },
     "consensus": {
         "algorithm": "PoC+PBFT",
+        "poc_interval_sec": 300,
+        "min_computation_score": 50.0,
+    },
+    "state_persistence": {
+        "max_chunk_size": 1048576,  # 1MB
+        "replication_factor": 3,
+        "checkpoint_interval_sec": 300,
     },
     "monitoring": {
         "dashboard_port": 8080,
@@ -179,8 +194,11 @@ async def start_node(dry_run: bool = False, config_path: Optional[str] = None):
     tor_mod, tor_err = safe_import("tor_integration")
     p2p_mod, p2p_err = safe_import("p2p_network")
     crypto_mod, crypto_err = safe_import("crypto_framework")
-    consensus_mod, cons_err = safe_import("consensus_algorithm")
+    identity_mod, identity_err = safe_import("ed25519_identity_manager")
+    consensus_mod, cons_err = safe_import("consensus_protocol")  # Updated to new consensus protocol
+    state_mod, state_err = safe_import("distributed_state_persistence")
     monitor_mod, mon_err = safe_import("monitoring_dashboard")
+    integrated_mod, int_err = safe_import("integrated_dashboard")
     resource_mod, res_err = safe_import("resource_manager")
 
     if tor_err:
@@ -189,10 +207,16 @@ async def start_node(dry_run: bool = False, config_path: Optional[str] = None):
         logger.warning(f"P2P no disponible: {p2p_err}")
     if crypto_err:
         logger.warning(f"Crypto no disponible: {crypto_err}")
+    if identity_err:
+        logger.warning(f"Identity Manager no disponible: {identity_err}")
     if cons_err:
-        logger.warning(f"Consenso no disponible: {cons_err}")
+        logger.warning(f"Consenso Protocol no disponible: {cons_err}")
+    if state_err:
+        logger.warning(f"State Persistence no disponible: {state_err}")
     if mon_err:
         logger.warning(f"Monitoreo no disponible: {mon_err}")
+    if int_err:
+        logger.warning(f"Dashboard Integrado no disponible: {int_err}")
     if res_err:
         logger.warning(f"Gestión de recursos no disponible: {res_err}")
 
@@ -207,10 +231,14 @@ async def start_node(dry_run: bool = False, config_path: Optional[str] = None):
         module_call(resource_mod, "init_pool", cfg.get("p2p", {}))
     if cfg["app"]["enable"].get("crypto"):
         module_call(crypto_mod, "initialize_crypto", cfg.get("crypto", {}))
+    if cfg["app"]["enable"].get("identity", True):  # Nuevo: Identity Manager
+        module_call(identity_mod, "Ed25519IdentityManager", cfg.get("app", {}).get("node_id", "aegis_node"))
     if cfg["app"]["enable"].get("p2p"):
         module_call(p2p_mod, "start_network", cfg.get("p2p", {}))
     if cfg["app"]["enable"].get("consensus"):
-        module_call(consensus_mod, "start_consensus_loop", cfg.get("consensus", {}))
+        module_call(consensus_mod, "HybridConsensus", cfg.get("consensus", {}))
+    if cfg["app"]["enable"].get("state_persistence", True):  # Nuevo: State Persistence
+        module_call(state_mod, "DistributedStateManager", cfg.get("app", {}).get("node_id", "aegis_node"))
     if cfg["app"]["enable"].get("monitoring"):
         module_call(monitor_mod, "start_dashboard", cfg.get("monitoring", {}))
 
@@ -252,8 +280,11 @@ def list_modules():
         "tor_integration",
         "p2p_network",
         "crypto_framework",
-        "consensus_algorithm",
+        "ed25519_identity_manager",
+        "consensus_protocol",
+        "distributed_state_persistence",
         "monitoring_dashboard",
+        "integrated_dashboard",
         "resource_manager",
     ]
     for m in mods:
@@ -265,17 +296,61 @@ def list_modules():
 
 
 @cli.command(name="start-dashboard")
-@click.option("--type", "dashboard_type", type=click.Choice(["monitoring", "web"], case_sensitive=False), default="monitoring", help="Tipo de dashboard a iniciar")
+@click.option("--type", "dashboard_type", type=click.Choice(["monitoring", "web", "integrated"], case_sensitive=False), default="integrated", help="Tipo de dashboard a iniciar")
 @click.option("--host", type=str, help="Host para el dashboard (por defecto 0.0.0.0)")
 @click.option("--port", type=int, help="Puerto para el dashboard")
 @click.option("--config", type=click.Path(exists=False), help="Ruta del archivo de configuración JSON.")
 def start_dashboard_cmd(dashboard_type: str, host: Optional[str], port: Optional[int], config: Optional[str]):
-    """Inicia únicamente el dashboard (monitoring o web)."""
+    """Inicia únicamente el dashboard (monitoring, web o integrado)."""
     cfg = load_config(config)
 
-    dashboard_type = (dashboard_type or "monitoring").lower()
+    dashboard_type = (dashboard_type or "integrated").lower()
     target_host = host or cfg.get("monitoring", {}).get("host", "0.0.0.0")
     target_port = port or int(cfg.get("monitoring", {}).get("dashboard_port", 8080))
+
+    if dashboard_type == "integrated":
+        # Importar y usar dashboard integrado
+        try:
+            from integrated_dashboard import start_integrated_dashboard
+
+            # Configuración para dashboard integrado
+            dashboard_config = {
+                "host": target_host,
+                "dashboard_port": target_port,
+                "node_id": cfg.get("app", {}).get("node_id", "aegis_node"),
+                "enable_p2p": cfg["app"]["enable"].get("p2p", True),
+                "enable_knowledge_base": cfg["app"]["enable"].get("resource_manager", True),
+                "enable_heartbeat": cfg["app"]["enable"].get("monitoring", True),
+                "enable_crypto": cfg["app"]["enable"].get("crypto", True),
+                "p2p": cfg.get("p2p", {}),
+                "knowledge_base": {"node_id": cfg.get("app", {}).get("node_id", "aegis_node")},
+                "heartbeat": {
+                    "node_id": cfg.get("app", {}).get("node_id", "aegis_node"),
+                    "heartbeat_interval_sec": cfg.get("p2p", {}).get("heartbeat_interval_sec", 30),
+                    "heartbeat_timeout_sec": 10
+                },
+                "crypto": {
+                    "node_id": cfg.get("app", {}).get("node_id", "aegis_node"),
+                    "security_level": cfg.get("crypto", {}).get("security_level", "HIGH")
+                }
+            }
+
+            logger.info(f"Iniciando Dashboard Integrado en http://{target_host}:{target_port}")
+            dashboard = start_integrated_dashboard(dashboard_config)
+
+            # Mantener proceso activo
+            try:
+                logger.info("Manteniendo dashboard activo. Presiona Ctrl+C para detener.")
+                while True:
+                    time.sleep(3600)
+            except KeyboardInterrupt:
+                logger.info("Detención solicitada por usuario")
+
+        except ImportError as e:
+            logger.error(f"Error importando dashboard integrado: {e}")
+            logger.info("Usando dashboard de respaldo...")
+            # Fallback al dashboard original
+            dashboard_type = "monitoring"
 
     if dashboard_type == "monitoring":
         mod, err = safe_import("monitoring_dashboard")

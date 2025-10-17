@@ -1,0 +1,20 @@
+# Dockerfile específico para TOR
+FROM python:3.11-slim
+
+# Instalar TOR y herramientas necesarias
+RUN apt-get update && apt-get install -y \
+    tor \
+    curl \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+# Configurar TOR
+RUN mkdir -p /var/lib/tor /var/log/tor /etc/tor
+COPY config/torrc /etc/tor/torrc
+
+# Health check para TOR
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -s http://localhost:9051/tor/status || exit 1
+
+# Ejecutar TOR
+CMD ["tor"]

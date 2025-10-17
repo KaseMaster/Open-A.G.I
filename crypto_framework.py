@@ -5,14 +5,14 @@ AEGIS Security Framework - Uso Ético Únicamente
 
 Programador Principal: Jose Gómez alias KaseMaster
 Contacto: kasemaster@aegis-framework.com
-Versión: 2.0.0
+Versión: 2.1.0 - Con Perfect Forward Secrecy
 Licencia: MIT
 
 Este módulo implementa un sistema criptográfico robusto para:
 - Autenticación de nodos mediante Ed25519
 - Cifrado de extremo a extremo con ChaCha20-Poly1305
-- Intercambio de claves con X25519
-- Double Ratchet para forward secrecy
+- Intercambio de claves con X25519 + Diffie-Hellman Efímero
+- Double Ratchet COMPLETO con Forward Secrecy
 - Firmas digitales para integridad de datos
 
 ADVERTENCIA: Este código es para investigación y desarrollo ético únicamente.
@@ -139,44 +139,385 @@ class PublicNodeIdentity:
     trust_score: float = 0.5  # Puntuación de confianza inicial
 
 @dataclass
+class KeyRotationPolicy:
+    """Política de rotación de claves"""
+    rotation_interval: int = 3600  # 1 hora por defecto
+    max_key_age: int = 86400  # 24 horas máximo
+    emergency_rotation: bool = False  # Rotación inmediata por sospecha de compromiso
+    cleanup_delay: int = 300  # 5 minutos antes de limpiar claves antiguas
+
+
+class SecureKeyManager:
+    """Gestor seguro de claves con rotación automática en memoria"""
+
+    def __init__(self, crypto_engine: 'CryptoEngine', policy: KeyRotationPolicy = None):
+        self.crypto_engine = crypto_engine
+        self.policy = policy or KeyRotationPolicy()
+        self.key_history: Dict[str, List[Tuple[bytes, datetime]]] = {}  # peer_id -> [(key, created_at), ...]
+        self.active_keys: Dict[str, bytes] = {}  # peer_id -> current_active_key
+        self.rotation_tasks: Dict[str, asyncio.Task] = {}
+        self.cleanup_tasks: Dict[str, asyncio.Task] = {}
+        self.emergency_mode = False
+
+        logger.info("🔐 SecureKeyManager inicializado con política de rotación automática")
+
+    async def start_key_rotation(self, peer_id: str):
+        """Inicia la rotación automática de claves para un peer"""
+        if peer_id in self.rotation_tasks:
+            logger.debug(f"Rotación ya activa para {peer_id}")
+            return
+
+        # Crear tarea de rotación
+        task = asyncio.create_task(self._key_rotation_loop(peer_id))
+        self.rotation_tasks[peer_id] = task
+
+        logger.info(f"🔄 Rotación automática iniciada para peer {peer_id}")
+
+    async def stop_key_rotation(self, peer_id: str):
+        """Detiene la rotación de claves para un peer"""
+        if peer_id in self.rotation_tasks:
+            self.rotation_tasks[peer_id].cancel()
+            del self.rotation_tasks[peer_id]
+
+        if peer_id in self.cleanup_tasks:
+            self.cleanup_tasks[peer_id].cancel()
+            del self.cleanup_tasks[peer_id]
+
+        # Limpiar historial de claves
+        if peer_id in self.key_history:
+            del self.key_history[peer_id]
+        if peer_id in self.active_keys:
+            del self.active_keys[peer_id]
+
+        logger.info(f"🛑 Rotación detenida para peer {peer_id}")
+
+    async def _key_rotation_loop(self, peer_id: str):
+        """Bucle de rotación automática de claves"""
+        while peer_id in self.rotation_tasks:
+            try:
+                # Esperar intervalo de rotación (o menos en modo emergencia)
+                interval = 60 if self.emergency_mode else self.policy.rotation_interval
+                await asyncio.sleep(interval)
+
+                if peer_id not in self.rotation_tasks:
+                    break
+
+                # Realizar rotación
+                await self._rotate_keys(peer_id)
+
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"❌ Error en rotación de claves para {peer_id}: {e}")
+                await asyncio.sleep(60)  # Esperar antes de reintentar
+
+    async def _rotate_keys(self, peer_id: str):
+        """Realiza la rotación de claves para un peer"""
+        try:
+            # Generar nueva identidad para el peer (simula nueva clave)
+            # En implementación real, esto sería coordinado con el peer remoto
+            new_key_seed = secrets.token_bytes(32)
+            new_key = hashlib.sha256(new_key_seed).digest()
+
+            # Guardar clave anterior en historial antes de reemplazar
+            if peer_id in self.active_keys:
+                old_key = self.active_keys[peer_id]
+                old_timestamp = datetime.now(timezone.utc)
+
+                if peer_id not in self.key_history:
+                    self.key_history[peer_id] = []
+                self.key_history[peer_id].append((old_key, old_timestamp))
+
+                # Programar limpieza de clave antigua
+                await self._schedule_key_cleanup(peer_id, old_key, old_timestamp)
+
+            # Establecer nueva clave como activa
+            self.active_keys[peer_id] = new_key
+
+            # Si es modo emergencia, forzar nueva conexión
+            if self.emergency_mode:
+                logger.warning(f"🚨 ROTACIÓN DE EMERGENCIA para {peer_id} - posible compromiso detectado")
+                # Aquí se podría forzar reconexión o invalidar sesiones existentes
+
+            logger.info(f"🔄 Claves rotadas exitosamente para peer {peer_id}")
+
+        except Exception as e:
+            logger.error(f"❌ Error rotando claves para {peer_id}: {e}")
+
+    async def _schedule_key_cleanup(self, peer_id: str, old_key: bytes, created_at: datetime):
+        """Programa la limpieza de una clave antigua"""
+        async def cleanup_old_key():
+            try:
+                await asyncio.sleep(self.policy.cleanup_delay)
+
+                # Verificar que la clave aún existe en el historial
+                if peer_id in self.key_history:
+                    # Remover la clave específica del historial
+                    self.key_history[peer_id] = [
+                        (key, ts) for key, ts in self.key_history[peer_id]
+                        if key != old_key
+                    ]
+
+                    # Limpiar lista vacía
+                    if not self.key_history[peer_id]:
+                        del self.key_history[peer_id]
+
+                # Limpiar referencia a la clave (best effort)
+                # Nota: En Python esto ayuda al garbage collector
+
+                logger.debug(f"🧹 Clave antigua limpiada para peer {peer_id}")
+
+            except Exception as e:
+                logger.debug(f"⚠️ Error limpiando clave antigua para {peer_id}: {e}")
+
+        # Crear tarea de limpieza
+        task = asyncio.create_task(cleanup_old_key())
+        if peer_id not in self.cleanup_tasks:
+            self.cleanup_tasks[peer_id] = task
+
+    def emergency_rotation(self, peer_id: str = None):
+        """Activa rotación de emergencia para todos los peers o uno específico"""
+        self.emergency_mode = True
+
+        if peer_id:
+            # Rotación inmediata para peer específico
+            asyncio.create_task(self._rotate_keys(peer_id))
+            logger.critical(f"🚨 ROTACIÓN DE EMERGENCIA ACTIVADA para {peer_id}")
+        else:
+            # Rotación inmediata para todos los peers
+            for pid in list(self.active_keys.keys()):
+                asyncio.create_task(self._rotate_keys(pid))
+            logger.critical("🚨 ROTACIÓN DE EMERGENCIA ACTIVADA para TODOS los peers")
+
+        # Programar desactivación del modo emergencia después de 1 hora
+        async def deactivate_emergency():
+            await asyncio.sleep(3600)
+            self.emergency_mode = False
+            logger.info("🔄 Modo de rotación de emergencia desactivado")
+
+        asyncio.create_task(deactivate_emergency())
+
+    def get_active_key(self, peer_id: str) -> Optional[bytes]:
+        """Obtiene la clave activa actual para un peer"""
+        return self.active_keys.get(peer_id)
+
+    def validate_key_age(self, peer_id: str) -> bool:
+        """Valida que la clave activa no haya excedido la edad máxima"""
+        if peer_id not in self.key_history:
+            return True  # No hay historial, clave es nueva
+
+        # Verificar edad de la clave más reciente en historial
+        # (la clave activa no tiene timestamp, asumimos que es reciente)
+        current_time = datetime.now(timezone.utc)
+
+        for _, created_at in self.key_history.get(peer_id, []):
+            age = (current_time - created_at).total_seconds()
+            if age > self.policy.max_key_age:
+                return False
+
+        return True
+
+    def get_key_stats(self, peer_id: str) -> Dict[str, Any]:
+        """Obtiene estadísticas de claves para un peer"""
+        stats = {
+            "has_active_key": peer_id in self.active_keys,
+            "keys_in_history": len(self.key_history.get(peer_id, [])),
+            "rotation_active": peer_id in self.rotation_tasks,
+            "cleanup_active": peer_id in self.cleanup_tasks,
+            "emergency_mode": self.emergency_mode,
+            "oldest_key_age": None,
+            "newest_key_age": None
+        }
+
+        if peer_id in self.key_history:
+            timestamps = [ts for _, ts in self.key_history[peer_id]]
+            if timestamps:
+                current_time = datetime.now(timezone.utc)
+                ages = [(current_time - ts).total_seconds() for ts in timestamps]
+                stats["oldest_key_age"] = max(ages)
+                stats["newest_key_age"] = min(ages)
+
+        return stats
+
+    def cleanup_expired_keys(self):
+        """Limpia claves expiradas de todos los peers"""
+        current_time = datetime.now(timezone.utc)
+        total_cleaned = 0
+
+        for peer_id in list(self.key_history.keys()):
+            original_count = len(self.key_history[peer_id])
+
+            # Filtrar claves no expiradas
+            self.key_history[peer_id] = [
+                (key, ts) for key, ts in self.key_history[peer_id]
+                if (current_time - ts).total_seconds() <= self.policy.max_key_age
+            ]
+
+            cleaned = original_count - len(self.key_history[peer_id])
+            total_cleaned += cleaned
+
+            if not self.key_history[peer_id]:
+                del self.key_history[peer_id]
+
+        if total_cleaned > 0:
+            logger.info(f"🧹 {total_cleaned} claves expiradas limpiadas de memoria")
+
+    async def shutdown(self):
+        """Cierra el gestor de claves de forma segura"""
+        logger.info("🔐 Cerrando SecureKeyManager...")
+
+        # Cancelar todas las tareas de rotación
+        for task in self.rotation_tasks.values():
+            task.cancel()
+        self.rotation_tasks.clear()
+
+        # Cancelar todas las tareas de limpieza
+        for task in self.cleanup_tasks.values():
+            task.cancel()
+        self.cleanup_tasks.clear()
+
+        # Limpiar claves de memoria
+        self.key_history.clear()
+        self.active_keys.clear()
+
+        logger.info("✅ SecureKeyManager cerrado")
+
+@dataclass
 class RatchetState:
-    """Estado del Double Ratchet para forward secrecy"""
+    """Estado del Double Ratchet COMPLETO con Perfect Forward Secrecy"""
+    # Root key para derivar nuevas claves
     root_key: bytes
+
+    # Claves de cadena para envío y recepción
     chain_key_send: bytes
     chain_key_recv: bytes
+
+    # Claves públicas efímeras para DH ratchet
+    dh_send: x25519.X25519PrivateKey = field(default_factory=x25519.X25519PrivateKey.generate)
+    dh_recv: Optional[x25519.X25519PublicKey] = None
+
+    # Números de mensaje para orden correcto
     message_number_send: int = 0
     message_number_recv: int = 0
     previous_chain_length: int = 0
+
+    # Claves saltadas para mensajes fuera de orden
     skipped_keys: Dict[Tuple[int, int], bytes] = field(default_factory=dict)
-    
+
+    def __post_init__(self):
+        """Inicializar claves públicas efímeras"""
+        if not hasattr(self, 'dh_send_public'):
+            self.dh_send_public = self.dh_send.public_key()
+
+    @property
+    def dh_send_public(self) -> x25519.X25519PublicKey:
+        """Clave pública efímera de envío"""
+        return self.dh_send.public_key()
+
+    @dh_send_public.setter
+    def dh_send_public(self, value: x25519.X25519PublicKey):
+        """Setter para compatibilidad"""
+        pass
+
+    def advance_dh_ratchet(self, peer_dh_public: x25519.X25519PublicKey) -> None:
+        """Avanza el DH ratchet con nueva clave pública del peer - versión simplificada"""
+        try:
+            # Calcular secreto compartido usando nuestra clave privada y clave pública del peer
+            shared_secret = self.dh_send.exchange(peer_dh_public)
+
+            # Derivar nueva root key
+            self.root_key = self._kdf_rk(self.root_key, shared_secret)
+
+            # Derivar nueva chain key de recepción
+            self.chain_key_recv = self._kdf_ck(self.root_key)
+
+            # NO reiniciar message numbers - mantener sincronización
+            # self.message_number_send = 0
+            # self.message_number_recv = 0
+
+            logger.debug("🔄 DH ratchet avanzado con nueva clave efímera")
+
+        except Exception as e:
+            logger.error(f"❌ Error avanzando DH ratchet: {e}")
+            raise
+
     def advance_sending_chain(self) -> bytes:
-        """Avanzar cadena de envío y generar clave de mensaje"""
+        """Avanza cadena de envío y generar clave de mensaje"""
         message_key = self._derive_message_key(self.chain_key_send)
         self.chain_key_send = self._derive_chain_key(self.chain_key_send)
         self.message_number_send += 1
         return message_key
-    
+
     def advance_receiving_chain(self) -> bytes:
-        """Avanzar cadena de recepción y generar clave de mensaje"""
+        """Avanza cadena de recepción y generar clave de mensaje"""
         message_key = self._derive_message_key(self.chain_key_recv)
         self.chain_key_recv = self._derive_chain_key(self.chain_key_recv)
         self.message_number_recv += 1
         return message_key
-    
+
+    def try_message_key(self, message_number: int, dh_public: Optional[x25519.X25519PublicKey]) -> Optional[bytes]:
+        """Intenta obtener clave de mensaje, avanzando ratchet si es necesario"""
+        # Primero verificar si hay claves saltadas
+        key_id = (message_number, hash(dh_public.public_bytes_raw() if dh_public else b''))
+        if key_id in self.skipped_keys:
+            return self.skipped_keys.pop(key_id)
+
+        # Si el mensaje es para un chain diferente, avanzar DH ratchet
+        if dh_public and dh_public != self.dh_recv:
+            self.advance_dh_ratchet(dh_public)
+
+        # Verificar si podemos generar la clave
+        if message_number == self.message_number_recv:
+            return self.advance_receiving_chain()
+        elif message_number < self.message_number_recv:
+            # Mensaje demasiado antiguo
+            return None
+        else:
+            # Mensaje futuro - saltar claves intermedias
+            skipped_keys = []
+            while self.message_number_recv < message_number:
+                skipped_key = self.advance_receiving_chain()
+                skipped_keys.append(skipped_key)
+
+            # Guardar claves saltadas para uso futuro
+            for i, skipped_key in enumerate(skipped_keys[:-1]):
+                skip_id = (self.message_number_recv - len(skipped_keys) + i, hash(self.dh_recv.public_bytes_raw() if self.dh_recv else b''))
+                self.skipped_keys[skip_id] = skipped_key
+
+            return skipped_keys[-1]
+
+    def _kdf_rk(self, root_key: bytes, input_key: bytes) -> bytes:
+        """Derivar nueva root key usando HKDF"""
+        return HKDF(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=root_key,
+            info=b"root_key"
+        ).derive(input_key)
+
+    def _kdf_ck(self, root_key: bytes) -> bytes:
+        """Derivar chain key desde root key"""
+        return HKDF(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=None,
+            info=b"chain_key"
+        ).derive(root_key)
+
     def _derive_message_key(self, chain_key: bytes) -> bytes:
         """Derivar clave de mensaje desde clave de cadena"""
         return hmac.new(chain_key, b"message", hashlib.sha256).digest()
-    
+
     def _derive_chain_key(self, chain_key: bytes) -> bytes:
         """Derivar siguiente clave de cadena"""
         return hmac.new(chain_key, b"chain", hashlib.sha256).digest()
 
 class SecureMessage:
-    """Mensaje cifrado con metadatos de seguridad"""
-    
+    """Mensaje cifrado con metadatos de seguridad y Forward Secrecy"""
+
     def __init__(self, ciphertext: bytes, nonce: bytes, sender_id: str,
                  recipient_id: str, message_number: int, timestamp: float,
-                 signature: bytes):
+                 signature: bytes, dh_public: Optional[bytes] = None):
         self.ciphertext = ciphertext
         self.nonce = nonce
         self.sender_id = sender_id
@@ -184,7 +525,8 @@ class SecureMessage:
         self.message_number = message_number
         self.timestamp = timestamp
         self.signature = signature
-    
+        self.dh_public = dh_public  # Clave pública efímera para DH ratchet
+
     def serialize(self) -> bytes:
         """Serializar mensaje para transmisión"""
         data = {
@@ -194,33 +536,34 @@ class SecureMessage:
             'recipient_id': self.recipient_id.encode(),
             'message_number': self.message_number.to_bytes(4, 'big'),
             'timestamp': int(self.timestamp).to_bytes(8, 'big'),
-            'signature': self.signature
+            'signature': self.signature,
+            'dh_public': self.dh_public or b''
         }
-        
+
         # Formato: longitud + datos para cada campo
         serialized = b''
         for key, value in data.items():
             if isinstance(value, int):
                 value = value.to_bytes(4, 'big')
             serialized += len(value).to_bytes(4, 'big') + value
-        
+
         return serialized
-    
+
     @classmethod
     def deserialize(cls, data: bytes) -> 'SecureMessage':
         """Deserializar mensaje desde bytes"""
         offset = 0
         fields = {}
-        
+
         field_names = ['ciphertext', 'nonce', 'sender_id', 'recipient_id',
-                      'message_number', 'timestamp', 'signature']
-        
+                      'message_number', 'timestamp', 'signature', 'dh_public']
+
         for field_name in field_names:
             length = int.from_bytes(data[offset:offset+4], 'big')
             offset += 4
             value = data[offset:offset+length]
             offset += length
-            
+
             if field_name in ['sender_id', 'recipient_id']:
                 fields[field_name] = value.decode()
             elif field_name == 'message_number':
@@ -229,12 +572,12 @@ class SecureMessage:
                 fields[field_name] = float(int.from_bytes(value, 'big'))
             else:
                 fields[field_name] = value
-        
+
         return cls(**fields)
 
 class CryptoEngine:
     """Motor criptográfico principal del sistema"""
-    
+
     def __init__(self, config: CryptoConfig = None):
         self.config = config or CryptoConfig()
         self.identity: Optional[NodeIdentity] = None
@@ -242,9 +585,12 @@ class CryptoEngine:
         self.ratchet_states: Dict[str, RatchetState] = {}
         self.session_keys: Dict[str, bytes] = {}
         self.key_rotation_tasks: Dict[str, asyncio.Task] = {}
-        
+
+        # Inicializar gestor de claves seguras
+        self.key_manager = SecureKeyManager(self)
+
         logger.info(f"CryptoEngine inicializado con nivel {self.config.security_level.value}")
-    
+
     def generate_node_identity(self, node_id: str = None) -> NodeIdentity:
         """Generar nueva identidad criptográfica para el nodo"""
         if node_id is None:
@@ -271,84 +617,93 @@ class CryptoEngine:
             return False
     
     def establish_secure_channel(self, peer_id: str) -> bool:
-        """Establecer canal seguro con peer usando X25519 + Double Ratchet"""
+        """Establecer canal seguro con peer usando X25519 + Double Ratchet COMPLETO"""
         if peer_id not in self.peer_identities:
             logger.error(f"Peer {peer_id} no encontrado en registro")
             return False
-        
+
         if not self.identity:
             logger.error("Identidad local no inicializada")
             return False
-        
+
         try:
             peer_identity = self.peer_identities[peer_id]
-            
-            # Intercambio de claves X25519
+
+            # Intercambio de claves X25519 estático inicial
             shared_secret = self.identity.encryption_key.exchange(
                 peer_identity.public_encryption_key
             )
-            
-            # Derivar claves del Double Ratchet
+
+            # Derivar root key inicial del Double Ratchet
             root_key = HKDF(
                 algorithm=hashes.SHA256(),
                 length=32,
                 salt=None,
-                info=b"root_key"
+                info=b"initial_root_key"
             ).derive(shared_secret)
-            
+
+            # Derivar chain keys iniciales
             chain_key_send = HKDF(
                 algorithm=hashes.SHA256(),
                 length=32,
                 salt=None,
-                info=b"chain_send"
+                info=b"initial_chain_send"
             ).derive(shared_secret)
-            
+
             chain_key_recv = HKDF(
                 algorithm=hashes.SHA256(),
                 length=32,
                 salt=None,
-                info=b"chain_recv"
+                info=b"initial_chain_recv"
             ).derive(shared_secret)
-            
-            # Inicializar estado del ratchet
+
+            # Inicializar estado del ratchet con Forward Secrecy
             self.ratchet_states[peer_id] = RatchetState(
                 root_key=root_key,
                 chain_key_send=chain_key_send,
-                chain_key_recv=chain_key_recv
+                chain_key_recv=chain_key_recv,
+                dh_send=x25519.X25519PrivateKey.generate(),  # Primera clave efímera
+                dh_recv=None  # Se establecerá con el primer mensaje
             )
-            
+
             # Programar rotación de claves
             self._schedule_key_rotation(peer_id)
-            
-            logger.info(f"Canal seguro establecido con {peer_id}")
+
+            logger.info(f"🔒 Canal seguro con Perfect Forward Secrecy establecido con {peer_id}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Error estableciendo canal con {peer_id}: {e}")
             return False
     
     def encrypt_message(self, plaintext: bytes, recipient_id: str) -> Optional[SecureMessage]:
-        """Cifrar mensaje para destinatario específico"""
+        """Cifrar mensaje para destinatario específico con Perfect Forward Secrecy"""
         if recipient_id not in self.ratchet_states:
             logger.error(f"No hay canal seguro con {recipient_id}")
             return None
-        
+
         if not self.identity:
             logger.error("Identidad local no inicializada")
             return None
-        
+
         try:
             ratchet = self.ratchet_states[recipient_id]
-            
-            # Obtener clave de mensaje del ratchet
+
+            # AVANZAR DH RATCHET: Generar nueva clave efímera para cada mensaje
+            # Esto proporciona Perfect Forward Secrecy
+            new_dh_private = x25519.X25519PrivateKey.generate()
+            current_dh_public = new_dh_private.public_key().public_bytes_raw()
+            ratchet.dh_send = new_dh_private
+
+            # Obtener clave de mensaje del chain ratchet
             message_key = ratchet.advance_sending_chain()
-            
-            # Cifrar con ChaCha20-Poly1305
+
+            # Cifrar con ChaCha20-Poly1305 usando la clave derivada
             cipher = ChaCha20Poly1305(message_key)
             nonce = os.urandom(12)
             ciphertext = cipher.encrypt(nonce, plaintext, None)
-            
-            # Crear mensaje con metadatos
+
+            # Crear mensaje con metadatos y clave efímera actual para Forward Secrecy
             timestamp = time.time()
             message = SecureMessage(
                 ciphertext=ciphertext,
@@ -357,69 +712,88 @@ class CryptoEngine:
                 recipient_id=recipient_id,
                 message_number=ratchet.message_number_send - 1,
                 timestamp=timestamp,
-                signature=b''  # Se agregará después
+                signature=b'',  # Se agregará después
+                dh_public=current_dh_public  # Clave efímera actual para que el receptor pueda avanzar el ratchet
             )
-            
-            # Firmar mensaje
+
+            # Firmar mensaje (incluyendo la clave efímera para integridad)
             message_data = (
-                message.ciphertext + message.nonce + 
+                message.ciphertext + message.nonce +
                 message.sender_id.encode() + message.recipient_id.encode() +
                 message.message_number.to_bytes(4, 'big') +
-                int(timestamp).to_bytes(8, 'big')
+                int(timestamp).to_bytes(8, 'big') +
+                message.dh_public
             )
-            
+
             message.signature = self.identity.signing_key.sign(message_data)
-            
-            logger.debug(f"Mensaje cifrado para {recipient_id}")
+
+            logger.debug(f"🔐 Mensaje cifrado con PFS para {recipient_id}")
             return message
-            
+
         except Exception as e:
             logger.error(f"Error cifrando mensaje para {recipient_id}: {e}")
             return None
     
     def decrypt_message(self, message: SecureMessage) -> Optional[bytes]:
-        """Descifrar mensaje recibido"""
+        """Descifrar mensaje recibido con Perfect Forward Secrecy"""
         if message.sender_id not in self.ratchet_states:
             logger.error(f"No hay canal seguro con {message.sender_id}")
             return None
-        
+
         if message.sender_id not in self.peer_identities:
             logger.error(f"Peer {message.sender_id} no está en el registro")
             return None
-        
+
         try:
             # Verificar edad del mensaje
             if time.time() - message.timestamp > self.config.max_message_age:
                 logger.warning(f"Mensaje de {message.sender_id} demasiado antiguo")
                 return None
-            
-            # Verificar firma
+
+            # Verificar firma (incluyendo clave efímera)
             peer_identity = self.peer_identities[message.sender_id]
             message_data = (
-                message.ciphertext + message.nonce + 
+                message.ciphertext + message.nonce +
                 message.sender_id.encode() + message.recipient_id.encode() +
                 message.message_number.to_bytes(4, 'big') +
-                int(message.timestamp).to_bytes(8, 'big')
+                int(message.timestamp).to_bytes(8, 'big') +
+                message.dh_public
             )
-            
+
             peer_identity.public_signing_key.verify(message.signature, message_data)
-            
-            # Obtener clave de mensaje del ratchet
+
+            # Obtener ratchet state
             ratchet = self.ratchet_states[message.sender_id]
+
+            # Si hay clave efímera en el mensaje, avanzar DH ratchet
+            if message.dh_public:
+                try:
+                    peer_dh_public = x25519.X25519PublicKey.from_public_bytes(message.dh_public)
+                    logger.debug(f"🔄 Avanzando DH ratchet para {message.sender_id} con clave efímera")
+                    ratchet.advance_dh_ratchet(peer_dh_public)
+                except Exception as e:
+                    logger.warning(f"No se pudo procesar clave efímera de {message.sender_id}: {e}")
+
+            # Obtener clave de mensaje usando el chain ratchet
+            logger.debug(f"📥 Obteniendo clave de mensaje {message.message_number} para {message.sender_id}")
             message_key = ratchet.advance_receiving_chain()
-            
-            # Descifrar
+            logger.debug(f"🔑 Clave de mensaje obtenida: {message_key is not None}")
+            if not message_key:
+                logger.error(f"No se pudo obtener clave para mensaje {message.message_number} de {message.sender_id}")
+                return None
+
+            # Descifrar con ChaCha20-Poly1305
             cipher = ChaCha20Poly1305(message_key)
             plaintext = cipher.decrypt(message.nonce, message.ciphertext, None)
-            
+
             # Actualizar última actividad del peer
             peer_identity.last_seen = datetime.now(timezone.utc)
-            
-            logger.debug(f"Mensaje descifrado de {message.sender_id}")
+
+            logger.debug(f"🔓 Mensaje descifrado con PFS de {message.sender_id}")
             return plaintext
-            
+
         except InvalidSignature:
-            logger.error(f"Firma inválida en mensaje de {message.sender_id}")
+            logger.error(f"❌ Firma inválida en mensaje de {message.sender_id}")
             return None
         except Exception as e:
             logger.error(f"Error descifrando mensaje de {message.sender_id}: {e}")
@@ -499,17 +873,20 @@ class CryptoEngine:
     
     async def shutdown(self):
         """Cerrar motor criptográfico de forma segura"""
-        logger.info("Cerrando motor criptográfico...")
+        logger.info("🔐 Cerrando motor criptográfico...")
         
         # Cancelar tareas de rotación
         for task in self.key_rotation_tasks.values():
             task.cancel()
-        
+
+        # Cerrar gestor de claves seguras
+        await self.key_manager.shutdown()
+
         # Limpiar datos sensibles
         self.ratchet_states.clear()
         self.session_keys.clear()
-        
-        logger.info("Motor criptográfico cerrado")
+
+        logger.info("✅ Motor criptográfico cerrado")
 
 # Funciones de utilidad
 

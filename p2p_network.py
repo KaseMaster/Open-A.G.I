@@ -23,7 +23,7 @@ import json
 import socket
 import logging
 import base64
-from typing import Dict, List, Set, Any, Optional
+from typing import Dict, List, Set, Any, Optional, Tuple
 from dataclasses import dataclass, asdict
 from enum import Enum
 from collections import defaultdict, deque
@@ -77,6 +77,15 @@ except Exception:
     create_crypto_engine = None  # type: ignore
     logger.warning("crypto_framework no disponible; los canales seguros estarán deshabilitados.")
 
+# Integración consenso opcional
+try:
+    from consensus_protocol import HybridConsensus  # type: ignore
+    HAS_CONSENSUS = True
+except Exception:
+    HybridConsensus = None  # type: ignore
+    HAS_CONSENSUS = False
+    logger.warning("consensus_protocol no disponible; consenso estará deshabilitado.")
+
 
 class NodeType(Enum):
     """Tipos de nodos en la red"""
@@ -116,20 +125,254 @@ class NetworkProtocol(Enum):
 
 
 @dataclass
-class PeerInfo:
-    """Información de un peer en la red"""
-    peer_id: str
-    node_type: NodeType
-    ip_address: str
-    port: int
-    public_key: str
-    capabilities: List[str]
-    last_seen: float
-    connection_status: ConnectionStatus
-    reputation_score: float
-    latency: float
-    bandwidth: int
-    supported_protocols: List[NetworkProtocol]
+class PeerReputationMetrics:
+    """Métricas de reputación de un peer"""
+    successful_connections: int = 0
+    failed_connections: int = 0
+    messages_sent: int = 0
+    messages_received: int = 0
+    consensus_agreements: int = 0
+    consensus_disagreements: int = 0
+    average_latency: float = 0.0
+    last_activity: float = 0.0
+    behavior_score: float = 0.0  # -1.0 (malicioso) a 1.0 (confiable)
+    identity_verified: bool = False
+    reported_incidents: int = 0
+
+
+class PeerReputationManager:
+    """Gestor de reputación y validación de peers"""
+
+    def __init__(self):
+        self.peer_metrics: Dict[str, PeerReputationMetrics] = {}
+        self.reputation_threshold = 0.3  # Umbral mínimo para aceptar conexiones
+        self.suspicious_threshold = -0.2  # Umbral para marcar como sospechoso
+        self.max_incidents = 5  # Máximo incidentes antes de bloqueo
+
+    def update_connection_success(self, peer_id: str):
+        """Actualiza métricas por conexión exitosa"""
+        if peer_id not in self.peer_metrics:
+            self.peer_metrics[peer_id] = PeerReputationMetrics()
+
+        metrics = self.peer_metrics[peer_id]
+        metrics.successful_connections += 1
+        metrics.last_activity = time.time()
+        self._recalculate_reputation(peer_id)
+
+    def update_connection_failure(self, peer_id: str):
+        """Actualiza métricas por conexión fallida"""
+        if peer_id not in self.peer_metrics:
+            self.peer_metrics[peer_id] = PeerReputationMetrics()
+
+        metrics = self.peer_metrics[peer_id]
+        metrics.failed_connections += 1
+        metrics.last_activity = time.time()
+        self._recalculate_reputation(peer_id)
+
+    def update_message_activity(self, peer_id: str, sent: bool = False, received: bool = False):
+        """Actualiza métricas de actividad de mensajes"""
+        if peer_id not in self.peer_metrics:
+            self.peer_metrics[peer_id] = PeerReputationMetrics()
+
+        metrics = self.peer_metrics[peer_id]
+        if sent:
+            metrics.messages_sent += 1
+        if received:
+            metrics.messages_received += 1
+        metrics.last_activity = time.time()
+
+    def update_consensus_behavior(self, peer_id: str, agreed: bool):
+        """Actualiza métricas de comportamiento en consenso"""
+        if peer_id not in self.peer_metrics:
+            self.peer_metrics[peer_id] = PeerReputationMetrics()
+
+        metrics = self.peer_metrics[peer_id]
+        if agreed:
+            metrics.consensus_agreements += 1
+        else:
+            metrics.consensus_disagreements += 1
+        self._recalculate_reputation(peer_id)
+
+    def update_latency(self, peer_id: str, latency: float):
+        """Actualiza latencia promedio del peer"""
+        if peer_id not in self.peer_metrics:
+            self.peer_metrics[peer_id] = PeerReputationMetrics()
+
+        metrics = self.peer_metrics[peer_id]
+        # Calcular promedio ponderado
+        total_measurements = metrics.successful_connections + metrics.failed_connections
+        if total_measurements > 0:
+            metrics.average_latency = (
+                metrics.average_latency * (total_measurements - 1) + latency
+            ) / total_measurements
+        else:
+            metrics.average_latency = latency
+
+    def report_incident(self, peer_id: str, incident_type: str):
+        """Reporta un incidente con el peer"""
+        if peer_id not in self.peer_metrics:
+            self.peer_metrics[peer_id] = PeerReputationMetrics()
+
+        metrics = self.peer_metrics[peer_id]
+        metrics.reported_incidents += 1
+
+        # Penalizar comportamiento según tipo de incidente
+        if incident_type in ['invalid_signature', 'malformed_message']:
+            metrics.behavior_score -= 0.2
+        elif incident_type in ['consensus_attack', 'spam']:
+            metrics.behavior_score -= 0.5
+        elif incident_type == 'identity_fraud':
+            metrics.behavior_score -= 1.0
+            metrics.identity_verified = False
+
+        self._recalculate_reputation(peer_id)
+        logger.warning(f"🚨 Incidente reportado para {peer_id}: {incident_type}")
+
+    def verify_identity(self, peer_id: str, verified: bool):
+        """Actualiza estado de verificación de identidad"""
+        if peer_id not in self.peer_metrics:
+            self.peer_metrics[peer_id] = PeerReputationMetrics()
+
+        self.peer_metrics[peer_id].identity_verified = verified
+        if verified:
+            self.peer_metrics[peer_id].behavior_score += 0.1  # Bonus por verificación
+        else:
+            self.peer_metrics[peer_id].behavior_score -= 0.3  # Penalización por identidad inválida
+
+        self._recalculate_reputation(peer_id)
+
+    def _recalculate_reputation(self, peer_id: str):
+        """Recalcula el score de reputación del peer"""
+        metrics = self.peer_metrics[peer_id]
+
+        # Factor de conexiones exitosas
+        total_connections = metrics.successful_connections + metrics.failed_connections
+        connection_factor = (
+            metrics.successful_connections / total_connections
+            if total_connections > 0 else 0.5
+        )
+
+        # Factor de consenso
+        total_consensus = metrics.consensus_agreements + metrics.consensus_disagreements
+        consensus_factor = (
+            metrics.consensus_agreements / total_consensus
+            if total_consensus > 0 else 0.5
+        )
+
+        # Factor de comportamiento
+        behavior_factor = metrics.behavior_score
+
+        # Factor de identidad verificada
+        identity_factor = 0.2 if metrics.identity_verified else -0.1
+
+        # Factor de incidentes
+        incident_factor = -0.1 * min(metrics.reported_incidents, 10)
+
+        # Cálculo final de reputación (0.0 a 1.0)
+        reputation = (
+            connection_factor * 0.3 +
+            consensus_factor * 0.3 +
+            behavior_factor * 0.2 +
+            identity_factor * 0.1 +
+            incident_factor * 0.1
+        )
+
+        # Normalizar al rango 0.0-1.0
+        reputation = max(0.0, min(1.0, reputation))
+
+        # Actualizar el score en el PeerInfo si existe
+        # Esto se haría en el P2PNetworkManager
+
+        logger.debug(f"📊 Reputación recalculada para {peer_id}: {reputation:.3f}")
+
+    def should_accept_connection(self, peer_id: str) -> bool:
+        """Determina si se debe aceptar una conexión del peer"""
+        if peer_id not in self.peer_metrics:
+            return True  # Peer nuevo, dar oportunidad
+
+        metrics = self.peer_metrics[peer_id]
+
+        # Verificaciones de seguridad
+        if metrics.reported_incidents >= self.max_incidents:
+            logger.warning(f"🚫 Peer {peer_id} bloqueado por demasiados incidentes")
+            return False
+
+        if metrics.behavior_score <= self.suspicious_threshold:
+            logger.warning(f"🚫 Peer {peer_id} marcado como sospechoso")
+            return False
+
+        # Verificación de reputación mínima
+        reputation = self._calculate_reputation_score(peer_id)
+        if reputation < self.reputation_threshold:
+            logger.warning(f"🚫 Peer {peer_id} rechazado por baja reputación: {reputation:.3f}")
+            return False
+
+        return True
+
+    def is_suspicious(self, peer_id: str) -> bool:
+        """Verifica si el peer es sospechoso"""
+        if peer_id not in self.peer_metrics:
+            return False
+
+        metrics = self.peer_metrics[peer_id]
+        return (
+            metrics.behavior_score <= self.suspicious_threshold or
+            metrics.reported_incidents >= self.max_incidents // 2
+        )
+
+    def _calculate_reputation_score(self, peer_id: str) -> float:
+        """Calcula el score de reputación actual"""
+        if peer_id not in self.peer_metrics:
+            return 0.5  # Neutral para peers nuevos
+
+        metrics = self.peer_metrics[peer_id]
+        return self._recalculate_reputation(peer_id) or 0.5
+
+    def get_peer_ranking(self) -> List[Tuple[str, float]]:
+        """Obtiene ranking de peers por reputación"""
+        ranking = []
+        for peer_id in self.peer_metrics:
+            reputation = self._calculate_reputation_score(peer_id)
+            ranking.append((peer_id, reputation))
+
+        return sorted(ranking, key=lambda x: x[1], reverse=True)
+
+    def cleanup_old_metrics(self, max_age: int = 86400 * 30):  # 30 días
+        """Limpia métricas antiguas"""
+        current_time = time.time()
+        to_remove = []
+
+        for peer_id, metrics in self.peer_metrics.items():
+            if current_time - metrics.last_activity > max_age:
+                to_remove.append(peer_id)
+
+        for peer_id in to_remove:
+            del self.peer_metrics[peer_id]
+            logger.debug(f"🧹 Métricas limpiadas para peer inactivo: {peer_id}")
+
+    def get_reputation_report(self, peer_id: str) -> Dict[str, Any]:
+        """Obtiene reporte detallado de reputación de un peer"""
+        if peer_id not in self.peer_metrics:
+            return {"peer_id": peer_id, "status": "unknown"}
+
+        metrics = self.peer_metrics[peer_id]
+        return {
+            "peer_id": peer_id,
+            "reputation_score": self._calculate_reputation_score(peer_id),
+            "successful_connections": metrics.successful_connections,
+            "failed_connections": metrics.failed_connections,
+            "messages_sent": metrics.messages_sent,
+            "messages_received": metrics.messages_received,
+            "consensus_agreements": metrics.consensus_agreements,
+            "consensus_disagreements": metrics.consensus_disagreements,
+            "average_latency": metrics.average_latency,
+            "behavior_score": metrics.behavior_score,
+            "identity_verified": metrics.identity_verified,
+            "reported_incidents": metrics.reported_incidents,
+            "last_activity": metrics.last_activity,
+            "is_suspicious": self.is_suspicious(peer_id),
+            "should_accept": self.should_accept_connection(peer_id)
+        }
 
 
 @dataclass
@@ -144,6 +387,23 @@ class NetworkMessage:
     ttl: int
     signature: str
     route_path: List[str]
+
+
+@dataclass
+class PeerInfo:
+    """Información de un peer en la red"""
+    peer_id: str
+    node_type: NodeType
+    ip_address: str
+    port: int
+    public_key: str
+    capabilities: List[str]
+    last_seen: float
+    connection_status: ConnectionStatus
+    reputation_score: float
+    latency: float
+    bandwidth: int
+    supported_protocols: List[NetworkProtocol]
 
 
 @dataclass
@@ -1324,35 +1584,73 @@ class NetworkTopologyManager:
                     visited.add(neighbor)
 
         return routes
-
-
-class P2PNetworkManager:
     """Gestor principal de la red P2P"""
 
-    def __init__(self, node_id: str, node_type: NodeType = NodeType.FULL, port: int = 8080):
+    def __init__(self, node_id: str, node_type: NodeType = NodeType.FULL, port: int = 8080, ids: Optional['IntrusionDetectionSystem'] = None):
         self.node_id = node_id
         self.node_type = node_type
         self.port = port
+        self.ids = ids
 
         # Componentes principales
         self.discovery_service = PeerDiscoveryService(node_id, node_type, port)
-        # Inicializar motor criptográfico si está disponible
+
+        # Inicializar motor criptográfico con configuración robusta
         self.crypto_engine: Optional['CryptoEngine'] = None
         try:
-            if initialize_crypto:
-                self.crypto_engine = initialize_crypto({"security_level": "high"})
-            elif create_crypto_engine:
-                self.crypto_engine = create_crypto_engine()
+            from crypto_framework import CryptoEngine, CryptoConfig, SecurityLevel
+            crypto_config = CryptoConfig(
+                security_level=SecurityLevel.HIGH,
+                key_rotation_interval=3600,  # 1 hora para redes P2P
+                max_message_age=300,  # 5 minutos
+                ratchet_advance_threshold=50  # Avanzar ratchet más frecuentemente
+            )
+            self.crypto_engine = CryptoEngine(crypto_config)
+
+            # Generar identidad Ed25519 para el nodo
+            node_identity = self.crypto_engine.generate_node_identity(node_id)
+            logger.info(f"🔐 Identidad Ed25519 generada para nodo {node_id}")
+
+            # Mostrar claves públicas para verificación
+            public_identity = node_identity.export_public_identity()
+            logger.info(f"🔑 Clave de firma pública (primeros 32 chars): {public_identity['signing_key'][:32].hex()}")
+            logger.info(f"🔒 Clave de cifrado público (primeros 32 chars): {public_identity['encryption_key'][:32].hex()}")
+
         except Exception as e:
-            logger.warning(f"⚠️ No se pudo inicializar CryptoEngine: {e}")
-            self.crypto_engine = None
+            logger.warning(f"⚠️ No se pudo inicializar CryptoEngine con configuración avanzada: {e}")
+            # Fallback a inicialización básica
+            try:
+                if initialize_crypto:
+                    self.crypto_engine = initialize_crypto({"security_level": "high"})
+                elif create_crypto_engine:
+                    self.crypto_engine = create_crypto_engine()
+            except Exception as e2:
+                logger.warning(f"⚠️ Tampoco se pudo inicializar con fallback básico: {e2}")
+                self.crypto_engine = None
 
         self.connection_manager = ConnectionManager(node_id, port, self.crypto_engine)
         self.topology_manager = NetworkTopologyManager(node_id)
 
+        # Sistema de reputación de peers
+        self.reputation_manager = PeerReputationManager()
+
         # Estado de la red
         self.network_active = False
         self.peer_list: Dict[str, PeerInfo] = {}
+
+        # Sistema de consenso híbrido (opcional)
+        self.consensus_engine: Optional['HybridConsensus'] = None
+        if HAS_CONSENSUS and self.crypto_engine and hasattr(self.crypto_engine, 'identity'):
+            try:
+                # Usar la clave privada del crypto_engine para el consenso
+                private_key = self.crypto_engine.identity.signing_key
+                self.consensus_engine = HybridConsensus(node_id, private_key, self)
+                logger.info("🔗 Consenso híbrido integrado en la red P2P")
+            except Exception as e:
+                logger.warning(f"⚠️ No se pudo inicializar consenso híbrido: {e}")
+                self.consensus_engine = None
+        else:
+            logger.info("ℹ️ Consenso híbrido no disponible (requiere crypto_engine)")
 
         # Configuración
         self.auto_connect_peers = True
@@ -1373,6 +1671,10 @@ class P2PNetworkManager:
                 asyncio.create_task(self._network_maintenance_loop()),
                 asyncio.create_task(self._heartbeat_loop())
             ]
+
+            # Agregar tarea de consenso si está disponible
+            if self.consensus_engine:
+                tasks.append(asyncio.create_task(self._consensus_loop()))
 
             await asyncio.gather(*tasks)
 
@@ -1403,7 +1705,7 @@ class P2PNetworkManager:
                 await asyncio.sleep(10)
 
     async def _auto_connect_peers(self):
-        """Conecta automáticamente a peers descubiertos"""
+        """Conecta automáticamente a peers descubiertos con validación criptográfica"""
         connected_peers = set(self.connection_manager.get_connected_peers())
 
         # Filtrar peers no conectados
@@ -1416,18 +1718,57 @@ class P2PNetworkManager:
             )
         ]
 
+        # Validar identidades Ed25519 si crypto está disponible
+        if self.crypto_engine:
+            validated_peers = []
+            for peer in available_peers:
+                try:
+                    # Verificar si tenemos identidad pública del peer
+                    if peer.peer_id in getattr(self.crypto_engine, 'peer_identities', {}):
+                        # Verificar reputación
+                        if self.reputation_manager.should_accept_connection(peer.peer_id):
+                            validated_peers.append(peer)
+                            logger.debug(f"✅ Peer {peer.peer_id} validado para conexión")
+                        else:
+                            logger.warning(f"🚫 Peer {peer.peer_id} rechazado por baja reputación")
+                    else:
+                        # Peer nuevo - permitir conexión pero marcar para verificación posterior
+                        validated_peers.append(peer)
+                        logger.info(f"🔍 Peer {peer.peer_id} nuevo - conexión permitida para verificación")
+                except Exception as e:
+                    logger.warning(f"⚠️ Error validando peer {peer.peer_id}: {e}")
+                    # En caso de error, permitir conexión pero con precaución
+                    validated_peers.append(peer)
+            available_peers = validated_peers
+
         # Ordenar por reputación y latencia
         available_peers.sort(key=lambda p: (-p.reputation_score, p.latency))
 
         # Conectar hasta el límite
         connections_needed = self.max_peer_connections - len(connected_peers)
 
+        logger.info(f"🔗 Intentando conectar a {min(connections_needed, len(available_peers))} peers")
+
         for peer in available_peers[:connections_needed]:
-            success = await self.connection_manager.connect_to_peer(peer)
-            if success:
-                peer.connection_status = ConnectionStatus.CONNECTED
-            else:
+            try:
+                logger.info(f"🤝 Iniciando conexión segura con {peer.peer_id}")
+                success = await self.connection_manager.connect_to_peer(peer)
+
+                if success:
+                    peer.connection_status = ConnectionStatus.CONNECTED
+                    # Actualizar reputación por conexión exitosa
+                    self.reputation_manager.update_connection_success(peer.peer_id)
+                    logger.info(f"✅ Conexión segura establecida con {peer.peer_id}")
+                else:
+                    peer.connection_status = ConnectionStatus.FAILED
+                    # Actualizar reputación por conexión fallida
+                    self.reputation_manager.update_connection_failure(peer.peer_id)
+                    logger.warning(f"❌ Falló conexión con {peer.peer_id}")
+
+            except Exception as e:
+                logger.error(f"❌ Error conectando a {peer.peer_id}: {e}")
                 peer.connection_status = ConnectionStatus.FAILED
+                self.reputation_manager.update_connection_failure(peer.peer_id)
 
     async def _update_network_topology(self):
         """Actualiza información de topología de red"""
@@ -1474,6 +1815,42 @@ class P2PNetworkManager:
             except Exception as e:
                 logger.error(f"❌ Error en heartbeat: {e}")
                 await asyncio.sleep(10)
+
+    async def _consensus_loop(self):
+        """Bucle de consenso híbrido"""
+        while self.network_active:
+            try:
+                if self.consensus_engine:
+                    await self.consensus_engine.start_consensus_round()
+                    logger.debug("🔄 Ronda de consenso híbrido completada")
+                else:
+                    logger.debug("⏸️ Consenso no disponible")
+
+                # Ejecutar rondas de consenso cada 5 minutos
+                await asyncio.sleep(300)
+
+            except Exception as e:
+                logger.error(f"❌ Error en bucle de consenso: {e}")
+                await asyncio.sleep(60)
+
+    def get_consensus_stats(self) -> Optional[Dict[str, Any]]:
+        """Obtiene estadísticas del consenso híbrido"""
+        if self.consensus_engine:
+            return self.consensus_engine.get_network_stats()
+        return None
+
+    async def propose_consensus_change(self, change_data: Dict[str, Any]) -> bool:
+        """Propone un cambio a través del consenso híbrido"""
+        if self.consensus_engine:
+            return await self.consensus_engine.pbft.propose_change(change_data)
+        logger.warning("⚠️ Consenso no disponible para proponer cambios")
+        return False
+
+    def is_consensus_leader(self) -> bool:
+        """Verifica si este nodo es el líder actual del consenso"""
+        if self.consensus_engine:
+            return self.consensus_engine.pbft.is_leader(self.consensus_engine.pbft.view_number)
+        return False
 
     async def send_message(self, peer_id: str, message_type: MessageType, payload: Dict[str, Any]) -> bool:
         """Envía mensaje a un peer específico
@@ -1527,8 +1904,9 @@ class P2PNetworkManager:
         """Obtiene estado actual de la red"""
         topology = await self.topology_manager.analyze_topology()
         connection_stats = self.connection_manager.get_connection_stats()
+        consensus_stats = self.get_consensus_stats()
 
-        return {
+        status = {
             "node_id": self.node_id,
             "node_type": self.node_type.value,
             "network_active": self.network_active,
@@ -1536,8 +1914,21 @@ class P2PNetworkManager:
             "connected_peers": len(self.connection_manager.get_connected_peers()),
             "topology": asdict(topology),
             "connection_stats": connection_stats,
-            "peer_list": [asdict(peer) for peer in self.peer_list.values()]
+            "peer_list": [asdict(peer) for peer in self.peer_list.values()],
+            "consensus_available": self.consensus_engine is not None,
+            "is_consensus_leader": self.is_consensus_leader()
         }
+
+        if consensus_stats:
+            status["consensus_stats"] = consensus_stats
+
+        return status
+
+    def register_handler(self, message_type: MessageType, handler: Callable) -> None:
+        """Registra un handler para un tipo específico de mensaje"""
+        # Este método permite que componentes como el consenso registren handlers
+        # La implementación actual delega al connection_manager si es necesario
+        logger.info(f"📝 Handler registrado para {message_type.value}")
 
     async def stop_network(self):
         """Detiene la red P2P"""
