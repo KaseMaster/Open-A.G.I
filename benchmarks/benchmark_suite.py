@@ -1,237 +1,380 @@
 #!/usr/bin/env python3
 """
-AEGIS Framework - Benchmark Suite
-Suite completa de benchmarks de rendimiento
+AEGIS Framework - Automated Benchmark Suite
+Comprehensive performance benchmarking for all core components
 """
 
-import sys
 import time
+import asyncio
 import statistics
+import json
+import sys
 from pathlib import Path
-from typing import Callable, List, Dict
+from typing import Dict, List, Any, Callable
+from dataclasses import dataclass, asdict
+from datetime import datetime
 
 project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root / "src"))
+sys.path.insert(0, str(project_root))
+
+from src.aegis.security.crypto_framework import CryptoEngine, SecurityLevel, CryptoConfig
+from src.aegis.blockchain.consensus_protocol import HybridConsensus
+from src.aegis.blockchain.merkle_tree import MerkleTree
+from src.aegis.networking.p2p_network import NodeType
 
 
-class BenchmarkRunner:
-    """Ejecutor de benchmarks con estadísticas"""
+@dataclass
+class BenchmarkResult:
+    """Result of a single benchmark"""
+    name: str
+    description: str
+    iterations: int
+    total_time: float
+    avg_time: float
+    min_time: float
+    max_time: float
+    median_time: float
+    std_dev: float
+    ops_per_second: float
     
-    def __init__(self, iterations: int = 1000):
-        self.iterations = iterations
-        self.results = {}
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+
+class BenchmarkSuite:
+    """Automated benchmark suite for AEGIS components"""
     
-    def benchmark(self, name: str, func: Callable, warmup: int = 100) -> Dict:
-        """
-        Ejecuta un benchmark y retorna estadísticas
+    def __init__(self):
+        self.results: List[BenchmarkResult] = []
+        self.start_time = datetime.now()
         
-        Args:
-            name: Nombre del benchmark
-            func: Función a benchmarkear
-            warmup: Iteraciones de calentamiento
+    def benchmark(self, name: str, description: str, iterations: int = 1000):
+        """Decorator for benchmarking functions"""
+        def decorator(func: Callable):
+            def wrapper(*args, **kwargs):
+                times = []
+                
+                print(f"\n🔬 Benchmarking: {name}")
+                print(f"   Description: {description}")
+                print(f"   Iterations: {iterations}")
+                
+                for i in range(iterations):
+                    start = time.perf_counter()
+                    func(*args, **kwargs)
+                    end = time.perf_counter()
+                    times.append(end - start)
+                    
+                    if (i + 1) % (iterations // 10) == 0:
+                        progress = (i + 1) / iterations * 100
+                        print(f"   Progress: {progress:.0f}%", end='\r')
+                
+                total_time = sum(times)
+                avg_time = statistics.mean(times)
+                min_time = min(times)
+                max_time = max(times)
+                median_time = statistics.median(times)
+                std_dev = statistics.stdev(times) if len(times) > 1 else 0
+                ops_per_second = 1 / avg_time if avg_time > 0 else 0
+                
+                result = BenchmarkResult(
+                    name=name,
+                    description=description,
+                    iterations=iterations,
+                    total_time=total_time,
+                    avg_time=avg_time,
+                    min_time=min_time,
+                    max_time=max_time,
+                    median_time=median_time,
+                    std_dev=std_dev,
+                    ops_per_second=ops_per_second
+                )
+                
+                self.results.append(result)
+                
+                print(f"\n   ✅ Average: {avg_time*1000:.3f} ms")
+                print(f"   ⚡ Ops/sec: {ops_per_second:.2f}")
+                print(f"   📊 Min/Max: {min_time*1000:.3f} / {max_time*1000:.3f} ms")
+                
+                return result
+            return wrapper
+        return decorator
+    
+    def run_crypto_benchmarks(self):
+        """Benchmark cryptographic operations"""
+        print("\n" + "="*60)
+        print("🔐 CRYPTOGRAPHIC OPERATIONS BENCHMARKS")
+        print("="*60)
         
-        Returns:
-            Dict con estadísticas
-        """
-        print(f"  ⏱️  {name}...", end='', flush=True)
+        crypto = CryptoEngine()
         
-        # Warmup
-        for _ in range(warmup):
-            func()
+        # Benchmark: Node Identity Generation
+        @self.benchmark(
+            "Crypto: Generate Node Identity",
+            "Generate Ed25519 + X25519 key pairs",
+            iterations=100
+        )
+        def bench_identity_generation():
+            crypto.generate_node_identity(f"node_{time.time()}")
         
-        # Medición
-        times = []
-        for _ in range(self.iterations):
-            start = time.perf_counter()
-            func()
-            end = time.perf_counter()
-            times.append((end - start) * 1000)  # Convert to ms
+        bench_identity_generation()
         
-        stats = {
-            'mean': statistics.mean(times),
-            'median': statistics.median(times),
-            'stdev': statistics.stdev(times) if len(times) > 1 else 0,
-            'min': min(times),
-            'max': max(times),
-            'p95': sorted(times)[int(len(times) * 0.95)],
-            'p99': sorted(times)[int(len(times) * 0.99)],
-            'iterations': self.iterations
+        # Setup for signing benchmarks
+        identity = crypto.generate_node_identity("bench_node")
+        crypto.identity = identity
+        test_data = b"benchmark_test_data" * 100  # 1.9KB
+        
+        # Benchmark: Data Signing
+        @self.benchmark(
+            "Crypto: Sign Data",
+            "Sign 1.9KB data with Ed25519",
+            iterations=1000
+        )
+        def bench_sign_data():
+            crypto.sign_data(test_data)
+        
+        bench_sign_data()
+        
+        # Benchmark: Key Export
+        @self.benchmark(
+            "Crypto: Export Public Identity",
+            "Serialize public keys for network",
+            iterations=1000
+        )
+        def bench_export_identity():
+            identity.export_public_identity()
+        
+        bench_export_identity()
+    
+    def run_merkle_tree_benchmarks(self):
+        """Benchmark Merkle Tree operations"""
+        print("\n" + "="*60)
+        print("🌳 MERKLE TREE BENCHMARKS")
+        print("="*60)
+        
+        # Benchmark: Add Single Leaf
+        @self.benchmark(
+            "Merkle: Add Leaf",
+            "Add single leaf to tree",
+            iterations=10000
+        )
+        def bench_add_leaf():
+            tree = MerkleTree()
+            tree.add_leaf(b"test_data")
+        
+        bench_add_leaf()
+        
+        # Benchmark: Build Tree (100 leaves)
+        @self.benchmark(
+            "Merkle: Build Tree (100 leaves)",
+            "Build complete Merkle tree",
+            iterations=100
+        )
+        def bench_build_tree():
+            tree = MerkleTree()
+            for i in range(100):
+                tree.add_leaf(f"leaf_{i}".encode())
+            tree.make_tree()
+        
+        bench_build_tree()
+        
+        # Benchmark: Generate Proof
+        tree = MerkleTree()
+        for i in range(100):
+            tree.add_leaf(f"leaf_{i}".encode())
+        tree.make_tree()
+        
+        @self.benchmark(
+            "Merkle: Generate Proof",
+            "Generate inclusion proof for leaf",
+            iterations=1000
+        )
+        def bench_generate_proof():
+            tree.get_proof(50)
+        
+        bench_generate_proof()
+        
+        # Skip verify proof benchmark if method doesn't exist
+        if hasattr(tree, 'verify_proof'):
+            proof = tree.get_proof(50)
+            leaf = tree.leaves[50]
+            root = tree.get_merkle_root()
+            
+            @self.benchmark(
+                "Merkle: Verify Proof",
+                "Verify Merkle proof validity",
+                iterations=1000
+            )
+            def bench_verify_proof():
+                tree.verify_proof(proof, leaf, root)
+            
+            bench_verify_proof()
+    
+    def run_consensus_benchmarks(self):
+        """Benchmark consensus operations"""
+        print("\n" + "="*60)
+        print("⛓️  CONSENSUS PROTOCOL BENCHMARKS")
+        print("="*60)
+        
+        from cryptography.hazmat.primitives.asymmetric import ed25519
+        
+        # Benchmark: Consensus Initialization
+        @self.benchmark(
+            "Consensus: Initialize",
+            "Initialize HybridConsensus instance",
+            iterations=100
+        )
+        def bench_consensus_init():
+            private_key = ed25519.Ed25519PrivateKey.generate()
+            HybridConsensus(
+                node_id=f"node_{time.time()}",
+                private_key=private_key
+            )
+        
+        bench_consensus_init()
+    
+    def run_hashing_benchmarks(self):
+        """Benchmark hashing operations"""
+        print("\n" + "="*60)
+        print("🔢 HASHING BENCHMARKS")
+        print("="*60)
+        
+        import hashlib
+        test_data = b"benchmark_data" * 100  # ~1.4KB
+        
+        # SHA-256
+        @self.benchmark(
+            "Hash: SHA-256",
+            "Hash 1.4KB with SHA-256",
+            iterations=10000
+        )
+        def bench_sha256():
+            hashlib.sha256(test_data).digest()
+        
+        bench_sha256()
+        
+        # SHA-512
+        @self.benchmark(
+            "Hash: SHA-512",
+            "Hash 1.4KB with SHA-512",
+            iterations=10000
+        )
+        def bench_sha512():
+            hashlib.sha512(test_data).digest()
+        
+        bench_sha512()
+        
+        # BLAKE2b
+        @self.benchmark(
+            "Hash: BLAKE2b",
+            "Hash 1.4KB with BLAKE2b",
+            iterations=10000
+        )
+        def bench_blake2b():
+            hashlib.blake2b(test_data).digest()
+        
+        bench_blake2b()
+    
+    def generate_report(self) -> Dict[str, Any]:
+        """Generate comprehensive benchmark report"""
+        
+        end_time = datetime.now()
+        duration = (end_time - self.start_time).total_seconds()
+        
+        report = {
+            "benchmark_suite": "AEGIS Framework Performance Benchmarks",
+            "version": "2.0.0",
+            "timestamp": self.start_time.isoformat(),
+            "duration_seconds": duration,
+            "total_benchmarks": len(self.results),
+            "results": [r.to_dict() for r in self.results],
+            "summary": self._generate_summary()
         }
         
-        print(f" {stats['mean']:.3f}ms (±{stats['stdev']:.3f}ms)")
-        
-        self.results[name] = stats
-        return stats
+        return report
     
-    def print_summary(self):
-        """Imprime resumen de todos los benchmarks"""
-        print("\n" + "="*70)
-        print("BENCHMARK SUMMARY")
-        print("="*70)
-        print(f"{'Benchmark':<30} {'Mean':>10} {'Median':>10} {'P95':>10} {'P99':>10}")
-        print("-"*70)
+    def _generate_summary(self) -> Dict[str, Any]:
+        """Generate summary statistics"""
         
-        for name, stats in self.results.items():
-            print(f"{name:<30} {stats['mean']:>9.3f}ms {stats['median']:>9.3f}ms "
-                  f"{stats['p95']:>9.3f}ms {stats['p99']:>9.3f}ms")
+        categories = {
+            "Crypto": [r for r in self.results if r.name.startswith("Crypto")],
+            "Merkle": [r for r in self.results if r.name.startswith("Merkle")],
+            "Hash": [r for r in self.results if r.name.startswith("Hash")],
+            "Consensus": [r for r in self.results if r.name.startswith("Consensus")]
+        }
         
-        print("="*70)
+        summary = {}
+        for category, results in categories.items():
+            if results:
+                summary[category] = {
+                    "count": len(results),
+                    "avg_ops_per_second": statistics.mean([r.ops_per_second for r in results]),
+                    "total_operations": sum([r.iterations for r in results])
+                }
+        
+        return summary
+    
+    def print_report(self):
+        """Print formatted benchmark report"""
+        print("\n" + "="*60)
+        print("📊 BENCHMARK REPORT")
+        print("="*60)
+        
+        report = self.generate_report()
+        
+        print(f"\n⏱️  Total Duration: {report['duration_seconds']:.2f} seconds")
+        print(f"📈 Total Benchmarks: {report['total_benchmarks']}")
+        
+        print("\n🎯 Summary by Category:")
+        for category, stats in report['summary'].items():
+            print(f"\n   {category}:")
+            print(f"      Benchmarks: {stats['count']}")
+            print(f"      Avg Ops/sec: {stats['avg_ops_per_second']:.2f}")
+            print(f"      Total Ops: {stats['total_operations']:,}")
+        
+        print("\n📋 Top 5 Fastest Operations:")
+        sorted_results = sorted(self.results, key=lambda x: x.avg_time)
+        for i, result in enumerate(sorted_results[:5], 1):
+            print(f"   {i}. {result.name}: {result.avg_time*1000:.3f} ms ({result.ops_per_second:.0f} ops/s)")
+        
+        print("\n⚠️  Top 5 Slowest Operations:")
+        for i, result in enumerate(sorted(self.results, key=lambda x: x.avg_time, reverse=True)[:5], 1):
+            print(f"   {i}. {result.name}: {result.avg_time*1000:.3f} ms ({result.ops_per_second:.0f} ops/s)")
+    
+    def save_report(self, filename: str = "benchmark_results.json"):
+        """Save report to JSON file"""
+        report = self.generate_report()
+        
+        output_path = Path(__file__).parent / filename
+        with open(output_path, 'w') as f:
+            json.dump(report, f, indent=2)
+        
+        print(f"\n💾 Report saved to: {output_path}")
 
 
 def main():
-    print("🏃 AEGIS Framework - Performance Benchmarks")
-    print("="*70)
-    print()
+    """Run all benchmarks"""
+    print("""
+╔═══════════════════════════════════════════════════════════╗
+║         AEGIS FRAMEWORK BENCHMARK SUITE v2.0.0           ║
+║                                                           ║
+║  Automated Performance Testing for Core Components       ║
+╚═══════════════════════════════════════════════════════════╝
+    """)
     
-    runner = BenchmarkRunner(iterations=1000)
+    suite = BenchmarkSuite()
     
-    # 1. Merkle Tree Benchmarks
-    print("1️⃣  Merkle Tree Operations")
+    # Run all benchmark categories
+    suite.run_hashing_benchmarks()
+    suite.run_crypto_benchmarks()
+    suite.run_merkle_tree_benchmarks()
+    suite.run_consensus_benchmarks()
     
-    from aegis.blockchain.merkle_tree import MerkleTree
+    # Generate and display report
+    suite.print_report()
+    suite.save_report()
     
-    def bench_merkle_add_leaf():
-        tree = MerkleTree()
-        tree.add_leaf(b"benchmark data")
-    
-    def bench_merkle_build_tree():
-        tree = MerkleTree()
-        for i in range(10):
-            tree.add_leaf(f"tx{i}".encode())
-        tree.make_tree()
-    
-    def bench_merkle_get_root():
-        tree = MerkleTree()
-        for i in range(10):
-            tree.add_leaf(f"tx{i}".encode())
-        tree.make_tree()
-        tree.get_merkle_root()
-    
-    runner.benchmark("Merkle: Add Leaf", bench_merkle_add_leaf)
-    runner.benchmark("Merkle: Build Tree (10 tx)", bench_merkle_build_tree)
-    runner.benchmark("Merkle: Get Root", bench_merkle_get_root)
-    
-    print()
-    
-    # 2. Cryptography Benchmarks
-    print("2️⃣  Cryptography Operations")
-    
-    # Use simpler crypto operations
-    import hashlib
-    
-    data = b"benchmark data for crypto operations"
-    
-    def bench_hash_sha256():
-        hashlib.sha256(data).digest()
-    
-    def bench_hash_sha3():
-        hashlib.sha3_256(data).digest()
-    
-    runner.benchmark("Crypto: SHA-256 Hash", bench_hash_sha256)
-    runner.benchmark("Crypto: SHA3-256 Hash", bench_hash_sha3)
-    
-    print()
-    
-    # 3. Config Manager Benchmarks
-    print("3️⃣  Configuration Management")
-    
-    from aegis.core.config_manager import ConfigManager
-    
-    config = ConfigManager()
-    
-    def bench_config_get():
-        config.get('app.log_level', 'INFO')
-    
-    def bench_config_set():
-        config.set('test.key', 'value')
-    
-    runner.benchmark("Config: Get Value", bench_config_get)
-    runner.benchmark("Config: Set Value", bench_config_set)
-    
-    print()
-    
-    # 4. Data Serialization Benchmarks
-    print("4️⃣  Data Serialization")
-    
-    import json
-    import pickle
-    
-    test_data = {
-        'type': 'transaction',
-        'sender': 'node_abc123',
-        'timestamp': time.time(),
-        'payload': {'amount': 100, 'receiver': 'node_def456'}
-    }
-    
-    def bench_json_dumps():
-        json.dumps(test_data)
-    
-    def bench_json_loads():
-        json_str = json.dumps(test_data)
-        json.loads(json_str)
-    
-    def bench_pickle_dumps():
-        pickle.dumps(test_data)
-    
-    def bench_pickle_loads():
-        pickled = pickle.dumps(test_data)
-        pickle.loads(pickled)
-    
-    runner.benchmark("Serialize: JSON dumps", bench_json_dumps)
-    runner.benchmark("Serialize: JSON loads", bench_json_loads)
-    runner.benchmark("Serialize: Pickle dumps", bench_pickle_dumps)
-    runner.benchmark("Serialize: Pickle loads", bench_pickle_loads)
-    
-    print()
-    
-    # Print summary
-    runner.print_summary()
-    
-    # Performance targets
-    print("\n📊 Performance Targets vs Actual")
-    print("-"*70)
-    
-    targets = {
-        "Merkle: Add Leaf": 0.1,  # Target: <0.1ms
-        "Merkle: Build Tree (10 tx)": 1.0,  # Target: <1ms
-        "Crypto: SHA-256 Hash": 0.5,  # Target: <0.5ms
-        "Crypto: AES Encrypt": 0.5,  # Target: <0.5ms
-        "Config: Get Value": 0.01,  # Target: <0.01ms
-        "Serialize: JSON dumps": 0.1,  # Target: <0.1ms
-    }
-    
-    all_passed = True
-    for name, target in targets.items():
-        if name in runner.results:
-            actual = runner.results[name]['mean']
-            status = "✅" if actual < target else "⚠️"
-            all_passed = all_passed and (actual < target)
-            print(f"{status} {name:<30} Target: {target:>6.3f}ms  Actual: {actual:>6.3f}ms")
-    
-    print("-"*70)
-    
-    if all_passed:
-        print("\n✅ All performance targets met!")
-    else:
-        print("\n⚠️  Some targets not met (optimization needed)")
-    
-    print()
-    
-    # Save results
-    results_file = project_root / "benchmarks" / "results.json"
-    import json
-    with open(results_file, 'w') as f:
-        json.dump(runner.results, f, indent=2)
-    
-    print(f"📁 Results saved to: {results_file}")
-    print()
+    print("\n✅ Benchmark suite completed successfully!\n")
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        print(f"❌ Error running benchmarks: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+    main()

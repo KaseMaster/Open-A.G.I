@@ -1,0 +1,151 @@
+{
+  "benchmark_suite": "AEGIS Framework Performance Benchmarks",
+  "version": "2.0.0",
+  "timestamp": "2025-10-24T19:10:36.767043",
+  "duration_seconds": 0.185358,
+  "total_benchmarks": 10,
+  "results": [
+    {
+      "name": "Hash: SHA-256",
+      "description": "Hash 1.4KB with SHA-256",
+      "iterations": 10000,
+      "total_time": 0.01294255703669478,
+      "avg_time": 1.2942557036694779e-06,
+      "min_time": 1.2519994925241917e-06,
+      "max_time": 1.4938000276742969e-05,
+      "median_time": 1.2720001905108802e-06,
+      "std_dev": 2.9152571190675827e-07,
+      "ops_per_second": 772644.8468913807
+    },
+    {
+      "name": "Hash: SHA-512",
+      "description": "Hash 1.4KB with SHA-512",
+      "iterations": 10000,
+      "total_time": 0.024628754036712053,
+      "avg_time": 2.4628754036712054e-06,
+      "min_time": 2.4039991330937482e-06,
+      "max_time": 1.901599989651004e-05,
+      "median_time": 2.43399972532643e-06,
+      "std_dev": 3.624026365166411e-07,
+      "ops_per_second": 406029.47209971823
+    },
+    {
+      "name": "Hash: BLAKE2b",
+      "description": "Hash 1.4KB with BLAKE2b",
+      "iterations": 10000,
+      "total_time": 0.023222092024298036,
+      "avg_time": 2.3222092024298037e-06,
+      "min_time": 2.113999471475836e-06,
+      "max_time": 0.00010551000013947487,
+      "median_time": 2.1340001694625244e-06,
+      "std_dev": 1.171095094788921e-06,
+      "ops_per_second": 430624.42391222424
+    },
+    {
+      "name": "Crypto: Generate Node Identity",
+      "description": "Generate Ed25519 + X25519 key pairs",
+      "iterations": 100,
+      "total_time": 0.01058843699956924,
+      "avg_time": 0.0001058843699956924,
+      "min_time": 9.060100001079263e-05,
+      "max_time": 0.0011962259995925706,
+      "median_time": 9.246499985238188e-05,
+      "std_dev": 0.00011025869438401935,
+      "ops_per_second": 9444.264531589337
+    },
+    {
+      "name": "Crypto: Sign Data",
+      "description": "Sign 1.9KB data with Ed25519",
+      "iterations": 1000,
+      "total_time": 0.036281324002629844,
+      "avg_time": 3.628132400262985e-05,
+      "min_time": 3.476599977147998e-05,
+      "max_time": 0.00019824500031973002,
+      "median_time": 3.523699979268713e-05,
+      "std_dev": 5.973971295157571e-06,
+      "ops_per_second": 27562.38994826967
+    },
+    {
+      "name": "Crypto: Export Public Identity",
+      "description": "Serialize public keys for network",
+      "iterations": 1000,
+      "total_time": 0.002992800007632468,
+      "avg_time": 2.9928000076324677e-06,
+      "min_time": 2.835000486811623e-06,
+      "max_time": 4.3371999709052034e-05,
+      "median_time": 2.895000761782285e-06,
+      "std_dev": 1.336322055326121e-06,
+      "ops_per_second": 334135.25710028183
+    },
+    {
+      "name": "Merkle: Add Leaf",
+      "description": "Add single leaf to tree",
+      "iterations": 10000,
+      "total_time": 0.010693985978832643,
+      "avg_time": 1.0693985978832643e-06,
+      "min_time": 1.020999661704991e-06,
+      "max_time": 1.794400031940313e-05,
+      "median_time": 1.0519997886149213e-06,
+      "std_dev": 2.796161521124637e-07,
+      "ops_per_second": 935105.0225606898
+    },
+    {
+      "name": "Merkle: Build Tree (100 leaves)",
+      "description": "Build complete Merkle tree",
+      "iterations": 100,
+      "total_time": 0.013239264002550044,
+      "avg_time": 0.00013239264002550043,
+      "min_time": 0.00012674000026891008,
+      "max_time": 0.00018271599947183859,
+      "median_time": 0.0001289895003537822,
+      "std_dev": 1.0671082508462985e-05,
+      "ops_per_second": 7553.28996995141
+    },
+    {
+      "name": "Merkle: Generate Proof",
+      "description": "Generate inclusion proof for leaf",
+      "iterations": 1000,
+      "total_time": 0.0017512740132588078,
+      "avg_time": 1.7512740132588079e-06,
+      "min_time": 1.7029997252393514e-06,
+      "max_time": 8.866999451129232e-06,
+      "median_time": 1.7239999579032883e-06,
+      "std_dev": 3.4838553801788227e-07,
+      "ops_per_second": 571012.8697331486
+    },
+    {
+      "name": "Consensus: Initialize",
+      "description": "Initialize HybridConsensus instance",
+      "iterations": 100,
+      "total_time": 0.0039499110034739715,
+      "avg_time": 3.949911003473972e-05,
+      "min_time": 3.507599922158988e-05,
+      "max_time": 0.0002639499998622341,
+      "median_time": 3.560750064934837e-05,
+      "std_dev": 2.3545978348728744e-05,
+      "ops_per_second": 25317.026108195696
+    }
+  ],
+  "summary": {
+    "Crypto": {
+      "count": 3,
+      "avg_ops_per_second": 123713.97052671362,
+      "total_operations": 2100
+    },
+    "Merkle": {
+      "count": 3,
+      "avg_ops_per_second": 504557.0607545966,
+      "total_operations": 11100
+    },
+    "Hash": {
+      "count": 3,
+      "avg_ops_per_second": 536432.9143011078,
+      "total_operations": 30000
+    },
+    "Consensus": {
+      "count": 1,
+      "avg_ops_per_second": 25317.026108195696,
+      "total_operations": 100
+    }
+  }
+}
