@@ -1,0 +1,143 @@
+groups:
+  - name: aegis_alerts
+    interval: 30s
+    rules:
+      - alert: HighConsensusLatency
+        expr: aegis_consensus_latency_ms > 100
+        for: 5m
+        labels:
+          severity: warning
+          component: consensus
+        annotations:
+          summary: "High consensus latency detected"
+          description: "Consensus latency is {{ $value }}ms (threshold: 100ms)"
+
+      - alert: CriticalConsensusLatency
+        expr: aegis_consensus_latency_ms > 500
+        for: 2m
+        labels:
+          severity: critical
+          component: consensus
+        annotations:
+          summary: "Critical consensus latency detected"
+          description: "Consensus latency is {{ $value }}ms (threshold: 500ms)"
+
+      - alert: ByzantineFailureDetected
+        expr: increase(aegis_byzantine_failures[5m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: consensus
+        annotations:
+          summary: "Byzantine failure detected in the network"
+          description: "{{ $value }} Byzantine failures detected in the last 5 minutes"
+
+      - alert: LowActiveNodes
+        expr: aegis_active_nodes < 3
+        for: 2m
+        labels:
+          severity: warning
+          component: network
+        annotations:
+          summary: "Low number of active nodes"
+          description: "Only {{ $value }} active nodes (minimum recommended: 3)"
+
+      - alert: CriticalLowActiveNodes
+        expr: aegis_active_nodes < 2
+        for: 1m
+        labels:
+          severity: critical
+          component: network
+        annotations:
+          summary: "Critical: Very few active nodes"
+          description: "Only {{ $value }} active nodes - network reliability at risk"
+
+      - alert: HighTransactionFailureRate
+        expr: rate(aegis_transactions_total{status="failed"}[5m]) / rate(aegis_transactions_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: warning
+          component: blockchain
+        annotations:
+          summary: "High transaction failure rate"
+          description: "Transaction failure rate is {{ $value | humanizePercentage }} (threshold: 10%)"
+
+      - alert: SlowCryptoOperations
+        expr: histogram_quantile(0.95, rate(aegis_crypto_operation_duration_ms_bucket[5m])) > 50
+        for: 5m
+        labels:
+          severity: warning
+          component: crypto
+        annotations:
+          summary: "Slow cryptographic operations"
+          description: "P95 crypto operation latency is {{ $value }}ms (threshold: 50ms)"
+
+      - alert: P2PDisconnectedPeers
+        expr: aegis_p2p_connected_peers < 2
+        for: 3m
+        labels:
+          severity: warning
+          component: networking
+        annotations:
+          summary: "Low P2P peer connectivity"
+          description: "Only {{ $value }} connected peers (minimum recommended: 2)"
+
+      - alert: ModelAccuracyDegradation
+        expr: aegis_model_accuracy < 0.7
+        for: 10m
+        labels:
+          severity: warning
+          component: ml
+        annotations:
+          summary: "Model accuracy degradation detected"
+          description: "Model accuracy dropped to {{ $value | humanizePercentage }} (threshold: 70%)"
+
+      - alert: AEGISNodeDown
+        expr: up{job="aegis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: system
+        annotations:
+          summary: "AEGIS node is down"
+          description: "AEGIS node {{ $labels.instance }} has been down for more than 1 minute"
+
+      - alert: HighCPUUsage
+        expr: 100 * (1 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 85
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value | humanize }}% (threshold: 85%)"
+
+      - alert: HighMemoryUsage
+        expr: 100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 85
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value | humanize }}% (threshold: 85%)"
+
+      - alert: DiskSpaceLow
+        expr: 100 * (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) > 90
+        for: 5m
+        labels:
+          severity: critical
+          component: system
+        annotations:
+          summary: "Disk space critically low"
+          description: "Disk usage is {{ $value | humanize }}% (threshold: 90%)"
+
+      - alert: BlockchainSyncStalled
+        expr: rate(aegis_blockchain_height[10m]) == 0
+        for: 10m
+        labels:
+          severity: warning
+          component: blockchain
+        annotations:
+          summary: "Blockchain synchronization stalled"
+          description: "No new blocks added in the last 10 minutes"
