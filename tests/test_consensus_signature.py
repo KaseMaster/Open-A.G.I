@@ -12,7 +12,7 @@ if PROJECT_ROOT not in sys.path:
 
 from cryptography.hazmat.primitives.asymmetric import ed25519
 
-from consensus_protocol import PBFTConsensus, ConsensusMessage, MessageType
+from src.aegis.blockchain.consensus_protocol import PBFTConsensus, ConsensusMessage, MessageType
 
 
 class DummyNetworkManager:

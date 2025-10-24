@@ -15,7 +15,7 @@ if PROJECT_ROOT not in sys.path:
 
 
 def test_crypto_initialize_engine():
-    from crypto_framework import initialize_crypto
+    from src.aegis.security.crypto_framework import initialize_crypto
     engine = initialize_crypto({"security_level": "HIGH", "node_id": "testnode"})
     assert engine is not None
     assert engine.identity is not None
@@ -23,7 +23,7 @@ def test_crypto_initialize_engine():
 
 
 def test_consensus_engine_init_and_leader():
-    from consensus_algorithm import ConsensusEngine
+    from src.aegis.blockchain.consensus_algorithm import ConsensusEngine
 
     nodes = ["node_a", "node_b", "node_c"]
     engine = ConsensusEngine("node_a", nodes)
@@ -38,7 +38,7 @@ def test_consensus_engine_init_and_leader():
 
 
 def test_hybrid_consensus_stats():
-    from consensus_protocol import HybridConsensus
+    from src.aegis.blockchain.consensus_protocol import HybridConsensus
     from cryptography.hazmat.primitives.asymmetric import ed25519
 
     priv = ed25519.Ed25519PrivateKey.generate()
@@ -56,7 +56,7 @@ def test_hybrid_consensus_stats():
 
 
 def test_p2p_enums_available():
-    import p2p_network as p2p
+    from src.aegis.networking import p2p_network as p2p
     # Verificar que las enumeraciones principales existen
     assert hasattr(p2p, "NodeType")
     assert hasattr(p2p, "MessageType")

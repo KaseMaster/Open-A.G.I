@@ -1,0 +1,225 @@
+name: AEGIS Framework CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  pull-requests: write
+
+jobs:
+  lint:
+    name: Code Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install linting tools
+        run: |
+          pip install flake8 black isort mypy
+
+      - name: Run Black (check only)
+        run: |
+          black --check src/ tests/ examples/ --line-length 120
+
+      - name: Run isort (check only)
+        run: |
+          isort --check-only src/ tests/ examples/
+
+      - name: Run flake8
+        run: |
+          flake8 src/ --max-line-length=120 --exclude=__pycache__
+
+      - name: Run mypy
+        run: |
+          mypy src/aegis --ignore-missing-imports --no-strict-optional
+        continue-on-error: true
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install pytest pytest-cov pytest-asyncio
+
+      - name: Run pytest
+        run: |
+          pytest tests/ -v --cov=src/aegis --cov-report=xml --cov-report=term
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+        if: matrix.python-version == '3.11'
+        continue-on-error: true
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install security tools
+        run: |
+          pip install bandit safety
+
+      - name: Run Bandit
+        run: |
+          bandit -r src/ -f json -o bandit-report.json
+        continue-on-error: true
+
+      - name: Run Safety check
+        run: |
+          safety check --json > safety-report.json
+        continue-on-error: true
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+
+  build-docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: aegis-framework:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test Docker image
+        run: |
+          docker run --rm aegis-framework:latest python -c "from src.aegis.cli import main; print('OK')"
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run integration tests
+        run: |
+          pytest tests/integration_components_test.py tests/min_integration_test.py -v
+
+      - name: Run demo
+        run: |
+          python3 scripts/demo.py
+
+  benchmark:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run benchmarks
+        run: |
+          python3 benchmarks/benchmark_suite.py
+        continue-on-error: true
+
+  docs:
+    name: Check Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+        continue-on-error: true
+
+      - name: Verify documentation files
+        run: |
+          test -f docs/ARCHITECTURE.md
+          test -f docs/ROADMAP.md
+          test -f docs/QUICK_WINS.md
+          test -f README.md
+
+  deploy-dry-run:
+    name: Deployment Dry Run
+    runs-on: ubuntu-latest
+    needs: [build-docker, integration-test]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Simulate deployment
+        run: |
+          echo "✓ Would deploy to production"
+          echo "✓ All checks passed"

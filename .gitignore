@@ -57,3 +57,10 @@ ci_run_*.log
 
 # Local lint logs
 flake8*.txt
+
+# Legacy files from restructuring
+# ================================
+legacy/
+*.egg-info/
+*.pyc
+*.pyo

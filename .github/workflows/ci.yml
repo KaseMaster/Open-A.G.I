@@ -32,12 +32,21 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if (Test-Path -Path "requirements-test.txt") { pip install -r requirements.txt
+          pip install -e .
+          if (Test-Path -Path "requirements-dev.txt") { pip install -r requirements-dev.txt }
           pip install pytest flake8 bandit pip-audit cryptography click
 
       - name: Lint (flake8)
         run: |
-          flake8 .
+          flake8 src/aegis/ --exclude=__pycache__,*.pyc,*.pyo
+          flake8 main.py run_tests.py --ignore=E501
+
+      - name: Verify package structure
+        run: |
+          python -c "from aegis.core import config_manager; print('✅ Core imports working')"
+          python -c "import aegis; print(f'✅ AEGIS version: {aegis.__version__}')"
+          aegis --help
+          aegis-test --help
 
       - name: Run tests
         run: |
@@ -86,12 +95,21 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements-test.txt ]; then pip install -r requirements-test.txt; elif [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install -e .
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
           pip install pytest flake8 bandit pip-audit
 
       - name: Lint (flake8)
         run: |
-          flake8 .
+          flake8 src/aegis/ --exclude=__pycache__,*.pyc,*.pyo
+          flake8 main.py run_tests.py --ignore=E501
+
+      - name: Verify package structure
+        run: |
+          python -c "from aegis.core import config_manager; print('✅ Core imports working')"
+          python -c "import aegis; print(f'✅ AEGIS version: {aegis.__version__}')"
+          aegis --help
+          aegis-test --help
 
       - name: Run tests
         run: |
@@ -112,7 +130,7 @@ jobs:
       - name: Security scan (bandit)
         continue-on-error: true
         run: |
-          bandit -r . -f json -o bandit.json || exit 0
+          bandit -r src/aegis/ -f json -o bandit.json || exit 0
 
       - name: Upload bandit report
         if: always()
@@ -162,9 +180,10 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Smoke test in container (python main.py --dry-run)
+      - name: Smoke test in container (aegis and aegis-node)
         run: |
-          docker run --rm aegis-ci:local python main.py --dry-run
+          docker run --rm aegis-ci:local aegis --help
+          docker run --rm aegis-ci:local aegis health-check
 
       - name: Build and push to GHCR (main or release)
         if: github.event_name == 'release' || (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')

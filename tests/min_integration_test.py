@@ -16,7 +16,7 @@ if PROJECT_ROOT not in sys.path:
 
 
 def test_health_summary_keys():
-    from main import health_summary
+    from src.aegis.cli.main import health_summary
     summary = health_summary()
     assert "python" in summary
     assert "modules" in summary
@@ -26,6 +26,6 @@ def test_health_summary_keys():
 
 
 def test_start_node_dry_run_executes():
-    from main import start_node
+    from src.aegis.cli.main import start_node
     # Debe ejecutarse sin levantar servicios pesados
     asyncio.run(start_node(dry_run=True))
