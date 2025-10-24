@@ -1,0 +1,122 @@
+# .dockerignore - Optimize Docker build context
+# Reduces image size and build time
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.qoder/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation (keep essential, exclude development docs)
+docs/DEVELOPMENT_PROGRESS.md
+docs/CLEANUP_REPORT.md
+docs/ENTRY_POINTS_UPDATE.md
+docs/FINAL_COMPLETION_REPORT.md
+docs/IMPLEMENTATION_STATUS.md
+docs/PRIORITY_TASKS_REPORT.md
+docs/PROJECT_FINAL_STATUS.md
+docs/RESTRUCTURE_SUMMARY.md
+docs/RESTRUCTURE_VERIFICATION.md
+docs/SESSION_COMPLETION_SUMMARY.md
+docs/TASK_EXECUTION_REPORT.md
+docs/WEEK1_COMPLETION_REPORT.md
+
+# Tests
+tests/
+test_results/
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
+
+# Benchmarks and reports
+benchmarks/
+benchmark_results.json
+security_report_*.json
+security_report_*.txt
+
+# Temporary files
+*.log
+*.db
+*.sqlite
+*.tmp
+.trae/
+
+# Build artifacts
+*.tar.gz
+*.zip
+rustup-init.sh
+
+# CI/CD
+.github/
+.secrets.baseline
+
+# Backup files
+backup/
+*.backup
+*.bak
+
+# Size comparison files
+size_*.txt
+cleanup_manifest_*.txt
+
+# Legacy code
+legacy/
+
+# Node modules (if any)
+node_modules/
+package-lock.json
+
+# Compiled files
+*.pyc
+*.pyo
+*.pyd
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+
+# Docker files (don't copy into image)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# README and documentation we don't need in image
+README_DEPLOYMENT.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+
+# Scripts we don't need in production
+scripts/
+setup.py.backup
+
+# DApp files (separate deployment)
+dapps/
+
+# Web files (if serving separately)
+web/

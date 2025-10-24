@@ -1,0 +1,153 @@
+# Docker Compose for AEGIS Framework
+# Complete development and production stack
+# Version: 2.0.0
+
+version: '3.8'
+
+services:
+  # ============================================================================
+  # AEGIS Core Node
+  # ============================================================================
+  aegis-node:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aegis-node
+    image: aegis-framework:2.0.0
+    restart: unless-stopped
+    ports:
+      - "8080:8080"  # Dashboard
+      - "9090:9090"  # Metrics
+    environment:
+      - AEGIS_ENV=production
+      - AEGIS_LOG_LEVEL=INFO
+      - AEGIS_NODE_ID=node_001
+      - AEGIS_DASHBOARD_PORT=8080
+    volumes:
+      - aegis-data:/app/data
+      - aegis-logs:/app/logs
+      - aegis-certs:/app/certs
+    networks:
+      - aegis-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ============================================================================
+  # Prometheus - Metrics Collection
+  # ============================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: aegis-prometheus
+    restart: unless-stopped
+    ports:
+      - "9091:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - aegis-network
+    depends_on:
+      - aegis-node
+
+  # ============================================================================
+  # Grafana - Visualization Dashboard
+  # ============================================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: aegis-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=aegis2024
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - aegis-network
+    depends_on:
+      - prometheus
+
+  # ============================================================================
+  # Redis - Caching Layer (Optional)
+  # ============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: aegis-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass aegis_redis_pass
+    volumes:
+      - redis-data:/data
+    networks:
+      - aegis-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+# ============================================================================
+# Networks
+# ============================================================================
+networks:
+  aegis-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# ============================================================================
+# Volumes
+# ============================================================================
+volumes:
+  aegis-data:
+    driver: local
+  aegis-logs:
+    driver: local
+  aegis-certs:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  redis-data:
+    driver: local
+
+# ============================================================================
+# Usage:
+#
+# Development:
+#   docker-compose up
+#
+# Production:
+#   docker-compose -f docker-compose.yml up -d
+#
+# Scale nodes:
+#   docker-compose up -d --scale aegis-node=3
+#
+# View logs:
+#   docker-compose logs -f aegis-node
+#
+# Stop all:
+#   docker-compose down
+#
+# Clean up:
+#   docker-compose down -v
+# ============================================================================
