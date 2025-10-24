@@ -24,7 +24,12 @@ except Exception:
     logger = _L()
 
 import click
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    # Fallback if python-dotenv is not installed
+    def load_dotenv():
+        pass
 import inspect
 
 
