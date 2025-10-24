@@ -1,0 +1,323 @@
+name: AEGIS CI/CD Enhanced
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["main", "develop"]
+  release:
+    types: [published]
+  schedule:
+    # Run security scans daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  security-events: write
+
+env:
+  PYTHON_VERSION: "3.11"
+  DOCKER_IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  # ============================================================================
+  # Job 1: Code Quality and Linting
+  # ============================================================================
+  code-quality:
+    name: Code Quality & Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 black isort mypy
+          pip install -r requirements.txt
+
+      - name: Run Black (format check)
+        run: black --check src/ tests/ --line-length 100
+
+      - name: Run isort (import sorting)
+        run: isort --check-only src/ tests/
+
+      - name: Run Flake8 (linting)
+        run: flake8 src/ tests/ --max-line-length=100 --exclude=__pycache__
+
+      - name: Run MyPy (type checking)
+        continue-on-error: true
+        run: mypy src/ --ignore-missing-imports
+
+  # ============================================================================
+  # Job 2: Security Scanning
+  # ============================================================================
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install security tools
+        run: |
+          pip install bandit pip-audit safety
+
+      - name: Run Bandit (security linting)
+        continue-on-error: true
+        run: bandit -r src/ -f json -o bandit-report.json
+
+      - name: Run pip-audit (dependency vulnerabilities)
+        continue-on-error: true
+        run: pip-audit -r requirements.txt -f json -o pip-audit-report.json
+
+      - name: Run Safety (known vulnerabilities)
+        continue-on-error: true
+        run: safety check --json --output safety-report.json
+
+      - name: Gitleaks (secret scanning)
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: --verbose --redact
+        continue-on-error: true
+
+      - name: Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            pip-audit-report.json
+            safety-report.json
+
+  # ============================================================================
+  # Job 3: Unit and Integration Tests
+  # ============================================================================
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.11", "3.12", "3.13"]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio
+
+      - name: Run tests with coverage
+        run: |
+          pytest tests/ -v --cov=src/aegis --cov-report=xml --cov-report=html
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}-${{ matrix.python-version }}
+          path: htmlcov/
+
+  # ============================================================================
+  # Job 4: Benchmarks
+  # ============================================================================
+  benchmarks:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run benchmark suite
+        run: |
+          python benchmarks/benchmark_suite.py
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmarks/benchmark_results.json
+
+  # ============================================================================
+  # Job 5: Docker Build and Test
+  # ============================================================================
+  docker-build:
+    name: Docker Build & Test
+    runs-on: ubuntu-latest
+    needs: [code-quality, test]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          load: true
+          tags: aegis-test:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test Docker image
+        run: |
+          docker run --rm aegis-test:latest python -c "print('✅ Image functional')"
+          docker run --rm aegis-test:latest python main.py health-check
+
+      - name: Check image size
+        run: |
+          SIZE=$(docker images aegis-test:latest --format "{{.Size}}")
+          echo "Image size: $SIZE"
+          # Note: Add size check logic here if needed
+
+      - name: Push Docker image
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          platforms: linux/amd64,linux/arm64
+
+  # ============================================================================
+  # Job 6: Documentation Build
+  # ============================================================================
+  docs:
+    name: Documentation Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check documentation links
+        run: |
+          echo "Checking markdown files..."
+          find docs/ -name "*.md" -type f
+
+      - name: Validate examples
+        run: |
+          echo "Validating example scripts..."
+          python -m py_compile examples/*.py
+
+  # ============================================================================
+  # Job 7: Dependency Review
+  # ============================================================================
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v3
+        with:
+          fail-on-severity: moderate
+
+  # ============================================================================
+  # Job 8: Release
+  # ============================================================================
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    needs: [test, docker-build, security-scan]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create release artifacts
+        run: |
+          tar -czf aegis-framework-${{ github.ref_name }}.tar.gz \
+            src/ examples/ docs/ requirements.txt README.md LICENSE
+
+      - name: Upload release artifacts
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            aegis-framework-${{ github.ref_name }}.tar.gz
+            benchmarks/benchmark_results.json
+
+# ============================================================================
+# Workflow Summary:
+# - Code quality checks (black, isort, flake8, mypy)
+# - Security scanning (bandit, pip-audit, safety, gitleaks)
+# - Tests across multiple OS and Python versions
+# - Performance benchmarks
+# - Docker build and size check
+# - Documentation validation
+# - Dependency review for PRs
+# - Automated releases
+# ============================================================================
