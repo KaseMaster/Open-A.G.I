@@ -18,6 +18,9 @@ import logging
 from collections import defaultdict
 from cryptography.hazmat.primitives.asymmetric import ed25519
 
+# Import advanced consensus features
+from .advanced_consensus import AdvancedConsensusFeatures
+
 # Configuración de logging temprana
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
