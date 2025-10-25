@@ -78,8 +78,8 @@ The AEGIS Framework is a comprehensive blockchain platform designed for enterpri
 ### Installation
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/aegis-framework.git
-cd aegis-framework
+git clone https://github.com/KaseMaster/Open-A.G.I.git
+cd Open-A.G.I
 
 # Create virtual environment
 python3 -m venv venv
