@@ -471,6 +471,9 @@ pip install -r requirements.txt --upgrade
 
 Contributions are welcome! Please read our [Contribution Guide](CONTRIBUTING.md).
 
+Donate: 0x31540c1DB27B20B88B3915524B0D6219DD0c19D2
+<img width="345" height="354" alt="image" src="https://github.com/user-attachments/assets/cdcaa374-490f-49cf-b22f-5e2d7685a920" />
+
 ### Process
 
 1. **Fork** the repository
