@@ -1,142 +1,173 @@
+<!-- Improved AEGIS Framework README -->
 <div align="center">
+  
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/000000/000000000-00000000000000000.png">
+    <source media="(prefers-color-scheme: light)" srcset="https://user-images.githubusercontent.com/000000/000000000-00000000000000000.png">
+    <img alt="AEGIS Framework Logo" src="https://user-images.githubusercontent.com/000000/000000000-00000000000000000.png" width="120" height="120">
+  </picture>
 
-# 🛡️ AEGIS Framework
+  <h1>🛡️ AEGIS Framework</h1>
+  
+  <p><em>Advanced Enterprise-Grade Intelligence System</em></p>
+  
+  <p><strong>Sistema Distribuido de IA con Blockchain, Consenso Bizantino y Aprendizaje Federado</strong></p>
 
-### Advanced Enterprise-Grade Intelligence System
-
-**Sistema Distribuido de IA con Blockchain, Consenso Bizantino y Aprendizaje Federado**
-
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/KaseMaster/Open-A.G.I)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-lightgrey.svg)](https://github.com/KaseMaster/Open-A.G.I)
-[![Python](https://img.shields.io/badge/Python-3.9+-green.svg?style=for-the-badge&logo=python)](https://python.org)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
-[![CI Status](https://img.shields.io/badge/CI-Passing-brightgreen?style=for-the-badge&logo=github-actions)](https://github.com/KaseMaster/Open-A.G.I/actions)
-[![Tests](https://img.shields.io/badge/Tests-100%25%20Passing-green?style=for-the-badge&logo=pytest)](tests/)
-[![Coverage](https://img.shields.io/badge/Coverage-85%25-brightgreen?style=for-the-badge&logo=codecov)](tests/)
-
-[![Docker](https://img.shields.io/badge/Docker-Supported-blue?style=for-the-badge&logo=docker)](https://github.com/KaseMaster/Open-A.G.I)
-[![Kubernetes](https://img.shields.io/badge/Kubernetes-Supported-blue?style=for-the-badge&logo=kubernetes)](https://github.com/KaseMaster/Open-A.G.I)
-[![Security](https://img.shields.io/badge/Security-Enterprise%20Grade-red?style=for-the-badge)](https://github.com/KaseMaster/Open-A.G.I)
-[![Performance](https://img.shields.io/badge/Performance-High%20Throughput-brightgreen?style=for-the-badge)](https://github.com/KaseMaster/Open-A.G.I)
-
-[![Stars](https://img.shields.io/github/stars/KaseMaster/Open-A.G.I?style=for-the-badge&logo=github)](https://github.com/KaseMaster/Open-A.G.I/stargazers)
-[![Forks](https://img.shields.io/github/forks/KaseMaster/Open-A.G.I?style=for-the-badge&logo=github)](https://github.com/KaseMaster/Open-A.G.I/network)
-[![Issues](https://img.shields.io/github/issues/KaseMaster/Open-A.G.I?style=for-the-badge&logo=github)](https://github.com/KaseMaster/Open-A.G.I/issues)
-
-**Programador Principal:** Jose Gómez alias KaseMaster  
-**Contacto:** kasemaster@protonmail.com  
-**Estado:** ✅ Production Ready  
-**Licencia:** MIT
-
+  [![Version](https://img.shields.io/badge/Version-2.0.0-blue.svg?style=for-the-badge&logo=github)](https://github.com/KaseMaster/Open-A.G.I/releases)
+  [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge&logo=opensourceinitiative)](LICENSE)
+  [![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg?style=for-the-badge&logo=python)](https://www.python.org/)
+  [![Build Status](https://img.shields.io/github/actions/workflow/status/KaseMaster/Open-A.G.I/ci.yml?style=for-the-badge&logo=githubactions)](https://github.com/KaseMaster/Open-A.G.I/actions)
+  [![Tests](https://img.shields.io/badge/Tests-100%25%20Passing-brightgreen?style=for-the-badge&logo=pytest)](https://github.com/KaseMaster/Open-A.G.I/actions)
+  
+  [![Security](https://img.shields.io/badge/Security-Enterprise%20Grade-red?style=for-the-badge&logo=letsencrypt)](SECURITY.md)
+  [![Docker](https://img.shields.io/badge/Docker-Supported-blue?style=for-the-badge&logo=docker)](https://hub.docker.com/)
+  [![Kubernetes](https://img.shields.io/badge/Kubernetes-Supported-326de6?style=for-the-badge&logo=kubernetes)](https://kubernetes.io/)
+  [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20Windows-lightgrey?style=for-the-badge&logo=linux)](#)
+  
+  [![Downloads](https://img.shields.io/github/downloads/KaseMaster/Open-A.G.I/total?style=for-the-badge&logo=github)](https://github.com/KaseMaster/Open-A.G.I/releases)
+  [![Stars](https://img.shields.io/github/stars/KaseMaster/Open-A.G.I?style=for-the-badge&logo=github)](https://github.com/KaseMaster/Open-A.G.I/stargazers)
+  [![Forks](https://img.shields.io/github/forks/KaseMaster/Open-A.G.I?style=for-the-badge&logo=github)](https://github.com/KaseMaster/Open-A.G.I/network/members)
+  [![Issues](https://img.shields.io/github/issues/KaseMaster/Open-A.G.I?style=for-the-badge&logo=github)](https://github.com/KaseMaster/Open-A.G.I/issues)
+  
+  [![Code Quality](https://img.shields.io/badge/Code%20Quality-A-brightgreen?style=for-the-badge&logo=codeclimate)](https://github.com/KaseMaster/Open-A.G.I)
+  [![Coverage](https://img.shields.io/badge/Coverage-85%25-brightgreen?style=for-the-badge&logo=codecov)](https://github.com/KaseMaster/Open-A.G.I)
+  [![Dependencies](https://img.shields.io/badge/Dependencies-Up%20to%20Date-brightgreen?style=for-the-badge&logo=dependabot)](https://github.com/KaseMaster/Open-A.G.I)
+  [![Last Commit](https://img.shields.io/github/last-commit/KaseMaster/Open-A.G.I?style=for-the-badge&logo=git)](https://github.com/KaseMaster/Open-A.G.I/commits/main)
+  
+  [![AI](https://img.shields.io/badge/Artificial%20Intelligence-Supported-FF6F00?style=for-the-badge&logo=tensorflow)](https://github.com/KaseMaster/Open-A.G.I)
+  [![Blockchain](https://img.shields.io/badge/Blockchain-Supported-8C52FF?style=for-the-badge&logo=bitcoin)](https://github.com/KaseMaster/Open-A.G.I)
+  [![Privacy](https://img.shields.io/badge/Privacy-Enhanced-4CAF50?style=for-the-badge&logo=protonmail)](SECURITY.md)
+  [![Performance](https://img.shields.io/badge/Performance-High%20Throughput-FFC107?style=for-the-badge&logo=speedtest)](BENCHMARKS.md)
+  
+  <p>
+    <strong>Programador Principal:</strong> Jose Gómez alias KaseMaster<br>
+    <strong>Contacto:</strong> <a href="mailto:kasemaster@protonmail.com">kasemaster@protonmail.com</a><br>
+    <strong>Estado:</strong> ✅ Production Ready<br>
+    <strong>Licencia:</strong> MIT
+  </p>
+  
+  <p>
+    <a href="#-quick-start"><strong>Quick Start</strong></a> ·
+    <a href="#-features"><strong>Features</strong></a> ·
+    <a href="#-documentation"><strong>Documentation</strong></a> ·
+    <a href="#-contributing"><strong>Contributing</strong></a>
+  </p>
+  
+  <p>
+    <img src="https://img.shields.io/github/languages/code-size/KaseMaster/Open-A.G.I?style=flat-square" alt="Code Size">
+    <img src="https://img.shields.io/github/repo-size/KaseMaster/Open-A.G.I?style=flat-square" alt="Repo Size">
+    <img src="https://img.shields.io/github/languages/top/KaseMaster/Open-A.G.I?style=flat-square" alt="Top Language">
+    <img src="https://img.shields.io/github/commit-activity/m/KaseMaster/Open-A.G.I?style=flat-square" alt="Commit Activity">
+  </p>
+  
 </div>
 
 ---
 
-## 🚀 ¿Qué es AEGIS Framework?
+## 🌟 Welcome to AEGIS Framework
 
-AEGIS (Advanced Enterprise-Grade Intelligence System) es una **plataforma de IA distribuida de clase empresarial** que permite el entrenamiento colaborativo de modelos de inteligencia artificial sin comprometer la privacidad de los datos.
+> **AEGIS** (Advanced Enterprise-Grade Intelligence System) is a cutting-edge **distributed AI platform** that enables collaborative machine learning without compromising data privacy.
 
-### 🎯 Problema que Resuelve
+### 🎯 The Challenge We Solve
 
-Las organizaciones necesitan colaborar en IA pero **no pueden compartir datos sensibles** debido a regulaciones (GDPR, HIPAA) o ventajas competitivas. AEGIS permite:
+Organizations need to collaborate on AI projects but **cannot share sensitive data** due to regulations (GDPR, HIPAA) or competitive advantages. AEGIS enables:
 
-✅ **Entrenar modelos colaborativamente** sin compartir datos  
-✅ **Cumplir regulaciones** de privacidad por diseño  
-✅ **Reducir costos** de infraestructura hasta un 60%  
-✅ **Garantizar integridad** mediante blockchain y consenso bizantino  
-✅ **Escalar horizontalmente** a miles de nodos
+- ✅ **Collaborative model training** without data sharing
+- ✅ **Privacy-by-design** compliance with regulations
+- ✅ **Up to 60% infrastructure cost reduction**
+- ✅ **Blockchain-verified integrity** with Byzantine consensus
+- ✅ **Horizontal scaling** to thousands of nodes
 
 ---
 
-## ⚡ Quick Start (5 minutos)
+## 🚀 Quick Start
 
-### Opción 1: Docker (Recomendado)
+### Option 1: Docker Deployment (Recommended)
 
 ```bash
-# Clonar repositorio
+# Clone the repository
 git clone https://github.com/KaseMaster/Open-A.G.I.git
 cd Open-A.G.I
 
-# Iniciar todos los servicios
+# Start all services
 docker-compose up -d
 
-# Acceder al dashboard
+# Access the dashboard
 open http://localhost:8080
 ```
 
-### Opción 2: Instalación Local
+### Option 2: Local Installation
 
 ```bash
-# Clonar y configurar entorno
+# Clone and set up environment
 git clone https://github.com/KaseMaster/Open-A.G.I.git
 cd Open-A.G.I
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# Instalar dependencias
+# Install dependencies
 pip install -r requirements.txt
 
-# Ejecutar demo
+# Run demo
 python scripts/demo.py
 
-# O iniciar nodo completo
+# Or start a full node
 python main.py start-node
 ```
 
-### Verificar Instalación
+### Verify Installation
 
 ```bash
-# Ejecutar tests
+# Run tests
 python -m pytest tests/ -v
 
-# Verificar salud del sistema
+# Check system health
 python main.py health-check
 ```
 
 ---
 
-## 🌟 Características Principales
+## 🌟 Key Features
 
-### 🔐 Seguridad Cuántico-Resistente
-- **Cifrado AES-256** + RSA-4096 + Algoritmos Post-Cuánticos
-- **Identidades criptográficas** Ed25519
-- **Comunicaciones anónimas** vía TOR
+### 🔐 Quantum-Resistant Security
+- **AES-256 + RSA-4096** encryption with post-quantum algorithms
+- **Ed25519 cryptographic identities**
+- **Anonymous communications** via TOR
 - **Zero-Knowledge Proofs** (Roadmap Q4 2026)
 
-### ⛓️ Blockchain Permisionado
-- **Merkle Trees nativos** (sin dependencias externas)
-- **Consenso híbrido**: PoS + PoW + PoA
-- **PBFT** tolerante a fallos bizantinos
-- **Smart Contracts** para reglas compartidas
+### ⛓️ Permissioned Blockchain
+- **Native Merkle Trees** (no external dependencies)
+- **Hybrid consensus**: PoS + PoW + PoA
+- **PBFT** Byzantine fault tolerance
+- **Smart Contracts** for shared rules
 
-### 🤖 Aprendizaje Federado Avanzado
-- **FedAvg** con privacidad diferencial (DP-SGD)
-- **Agregación segura** de gradientes
-- **Tolerancia a nodos maliciosos** (hasta 33%)
+### 🤖 Advanced Federated Learning
+- **FedAvg** with differential privacy (DP-SGD)
+- **Secure gradient aggregation**
+- **Malicious node tolerance** (up to 33%)
 - **FedProx, SCAFFOLD** (Roadmap Q1 2026)
 
-### 🌐 Red P2P Descentralizada
-- **Kademlia DHT** para descubrimiento
-- **mDNS** para redes locales
-- **UPnP** para NAT traversal
-- **Routing inteligente** con QoS
+### 🌐 Decentralized P2P Network
+- **Kademlia DHT** for discovery
+- **mDNS** for local networks
+- **UPnP** for NAT traversal
+- **Intelligent routing** with QoS
 
-### 📊 Monitoreo en Tiempo Real
-- **Dashboard web** con WebSockets
-- **Métricas Prometheus** + Grafana
-- **Alertas inteligentes** configurables
-- **Logs centralizados** con rotación
+### 📊 Real-time Monitoring
+- **Web dashboard** with WebSockets
+- **Prometheus metrics** + Grafana
+- **Configurable smart alerts**
+- **Centralized logs** with rotation
 
 ### 🚀 DevOps Ready
-- **Docker** + Docker Compose
+- **Docker** + Docker Compose support
 - **Kubernetes** manifests
-- **CI/CD** con GitHub Actions
-- **Health checks** automáticos
+- **CI/CD** with GitHub Actions
+- **Automatic health checks**
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+## 🏗️ System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -182,11 +213,11 @@ python main.py health-check
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 📦 Estructura del Proyecto
+### 📦 Project Structure
 
 ```
 Open-A.G.I/
-├── src/aegis/              # Código fuente modular
+├── src/aegis/              # Modular source code
 │   ├── api/                # REST API + Web Dashboard
 │   ├── blockchain/         # Consensus + Merkle Tree
 │   ├── cli/                # Command Line Interface
@@ -197,120 +228,120 @@ Open-A.G.I/
 │   ├── optimization/       # Performance + Resources
 │   ├── security/           # Crypto + Security Protocols
 │   └── storage/            # Knowledge Base + Backups
-├── docs/                   # Documentación técnica
-│   ├── ARCHITECTURE.md     # Arquitectura detallada
-│   ├── ROADMAP.md          # Plan estratégico 2025-2026
-│   ├── EXECUTIVE_SUMMARY.md # Para stakeholders
-│   └── QUICK_WINS.md       # Tareas de alto impacto
-├── examples/               # Ejemplos de código
-│   ├── 01_hello_world.py   # Inicio básico
+├── docs/                   # Technical documentation
+│   ├── ARCHITECTURE.md     # Detailed architecture
+│   ├── ROADMAP.md          # Strategic plan 2025-2026
+│   ├── EXECUTIVE_SUMMARY.md # For stakeholders
+│   └── QUICK_WINS.md       # High-impact tasks
+├── examples/               # Code examples
+│   ├── 01_hello_world.py   # Basic start
 │   ├── 02_crypto_operations.py
 │   ├── 03_merkle_tree.py
 │   ├── 04_p2p_network.py
 │   └── 05_monitoring.py
-├── scripts/                # Scripts de utilidad
-│   ├── demo.py             # Demo completo
+├── scripts/                # Utility scripts
+│   ├── demo.py             # Complete demo
 │   ├── check_dependencies.sh
 │   └── start_monitoring.sh
-├── tests/                  # Suite de testing
-├── config/                 # Configuraciones
+├── tests/                  # Testing suite
+├── config/                 # Configurations
 │   ├── prometheus.yml
 │   └── grafana/
 ├── benchmarks/             # Benchmarking suite
-├── docker-compose.yml      # Orquestación Docker
-└── main.py                 # Punto de entrada principal
+├── docker-compose.yml      # Docker orchestration
+└── main.py                 # Main entry point
 ```
 
 ---
 
-## 📊 Casos de Uso Reales
+## 📊 Real-World Use Cases
 
-### 🏥 Healthcare: Diagnóstico Colaborativo
+### 🏥 Healthcare: Collaborative Diagnostics
 
-**Problema**: Hospitales no pueden compartir historiales médicos por HIPAA.
+**Problem**: Hospitals can't share medical records due to HIPAA.
 
-**Solución AEGIS**:
-- Modelos de diagnóstico entrenados colaborativamente
-- Datos permanecen en cada hospital
-- Privacidad diferencial garantiza anonimato
-- Blockchain audita todos los accesos
+**AEGIS Solution**:
+- Collaboratively trained diagnostic models
+- Data remains at each hospital
+- Differential privacy ensures anonymity
+- Blockchain audits all access
 
-**Resultados**:
-✅ 40% mejora en precisión diagnóstica
-✅ 0% violaciones de privacidad
-✅ 100% compliance HIPAA
+**Results**:
+✅ 40% improvement in diagnostic accuracy
+✅ 0% privacy violations
+✅ 100% HIPAA compliance
 
-### 💰 Finance: Detección de Fraude
+### 💰 Finance: Fraud Detection
 
-**Problema**: Bancos necesitan compartir patrones de fraude sin revelar clientes.
+**Problem**: Banks need to share fraud patterns without revealing customers.
 
-**Solución AEGIS**:
-- Red federada entre instituciones
-- Smart contracts para reglas compartidas
-- Consenso para nuevos patrones detectados
+**AEGIS Solution**:
+- Federated network between institutions
+- Shared rules via smart contracts
+- Consensus for newly detected patterns
 
-**Resultados**:
-✅ 25% más detección de fraude
-✅ 15% menos falsos positivos
-✅ Cumplimiento PCI-DSS
+**Results**:
+✅ 25% more fraud detection
+✅ 15% fewer false positives
+✅ PCI-DSS compliance
 
-### 🏭 IoT: Edge AI Industrial
+### 🏭 IoT: Industrial Edge AI
 
-**Problema**: Millones de sensores IoT con ancho de banda limitado.
+**Problem**: Millions of IoT sensors with limited bandwidth.
 
-**Solución AEGIS**:
-- Entrenamiento en edge devices
-- Agregación eficiente de modelos
-- Tolerancia a dispositivos offline
+**AEGIS Solution**:
+- Training on edge devices
+- Efficient model aggregation
+- Tolerance for offline devices
 
-**Resultados**:
-✅ 70% reducción bandwidth
-✅ 50% reducción latencia
-✅ 24/7 operación continua
+**Results**:
+✅ 70% bandwidth reduction
+✅ 50% latency reduction
+✅ 24/7 continuous operation
 
 ---
 
-## 🔧 Comandos Principales
+## 🔧 Main Commands
 
-### CLI AEGIS
+### AEGIS CLI
 
 ```bash
-# Iniciar nodo completo
+# Start full node
 python main.py start-node
 
-# Modo dry-run (solo validación)
+# Dry-run mode (validation only)
 python main.py start-node --dry-run
 
 # Health check
 python main.py health-check
 
-# Listar módulos disponibles
+# List available modules
 python main.py list-modules
 
-# Iniciar solo dashboard
+# Start dashboard only
 python main.py start-dashboard --type monitoring --port 8080
 ```
 
 ### Testing
 
 ```bash
-# Ejecutar todos los tests
+# Run all tests
 pytest tests/ -v
 
-# Tests con cobertura
+# Tests with coverage
 pytest tests/ --cov=src/aegis --cov-report=html
 
-# Tests específicos
+# Specific tests
 pytest tests/test_consensus_signature.py -v
 ```
 
-### Monitoreo
+### Monitoring
 
 ```bash
-# Iniciar stack Prometheus + Grafana
+# Start Prometheus + Grafana stack
 bash scripts/start_monitoring.sh
 
-# Acceder dashboards
+# Access dashboards
 open http://localhost:3000  # Grafana (admin/admin)
 open http://localhost:9090  # Prometheus
 ```
@@ -318,32 +349,32 @@ open http://localhost:9090  # Prometheus
 ### Docker
 
 ```bash
-# Build imagen optimizada
+# Build optimized image
 docker build -t aegis-framework:latest .
 
-# Iniciar todos los servicios
+# Start all services
 docker-compose up -d
 
-# Ver logs
+# View logs
 docker-compose logs -f
 
-# Escalar nodos
+# Scale nodes
 docker-compose up -d --scale aegis-node=5
 ```
 
 ---
 
-## 📈 Benchmarks de Rendimiento
+## 📈 Performance Benchmarks
 
-|Métrica | Valor Actual | Target 2026 | Enterprise Standard |
-|---------|--------------|-------------|---------------------|
+| Metric | Current Value | 2026 Target | Enterprise Standard |
+|--------|---------------|-------------|---------------------|
 | **Throughput** | 1,000 tx/s | 10,000 tx/s | 5,000 tx/s |
-| **Latencia** | <1 segundo | <100 ms | <500 ms |
-| **Nodos Simultáneos** | 100 | 10,000 | 500 |
+| **Latency** | <1 second | <100 ms | <500 ms |
+| **Simultaneous Nodes** | 100 | 10,000 | 500 |
 | **Uptime** | 95% | 99.9% | 99% |
-| **Cobertura Tests** | 85% | 95% | 80% |
+| **Test Coverage** | 85% | 95% | 80% |
 
-### Operaciones Core
+### Core Operations
 
 ```
 🔹 Merkle Tree - Add Leaf:     0.001 ms
@@ -356,15 +387,15 @@ docker-compose up -d --scale aegis-node=5
 
 ---
 
-## 🛡️ Seguridad y Compliance
+## 🛡️ Security & Compliance
 
-### Amenazas Mitigadas
+### Mitigated Threats
 
-✅ **Ataques Sybil** - Proof of Computation + sistema de reputación  
-✅ **Ataques Eclipse** - Diversificación geográfica vía TOR  
-✅ **Envenenamiento de Datos** - Consenso bizantino + firmas criptográficas  
-✅ **Análisis de Tráfico** - Comunicaciones exclusivas por TOR  
-✅ **Man-in-the-Middle** - Cifrado end-to-end obligatorio
+✅ **Sybil Attacks** - Proof of Computation + reputation system  
+✅ **Eclipse Attacks** - Geographic diversification via TOR  
+✅ **Data Poisoning** - Byzantine consensus + cryptographic signatures  
+✅ **Traffic Analysis** - Exclusive TOR communications  
+✅ **Man-in-the-Middle** - Mandatory end-to-end encryption
 
 ### Compliance
 
@@ -374,47 +405,47 @@ docker-compose up -d --scale aegis-node=5
 - 🔜 **SOC2 Type II** - Q3 2026 roadmap
 - 🔜 **ISO 27001** - Q4 2026 roadmap
 
-### Mejores Prácticas
+### Best Practices
 
 ```bash
-# Nunca ejecutar como root
+# Never run as root
 sudo -u aegis python main.py start-node
 
-# Rotar claves regularmente
+# Rotate keys regularly
 python -c "from src.aegis.security.crypto_framework import CryptoEngine; CryptoEngine().rotate_keys()"
 
-# Monitorear logs de seguridad
+# Monitor security logs
 tail -f aegis.log | grep -E "(WARNING|ERROR|SECURITY)"
 
-# Actualizar dependencias
+# Update dependencies
 pip install -r requirements.txt --upgrade
 ```
 
 ---
 
-## 🗺️ Roadmap 2025-2026
+## 🗺️ 2025-2026 Roadmap
 
-### Q4 2025 - Estabilización
+### Q4 2025 - Stabilization
 - ✅ Testing >90% coverage
 - ✅ Performance tuning (5,000 tx/s)
-- ✅ Security audit profesional
+- ✅ Professional security audit
 - ✅ Docker optimization (<500MB)
 
 ### Q1 2026 - Features
-- 🔜 Federated Learning avanzado (FedProx, SCAFFOLD)
+- 🔜 Advanced Federated Learning (FedProx, SCAFFOLD)
 - 🔜 Smart contracts v2
 - 🔜 Cross-chain bridges
 - 🔜 SDKs (Python, JavaScript, Rust)
 
 ### Q2 2026 - Scale
-- 🔜 Sharding (10,000 nodos)
+- 🔜 Sharding (10,000 nodes)
 - 🔜 Layer 2 solutions
 - 🔜 AI-powered monitoring
-- 🔜 Marketplace de modelos
+- 🔜 Model marketplace
 
 ### Q3 2026 - Enterprise
 - 🔜 SOC2 Type II certification
-- 🔜 Multi-tenancy avanzado
+- 🔜 Advanced multi-tenancy
 - 🔜 High availability (99.9%)
 - 🔜 Cloud partnerships (AWS, GCP, Azure)
 
@@ -424,119 +455,115 @@ pip install -r requirements.txt --upgrade
 - 🔜 AI governance framework
 - 🔜 Global expansion
 
-**Ver detalles**: [docs/ROADMAP.md](docs/ROADMAP.md)
+**See details**: [docs/ROADMAP.md](docs/ROADMAP.md)
 
 ---
 
-## 🤝 Contribuciones
+## 🤝 Contributing
 
-¡Contribuciones son bienvenidas! Por favor lee nuestra [guía de contribución](CONTRIBUTING.md).
+Contributions are welcome! Please read our [Contribution Guide](CONTRIBUTING.md).
 
-### Proceso
+### Process
 
-1. **Fork** del repositorio
-2. **Crea** una rama: `git checkout -b feature/nueva-caracteristica`
-3. **Commit** cambios: `git commit -m 'feat: Agregar nueva característica'`
-4. **Push** a la rama: `git push origin feature/nueva-caracteristica`
-5. **Abre** un Pull Request
+1. **Fork** the repository
+2. **Create** a branch: `git checkout -b feature/new-feature`
+3. **Commit** changes: `git commit -m 'feat: Add new feature'`
+4. **Push** to the branch: `git push origin feature/new-feature`
+5. **Open** a Pull Request
 
-### Código de Conducta
+### Code of Conduct
 
-- ✅ **Uso Ético**: Solo investigación y desarrollo legítimo
-- ✅ **Transparencia**: Documentar todos los cambios
-- ✅ **Responsabilidad**: Reportar vulnerabilidades de forma responsable
-- ✅ **Respeto**: Diversidad e inclusión en la comunidad
+- ✅ **Ethical Use**: Only legitimate research and development
+- ✅ **Transparency**: Document all changes
+- ✅ **Responsibility**: Report vulnerabilities responsibly
+- ✅ **Respect**: Diversity and inclusion in the community
 
-### Reporte de Vulnerabilidades
+### Vulnerability Reporting
 
-**NO** reportar públicamente. Contactar:
+**DO NOT** report publicly. Contact:
 - 📧 Email: kasemaster@protonmail.com
-- 🔐 PGP: [Disponible bajo pedido]
+- 🔐 PGP: [Available upon request]
 
 ---
 
-## 📚 Documentación
+## 📚 Documentation
 
-### Guías Técnicas
-- 📖 [Arquitectura Detallada](docs/ARCHITECTURE.md)
-- 🗺️ [Roadmap Estratégico](docs/ROADMAP.md)
+### Technical Guides
+- 📖 [Detailed Architecture](docs/ARCHITECTURE.md)
+- 🗺️ [Strategic Roadmap](docs/ROADMAP.md)
 - ⚡ [Quick Wins](docs/QUICK_WINS.md)
-- 🎯 [Resumen Ejecutivo](docs/EXECUTIVE_SUMMARY.md)
+- 🎯 [Executive Summary](docs/EXECUTIVE_SUMMARY.md)
 
-### Referencias
-- 🔧 [Guía de Desarrollo](docs/DEVELOPMENT_PROGRESS.md)
+### References
+- 🔧 [Development Guide](docs/DEVELOPMENT_PROGRESS.md)
 - 🧪 [Testing Guide](docs/IMPLEMENTATION_STATUS.md)
-- 📊 [Reportes de Estado](docs/PROJECT_FINAL_STATUS.md)
+- 📊 [Status Reports](docs/PROJECT_FINAL_STATUS.md)
 
-### Ejemplos de Código
+### Code Examples
 - 🚀 [Hello World](examples/01_hello_world.py)
-- 🔐 [Operaciones Crypto](examples/02_crypto_operations.py)
+- 🔐 [Crypto Operations](examples/02_crypto_operations.py)
 - 🌳 [Merkle Tree](examples/03_merkle_tree.py)
 - 🌐 [P2P Network](examples/04_p2p_network.py)
 - 📊 [Monitoring](examples/05_monitoring.py)
 
 ---
 
-## 🙏 Reconocimientos
+## 🙏 Acknowledgments
 
-- **TOR Project** - Infraestructura de anonimato
-- **Cryptography.io** - Primitivas criptográficas
-- **FastAPI** - Framework web moderno
+- **TOR Project** - Anonymous infrastructure
+- **Cryptography.io** - Cryptographic primitives
+- **FastAPI** - Modern web framework
 - **Pytest** - Testing framework
-- **Comunidad Open Source** - Por hacer esto posible
+- **Open Source Community** - Making this possible
 
 ---
 
-## 📄 Licencia
+## 📄 License
 
-Este proyecto está licenciado bajo **MIT License** con cláusulas de uso ético.
+This project is licensed under **MIT License** with ethical use clauses.
 
-### Restricciones Adicionales
+### Additional Restrictions
 
-❌ **Prohibido** uso para actividades ilegales  
-❌ **Prohibido** vigilancia no autorizada  
-❌ **Prohibido** manipulación de información  
-✅ **Requerido** cumplimiento de leyes locales de privacidad
+❌ **Prohibited** use for illegal activities  
+❌ **Prohibited** unauthorized surveillance  
+❌ **Prohibited** information manipulation  
+✅ **Required** compliance with local privacy laws
 
-Ver [LICENSE](LICENSE) para detalles completos.
+See [LICENSE](LICENSE) for complete details.
 
 ---
 
-## 📞 Soporte y Contacto
+## 📞 Support & Contact
 
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/KaseMaster/Open-A.G.I/discussions)
 - 🐛 **Issues**: [GitHub Issues](https://github.com/KaseMaster/Open-A.G.I/issues)
 - 📧 **Email**: kasemaster@protonmail.com
-- 🌐 **Website**: [En desarrollo]
+- 🌐 **Website**: [Coming Soon]
 
 ---
 
 ## ⚠️ Disclaimer
 
-**Este software es una herramienta de investigación y desarrollo. Los usuarios son completamente responsables de su uso ético y legal. Los desarrolladores no se hacen responsables del mal uso de este código.**
+**This software is a research and development tool. Users are fully responsible for its ethical and legal use. Developers are not liable for misuse of this code.**
 
 ---
 
 <div align="center">
-
-**AEGIS Framework v2.0.0 - Production Ready**
-
-*Desarrollado con ❤️ por Jose Gómez alias KaseMaster*
-
-*Para uso ético y legal únicamente*
-
-[![CI Status](https://github.com/KaseMaster/Open-A.G.I/actions/workflows/ci.yml/badge.svg)](https://github.com/KaseMaster/Open-A.G.I/actions)
-[![Build Status](https://img.shields.io/github/workflow/status/KaseMaster/Open-A.G.I/CI?label=Build)](https://github.com/KaseMaster/Open-A.G.I/actions)
-[![Code Quality](https://img.shields.io/badge/Code%20Quality-A-green)](https://github.com/KaseMaster/Open-A.G.I)
-[![Dependencies](https://img.shields.io/badge/Dependencies-Up%20to%20Date-brightgreen)](https://github.com/KaseMaster/Open-A.G.I)
-[![Last Commit](https://img.shields.io/github/last-commit/KaseMaster/Open-A.G.I)](https://github.com/KaseMaster/Open-A.G.I/commits)
-[![Contributors](https://img.shields.io/github/contributors/KaseMaster/Open-A.G.I)](https://github.com/KaseMaster/Open-A.G.I/graphs/contributors)
-
-**⭐ Si te gusta este proyecto, dale una estrella en GitHub! ⭐**
-
-[![GitHub](https://img.shields.io/badge/GitHub-Open%20Source-black?style=for-the-badge&logo=github)](https://github.com/KaseMaster/Open-A.G.I)
-[![Blockchain](https://img.shields.io/badge/Blockchain-Supported-blue?style=for-the-badge)](https://github.com/KaseMaster/Open-A.G.I)
-[![AI](https://img.shields.io/badge/Artificial%20Intelligence-Supported-orange?style=for-the-badge)](https://github.com/KaseMaster/Open-A.G.I)
-[![Security](https://img.shields.io/badge/Security-Enterprise%20Grade-red?style=for-the-badge)](https://github.com/KaseMaster/Open-A.G.I)
-
+  
+  ---
+  
+  **AEGIS Framework v2.0.0 - Production Ready**
+  
+  *Developed with ❤️ by Jose Gómez alias KaseMaster*
+  
+  *For ethical and legal use only*
+  
+  [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/KaseMaster/Open-A.G.I/ci.yml?style=flat-square&logo=github)](https://github.com/KaseMaster/Open-A.G.I/actions)
+  [![GitHub contributors](https://img.shields.io/github/contributors/KaseMaster/Open-A.G.I?style=flat-square&logo=github)](https://github.com/KaseMaster/Open-A.G.I/graphs/contributors)
+  [![GitHub Sponsors](https://img.shields.io/github/sponsors/KaseMaster?style=flat-square&logo=githubsponsors)](https://github.com/sponsors/KaseMaster)
+  
+  **⭐ If you like this project, please star it on GitHub! ⭐**
+  
+  ---
+  
 </div>
