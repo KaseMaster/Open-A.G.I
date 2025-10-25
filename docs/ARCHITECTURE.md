@@ -1,6 +1,12 @@
 # Arquitectura del Framework AEGIS
 ## Sistema Distribuido de IA con Blockchain y Consenso Bizantino
 
+<!-- SEO Meta Tags -->
+<!--
+keywords: AEGIS architecture, distributed AI architecture, blockchain architecture, Byzantine consensus, federated learning architecture, machine learning system design, decentralized AI infrastructure, secure AI architecture, privacy-preserving AI, enterprise AI architecture, microservices architecture, distributed systems design, P2P network architecture, TOR integration, Merkle tree implementation, smart contract architecture, security architecture, monitoring architecture, optimization architecture
+description: Detailed architecture of the AEGIS Framework - a distributed AI system with blockchain integration and Byzantine consensus for secure collaborative machine learning. Comprehensive system design with security, monitoring, and optimization components.
+-->
+
 **Versión**: 1.0.0  
 **Fecha**: 2025-10-23  
 **Estado**: Production Ready  

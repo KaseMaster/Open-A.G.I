@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <!-- Main Repository Pages -->
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/README.md</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- Documentation Index -->
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/INDEX.md</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Getting Started Documentation -->
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/QUICK_WINS.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/DEPLOYMENT_GUIDE.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/enterprise_deployment_guide.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- Architecture Documentation -->
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/ARCHITECTURE.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/ARCHITECTURE_GUIDE.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/ARQUITECTURA_IA_DISTRIBUIDA.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- Technical Reference -->
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/API_REFERENCE.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/API_USAGE.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/ADVANCED_API.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- Security Documentation -->
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/SECURITY_GUIDE.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/ADVANCED_SECURITY.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/AEGIS_FRAMEWORK_FINAL_SUMMARY.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- AI & Machine Learning -->
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/ADVANCED_FEATURES.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/profiling_tools.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- Blockchain & Consensus -->
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/ARCHITECTURE.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- Monitoring & Operations -->
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/GRAFANA_AUTH.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- Development & Contributing -->
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/DEVELOPMENT_PROGRESS.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/COMPREHENSIVE_TEST_REPORT.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/RELEASE_NOTES_v2.2.0.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- Project Management -->
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/ROADMAP.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/EXECUTIVE_SUMMARY.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/PROJECT_FINAL_STATUS.md</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+</urlset>

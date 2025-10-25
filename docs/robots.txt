@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: 
+
+Sitemap: https://github.com/KaseMaster/Open-A.G.I/blob/main/docs/sitemap.xml
+
+# Allow crawling of documentation
+Allow: /docs/*.md
+
+# Crawl delay for search engines
+Crawl-delay: 10
