@@ -270,7 +270,7 @@ jobs:
 
       - name: Publish SBOM to release assets
         if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             sbom.spdx.json
