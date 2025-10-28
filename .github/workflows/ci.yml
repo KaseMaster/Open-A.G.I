@@ -50,7 +50,7 @@ jobs:
 
       - name: Upload pip-audit report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: pip-audit-${{ matrix.python-version }}
           path: pip-audit.json
@@ -62,7 +62,7 @@ jobs:
 
       - name: Upload bandit report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bandit-${{ matrix.python-version }}
           path: bandit.json
@@ -104,7 +104,7 @@ jobs:
 
       - name: Upload pip-audit report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: pip-audit-ubuntu-${{ matrix.python-version }}
           path: pip-audit.json
@@ -116,7 +116,7 @@ jobs:
 
       - name: Upload bandit report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bandit-ubuntu-${{ matrix.python-version }}
           path: bandit.json
@@ -187,7 +187,7 @@ jobs:
 
       - name: Upload SBOM artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sbom-spdx
           path: sbom.spdx.json
@@ -263,7 +263,7 @@ jobs:
 
       - name: Upload SBOM checksum artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sbom-spdx-sha256
           path: sbom.spdx.json.sha256
@@ -292,7 +292,7 @@ jobs:
 
       - name: Upload gitleaks report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: gitleaks-report
           path: gitleaks.json

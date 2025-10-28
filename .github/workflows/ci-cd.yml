@@ -84,7 +84,7 @@ jobs:
         poetry run bandit -r aegis/ -f json -o security_report.json || true
 
     - name: Upload security report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v5
       with:
         name: security-report-${{ matrix.python-version }}
         path: security_report.json
@@ -119,7 +119,7 @@ jobs:
         poetry run pip-audit --format json > pip_audit_report.json || true
 
     - name: Upload security reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v5
       with:
         name: security-audit-reports
         path: |
@@ -167,7 +167,7 @@ jobs:
         python -c "import aegis; print('✅ Package installation successful')"
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v5
       with:
         name: aegis-package
         path: dist/
