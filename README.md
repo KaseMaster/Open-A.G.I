@@ -440,10 +440,10 @@ bash scripts/rollback.sh production
 
 ## 📚 Documentación Técnica
 
-- **[🏗️ Arquitectura Detallada](docs/architecture.md)** - Diseño técnico completo
-- **[🔒 Manual de Seguridad](docs/security_manual.md)** - Guía de hardening
-- **[📖 API Reference](docs/api_reference.md)** - Documentación de APIs
-- **[🔧 Troubleshooting](docs/troubleshooting.md)** - Solución de problemas
+- **[🏗️ Arquitectura Detallada](docs/ARCHITECTURE_GUIDE.md)** - Diseño técnico completo
+- **[🔒 Manual de Seguridad](docs/SECURITY_GUIDE.md)** - Guía de hardening
+- **[📖 API Reference](docs/ARCHITECTURE_GUIDE.md#módulos-del-sistema)** - Documentación de APIs
+- **[🔧 Troubleshooting](DEPLOYMENT_GUIDE.md#-troubleshooting)** - Solución de problemas
 - **[🚀 Guía de Deployment](DEPLOYMENT_GUIDE.md)** - Instalación avanzada
 
 ### Scripts de Automatización

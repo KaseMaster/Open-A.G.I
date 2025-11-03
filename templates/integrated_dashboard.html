@@ -1,0 +1,289 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS Framework - Dashboard Integrado</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .metric-card { transition: all 0.3s ease; }
+        .metric-card:hover { transform: translateY(-2px); }
+        .component-active { color: #10b981; }
+        .component-inactive { color: #ef4444; }
+        .status-healthy { background-color: #d1fae5; color: #065f46; }
+        .status-degraded { background-color: #fef3c7; color: #92400e; }
+        .status-failed { background-color: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">🛡️ AEGIS Framework</h1>
+            <p class="text-gray-600">Dashboard Integrado - Métricas en Tiempo Real</p>
+        </div>
+
+        <!-- Component Status -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">P2P Network</p>
+                        <p class="text-lg font-bold component-active" id="p2p-status">🔗 Inactivo</p>
+                    </div>
+                    <div id="p2p-peers" class="text-sm text-gray-500">0 peers</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Knowledge Base</p>
+                        <p class="text-lg font-bold component-active" id="kb-status">📚 Inactivo</p>
+                    </div>
+                    <div id="kb-entries" class="text-sm text-gray-500">0 entradas</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Heartbeat System</p>
+                        <p class="text-lg font-bold component-active" id="heartbeat-status">💓 Inactivo</p>
+                    </div>
+                    <div id="heartbeat-health" class="text-sm text-gray-500">0% salud</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Crypto Framework</p>
+                        <p class="text-lg font-bold component-active" id="crypto-status">🔐 Inactivo</p>
+                    </div>
+                    <div id="crypto-channels" class="text-sm text-gray-500">0 canales</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Metrics -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">📊 Estado de Red P2P</h3>
+                <div id="p2p-metrics" class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Peers Conectados:</span>
+                        <span id="p2p-connected-peers" class="font-medium">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Peers Descubiertos:</span>
+                        <span id="p2p-discovered-peers" class="font-medium">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Estado de Red:</span>
+                        <span id="p2p-network-active" class="font-medium">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">📚 Knowledge Base</h3>
+                <div id="kb-metrics" class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Entradas Totales:</span>
+                        <span id="kb-total-entries" class="font-medium">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Ramas Activas:</span>
+                        <span id="kb-total-branches" class="font-medium">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Peers de Sync:</span>
+                        <span id="kb-sync-peers" class="font-medium">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">💓 Heartbeat System</h3>
+                <div id="heartbeat-metrics" class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Nodos Saludables:</span>
+                        <span id="heartbeat-healthy-nodes" class="font-medium">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Nodos Totales:</span>
+                        <span id="heartbeat-total-nodes" class="font-medium">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Salud General:</span>
+                        <span id="heartbeat-overall-health" class="font-medium">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Recuperaciones:</span>
+                        <span id="heartbeat-recovery-progress" class="font-medium">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">🔐 Crypto Framework</h3>
+                <div id="crypto-metrics" class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Nivel de Seguridad:</span>
+                        <span id="crypto-security-level" class="font-medium">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Canales Activos:</span>
+                        <span id="crypto-active-channels" class="font-medium">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Peers Conocidos:</span>
+                        <span id="crypto-known-peers" class="font-medium">--</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Estado:</span>
+                        <span id="crypto-status-indicator" class="font-medium">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Logs -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-lg font-semibold text-gray-800 mb-4">📋 Logs del Sistema</h3>
+            <div id="system-logs" class="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm h-64 overflow-y-auto">
+                <!-- Logs will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+
+        socket.on('connect', function() {
+            console.log('Connected to integrated dashboard');
+            updateRealTimeMetrics();
+        });
+
+        socket.on('components_status', function(status) {
+            updateComponentStatus(status);
+        });
+
+        socket.on('real_time_metrics', function(metrics) {
+            updateMetrics(metrics);
+        });
+
+        function updateComponentStatus(status) {
+            // P2P Status
+            const p2pStatus = document.getElementById('p2p-status');
+            const p2pPeers = document.getElementById('p2p-peers');
+
+            if (status.p2p_active) {
+                p2pStatus.textContent = '🔗 Activo';
+                p2pStatus.className = 'text-lg font-bold component-active';
+                p2pPeers.textContent = 'Cargando...';
+            } else {
+                p2pStatus.textContent = '🔗 Inactivo';
+                p2pStatus.className = 'text-lg font-bold component-inactive';
+                p2pPeers.textContent = '0 peers';
+            }
+
+            // Knowledge Base Status
+            const kbStatus = document.getElementById('kb-status');
+            const kbEntries = document.getElementById('kb-entries');
+
+            if (status.kb_active) {
+                kbStatus.textContent = '📚 Activo';
+                kbStatus.className = 'text-lg font-bold component-active';
+                kbEntries.textContent = 'Cargando...';
+            } else {
+                kbStatus.textContent = '📚 Inactivo';
+                kbStatus.className = 'text-lg font-bold component-inactive';
+                kbEntries.textContent = '0 entradas';
+            }
+
+            // Heartbeat Status
+            const heartbeatStatus = document.getElementById('heartbeat-status');
+            const heartbeatHealth = document.getElementById('heartbeat-health');
+
+            if (status.heartbeat_active) {
+                heartbeatStatus.textContent = '💓 Activo';
+                heartbeatStatus.className = 'text-lg font-bold component-active';
+                heartbeatHealth.textContent = 'Cargando...';
+            } else {
+                heartbeatStatus.textContent = '💓 Inactivo';
+                heartbeatStatus.className = 'text-lg font-bold component-inactive';
+                heartbeatHealth.textContent = '0% salud';
+            }
+
+            // Crypto Status
+            const cryptoStatus = document.getElementById('crypto-status');
+            const cryptoChannels = document.getElementById('crypto-channels');
+
+            if (status.crypto_active) {
+                cryptoStatus.textContent = '🔐 Activo';
+                cryptoStatus.className = 'text-lg font-bold component-active';
+                cryptoChannels.textContent = 'Cargando...';
+            } else {
+                cryptoStatus.textContent = '🔐 Inactivo';
+                cryptoStatus.className = 'text-lg font-bold component-inactive';
+                cryptoChannels.textContent = '0 canales';
+            }
+        }
+
+        function updateMetrics(metrics) {
+            // P2P Metrics
+            if (metrics.p2p) {
+                document.getElementById('p2p-connected-peers').textContent = metrics.p2p.connected_peers;
+                document.getElementById('p2p-discovered-peers').textContent = metrics.p2p.discovered_peers || 0;
+                document.getElementById('p2p-network-active').textContent = metrics.p2p.network_active ? 'Activo' : 'Inactivo';
+                document.getElementById('p2p-peers').textContent = `${metrics.p2p.connected_peers} peers`;
+            }
+
+            // Knowledge Base Metrics
+            if (metrics.knowledge_base) {
+                document.getElementById('kb-total-entries').textContent = metrics.knowledge_base.total_entries;
+                document.getElementById('kb-total-branches').textContent = metrics.knowledge_base.total_branches;
+                document.getElementById('kb-sync-peers').textContent = metrics.knowledge_base.sync_peers;
+                document.getElementById('kb-entries').textContent = `${metrics.knowledge_base.total_entries} entradas`;
+            }
+
+            // Heartbeat Metrics
+            if (metrics.heartbeat) {
+                document.getElementById('heartbeat-healthy-nodes').textContent = metrics.heartbeat.healthy_nodes;
+                document.getElementById('heartbeat-total-nodes').textContent = metrics.heartbeat.total_nodes;
+                document.getElementById('heartbeat-overall-health').textContent = `${(metrics.heartbeat.overall_health * 100).toFixed(1)}%`;
+                document.getElementById('heartbeat-recovery-progress').textContent = metrics.heartbeat.recovery_in_progress;
+                document.getElementById('heartbeat-health').textContent = `${(metrics.heartbeat.overall_health * 100).toFixed(1)}% salud`;
+            }
+
+            // Crypto Metrics
+            if (metrics.crypto) {
+                document.getElementById('crypto-security-level').textContent = metrics.crypto.security_level.toUpperCase();
+                document.getElementById('crypto-active-channels').textContent = metrics.crypto.active_channels;
+                document.getElementById('crypto-known-peers').textContent = metrics.crypto.known_peers;
+                document.getElementById('crypto-status-indicator').textContent = 'Activo';
+                document.getElementById('crypto-channels').textContent = `${metrics.crypto.active_channels} canales`;
+            }
+        }
+
+        function updateRealTimeMetrics() {
+            socket.emit('get_real_time_metrics');
+        }
+
+        // Update metrics every 5 seconds
+        setInterval(updateRealTimeMetrics, 5000);
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Integrated dashboard loaded');
+        });
+    </script>
+</body>
+</html>

@@ -35,7 +35,7 @@ async def quick_xai_demo():
         model, sample, X[:20], "tree", feature_names
     )
 
-    print("\\n🔍 Explicación local:")
+    print("\n🔍 Explicación local:")
     print(f"   • Método: {explanation.method.value}")
     print(f"   • Tiempo: {explanation.processing_time:.3f}s")
     print(f"   • Texto: {explanation.explanation_text}")
@@ -43,18 +43,18 @@ async def quick_xai_demo():
     # Explicación global
     global_exp = await xai.explain_model_global(model, X, y, "tree", feature_names)
 
-    print("\\n🌍 Importancia global:")
+    print("\n🌍 Importancia global:")
     for i, feat in enumerate(global_exp[:3]):
-        print(".3f"
+        print(f"   • {feat.feature_name}: {feat.importance_score:.3f}")
     # Insights
     full_exp = xai.create_model_explanation(model, "Demo Model", X, y, "tree", feature_names)
     insights = full_exp.model_insights
 
-    print("\\n💡 Insights:")
+    print("\n💡 Insights:")
     for insight in insights[:2]:
         print(f"   • {insight}")
 
-    print("\\n🎉 XAI funcionando!")
+    print("\n🎉 XAI funcionando!")
 
 if __name__ == "__main__":
     asyncio.run(quick_xai_demo())

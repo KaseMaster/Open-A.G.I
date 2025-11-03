@@ -12,6 +12,9 @@
   "type": "module",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "chai": "^6.2.0",
     "hardhat": "^3.0.7"
   },
   "dependencies": {
