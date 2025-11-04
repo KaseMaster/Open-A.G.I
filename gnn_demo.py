@@ -32,16 +32,19 @@ async def quick_gnn_demo():
     )
 
     # Entrenar modelo
-    print("\\n🚀 Entrenando GCN...")
+    print("\n🚀 Entrenando GCN...")
     result = await gnn.train_gnn_model(graph_data, config)
 
-    print(".3f"    print(".3f"    print(".1f"
+    print(f"✅ Accuracy: {result.final_test_accuracy:.3f}")
+    print(f"✅ F1 Score: {result.metrics['f1_macro']:.3f}")
+    print(f"✅ Tiempo: {result.training_time:.1f}s")
+
     # Análisis rápido
     analysis = await gnn.analyze_graph_properties(graph_data)
-    print(f"\\n📊 Grafo: densidad {analysis['basic_stats']['density']:.3f}, "
+    print(f"\n📊 Grafo: densidad {analysis['basic_stats']['density']:.3f}, "
           f"{analysis['num_communities']} comunidades")
 
-    print("\\n🎉 GNN funcionando correctamente!")
+    print("\n🎉 GNN funcionando correctamente!")
 
 if __name__ == "__main__":
     asyncio.run(quick_gnn_demo())

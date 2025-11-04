@@ -463,7 +463,7 @@ class GNNTrainer:
         )
 
         logger.info(f"✅ Entrenamiento completado en {training_time:.1f}s")
-        logger.info(".3f"
+        logger.info(f"📈 Accuracy final: {result.final_test_accuracy:.3f}")
         return result
 
 # ===== UTILIDADES Y DATASETS =====
@@ -826,15 +826,20 @@ async def demo_graph_neural_networks():
     results = await gnn_system.compare_gnn_models(graph_data, model_types)
 
     print("\\n🏆 RESULTADOS DE COMPARACIÓN:")
-    print("   Modelo       | Test Acc | F1 Score | Tiempo")
-    print("   --------------|----------|----------|--------")
+    print("   Modelo       | Test Acc | Tiempo")
+    print("   --------------|----------|--------")
     for result in results:
-        print("6.1f"
+        print(f"   {result.model_type.value.upper():<12} | "
+              f"{result.final_test_accuracy:.3f}   | "
+              f"{result.training_time:.1f}s")
+
     # Detalles del mejor modelo
     best_result = results[0]
-    print(f"\\n🏅 Mejor modelo: {best_result.model_type.value.upper()}")
-    print(".3f"    print(".3f"    print(f"   • Mejor epoch: {best_result.best_epoch}")
-    print(".1f"
+    print(f"\n🏅 Mejor modelo: {best_result.model_type.value.upper()}")
+    print(f"   • Test Accuracy: {best_result.final_test_accuracy:.3f}")
+    print(f"   • Mejor epoch: {best_result.best_epoch}")
+    print(f"   • Tiempo total: {best_result.training_time:.1f}s")
+
     # Visualización (opcional)
     print("\\n📊 Generando visualización del grafo...")
     try:
@@ -845,13 +850,13 @@ async def demo_graph_neural_networks():
     except Exception as e:
         print(f"⚠️ Error en visualización: {e}")
 
-    print("\\n🎉 DEMO COMPLETA - RESULTADOS FINALES")
+    print("\n🎉 DEMO COMPLETA - RESULTADOS FINALES")
     print("=" * 50)
 
     print("🏆 LOGROS ALCANZADOS:")
     print(f"   ✅ Sistema GNN completo operativo")
     print(f"   ✅ {len(model_types)} modelos GNN comparados")
-    print(".3f"    print(f"   ✅ Análisis de grafo automático")
+    print(f"   ✅ Análisis de grafo automático")
     print(f"   ✅ {len(insights)} insights generados")
     print(f"   ✅ Visualización de grafos")
 

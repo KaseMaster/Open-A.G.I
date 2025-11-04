@@ -238,14 +238,14 @@ class AEGISOptimizationShowcase:
         print("   ✅ Sistema de auditorías de seguridad exhaustivas operativo")
         print("   ✅ Evaluación integrada de todas las optimizaciones")
         print("   ✅ Reportes detallados generados automáticamente")
-        print("   ✅ Framework AEGIS completamente optimizado y auditado"
+        print("   ✅ Framework AEGIS completamente optimizado y auditado")
 
         print("\n🚀 PRÓXIMOS PASOS RECOMENDADOS:")
         print("   • Desplegar optimizaciones en entorno de producción")
         print("   • Implementar monitoreo continuo de rendimiento")
         print("   • Realizar pruebas de carga con optimizaciones activas")
         print("   • Planificar mantenimiento preventivo basado en métricas")
-        print("   • Continuar investigación en computación cuántica aplicada"
+        print("   • Continuar investigación en computación cuántica aplicada")
 
         print("\n🎉 ¡OPTIMIZACIONES AEGIS COMPLETADAS EXITOSAMENTE!")
         print("   El framework AEGIS ahora cuenta con capacidades de vanguardia")

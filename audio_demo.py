@@ -19,19 +19,20 @@ async def quick_audio_demo():
     text = "Hola, esto es una demostración de síntesis de voz."
     result = audio_system.synthesize_speech(text, "demo_tts.mp3")
 
-    print("\\n🗣️ Text-to-Speech:")
+    print("\n🗣️ Text-to-Speech:")
     print(f"   • Texto: {text}")
     print(f"   • Audio generado: {len(result.audio_data)} bytes")
-    print(".3f"    print("   • Archivo: demo_tts.mp3")
+    print(f"   • Tiempo procesamiento: {result.processing_time:.3f}s")
+    print("   • Archivo: demo_tts.mp3")
 
     # Simulated audio processing
-    print("\\n🎵 Audio Processing Simulation:")
+    print("\n🎵 Audio Processing Simulation:")
     print("   • Speech Recognition: 'Hola mundo' (confidence: 0.95)")
     print("   • Audio Classification: 'speech' (confidence: 0.92)")
     print("   • Speaker ID: 'speaker_001' (confidence: 0.88)")
     print("   • Emotion: 'happy' (confidence: 0.76)")
 
-    print("\\n🎉 Audio/Speech funcionando!")
+    print("\n🎉 Audio/Speech funcionando!")
 
 if __name__ == "__main__":
     asyncio.run(quick_audio_demo())

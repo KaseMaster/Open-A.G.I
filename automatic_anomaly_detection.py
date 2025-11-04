@@ -835,15 +835,16 @@ async def demo_anomaly_detection():
         anomaly_percentage = anomaly_count / len(result.anomaly_labels) * 100
 
         print(f"   • {result.method.value.upper()}: {anomaly_count} anomalías "
-              ".2f"
-              ".1f")
+              f"({anomaly_percentage:.2f}%) "
+              f"(⏱️ {result.processing_time:.1f}s)")
 
     # Crear ensemble
     if len(results) > 1:
         ensemble_result = anomaly_detector.create_ensemble_anomaly_detector(results, "majority")
         ensemble_anomalies = np.sum(ensemble_result.anomaly_labels == -1)
+        ensemble_percentage = ensemble_anomalies / len(ensemble_result.anomaly_labels) * 100
         print(f"   • ENSEMBLE: {ensemble_anomalies} anomalías "
-              ".2f")
+              f"({ensemble_percentage:.2f}%)")
 
     # ===== DEMO 2: SERIES TEMPORALES =====
     print("\\n\\n📈 DEMO 2: Detección de Anomalías en Series Temporales")
@@ -907,10 +908,14 @@ async def demo_anomaly_detection():
 
         print("🎯 EVALUACIÓN DEL MEJOR MÉTODO:")
         print(f"   • Método: {best_result.method.value.upper()}")
-        print(".3f"        print(".3f"        print(".3f"        print(".3f"
+        print(f"   • Precisión: {eval_metrics['precision']:.3f}")
+        print(f"   • Recall: {eval_metrics['recall']:.3f}")
+        print(f"   • F1-Score: {eval_metrics['f1_score']:.3f}")
+        print(f"   • Accuracy: {eval_metrics['accuracy']:.3f}")
+
     # Generar insights
     insights = anomaly_detector.get_anomaly_insights(results + ts_results)
-    print("\\n💡 INSIGHTS AUTOMÁTICOS:")
+    print("\n💡 INSIGHTS AUTOMÁTICOS:")
     for insight in insights[:5]:  # Primeros 5
         print(f"   • {insight}")
 

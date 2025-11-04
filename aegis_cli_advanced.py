@@ -56,8 +56,9 @@ class AEGISDeveloperCLI:
             click.echo("")
             click.echo("🚀 Quick start:")
             click.echo(f"   cd {project_path}")
-            click.echo("   pip install -r requirements.txt"
+            click.echo("   pip install -r requirements.txt")
             click.echo("   python main.py")
+            click.echo("   Check the documentation in the docs/ folder")
 
             return True
 
@@ -211,8 +212,8 @@ def create(ctx, template_name, project_name, output_dir):
     ))
 
     if success and ctx.obj['verbose']:
-        click.echo("
-💡 Next steps:"        click.echo("   1. Review the generated README.md for detailed instructions")
+        click.echo("\n💡 Next steps:")
+        click.echo("   1. Review the generated README.md for detailed instructions")
         click.echo("   2. Install dependencies: pip install -r requirements.txt")
         click.echo("   3. Run the application: python main.py")
         click.echo("   4. Check the documentation in the docs/ folder")
@@ -481,9 +482,9 @@ def scaffold(ctx, project_name, template, output_dir):
 
     if success:
         project_path = Path(output_dir) / project_name
-        click.echo("
-🎉 Project scaffolded successfully!"        click.echo("
-📁 Project structure created:"        click.echo(f"   {project_path}/")
+        click.echo("\n🎉 Project scaffolded successfully!")
+        click.echo("\n📁 Project structure created:")
+        click.echo(f"   {project_path}/")
         click.echo("   ├── src/                 # Source code")
         click.echo("   ├── tests/              # Test suites")
         click.echo("   ├── docs/               # Documentation")
@@ -492,8 +493,8 @@ def scaffold(ctx, project_name, template, output_dir):
         click.echo("   ├── scripts/            # Utility scripts")
         click.echo("   └── README.md           # Project documentation")
 
-        click.echo("
-🚀 Quick start:"        click.echo(f"   cd {project_path}")
+        click.echo("\n🚀 Quick start:")
+        click.echo(f"   cd {project_path}")
         click.echo("   python -m venv venv")
         click.echo("   source venv/bin/activate  # On Windows: venv\\Scripts\\activate")
         click.echo("   pip install -r requirements.txt")
@@ -501,8 +502,8 @@ def scaffold(ctx, project_name, template, output_dir):
         click.echo("   python src/main.py        # Run application")
 
         if ctx.obj['verbose']:
-            click.echo("
-💡 Advanced features included:"            click.echo("   • Comprehensive test suite with 90%+ coverage")
+            click.echo("\n💡 Advanced features included:")
+            click.echo("   • Comprehensive test suite with 90%+ coverage")
             click.echo("   • Docker multi-stage builds for production")
             click.echo("   • GitHub Actions CI/CD pipeline")
             click.echo("   • Prometheus/Grafana monitoring stack")

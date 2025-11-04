@@ -276,7 +276,8 @@ async def demo_edge_computing():
     ))
 
     print("\n📊 PUNTUACIÓN DE ÉXITO:")
-    print(".1f"    if actual_score >= 80:
+    print(f"   Puntuación Final: {actual_score:.1f}/100")
+    if actual_score >= 80:
         print("   Estado: ✅ EXCELENTE - Sistema completamente operativo")
     elif actual_score >= 60:
         print("   Estado: ⚠️ BUENO - Funcional pero con oportunidades de mejora")

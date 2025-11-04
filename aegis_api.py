@@ -528,7 +528,7 @@ async def logging_middleware(request, call_next):
     response = await call_next(request)
 
     processing_time = time.time() - start_time
-    logger.info(".3f"
+    logger.info(f"Response time: {processing_time:.3f}s")
     return response
 
 # ===== ENDPOINTS =====

@@ -138,7 +138,8 @@ class AdvancedModelOptimizer:
 
             self.optimization_history.append(result)
 
-            logger.info(".2f"            logger.info(".1f")
+            logger.info(f"✅ Optimización completada en {result.optimization_time:.2f}s")
+            logger.info(f"📈 Ganancia de performance: {result.performance_gain:.1f}%")
 
             return result
 
@@ -427,8 +428,8 @@ class AdvancedModelOptimizer:
             "recall": accuracy + 0.01,
             "latency_ms": latency,
             "memory_usage_gb": memory_usage,
-            "model_size_mb": 100.0 * (model.get("size_reduction", 1.0) if model else 1.0),
-            "platform": platform
+            "model_size_mb": 100.0 * (model.get("size_reduction", 1.0) if model else 1.0)
+            # Note: platform is not included as it's not a float metric
         }
 
     def _calculate_compression_ratio(self, original: Any, optimized: Any) -> float:
@@ -640,9 +641,9 @@ async def demo_advanced_optimization():
 
         if result.status == "completed":
             print(f"   ✅ Tamaño reducido: {result.compression_ratio:.1f}x")
-            print(f"   ⏱️ Tiempo: {result.processing_time:.2f}s")
-            print(f"   📊 Accuracy: {result.accuracy_preserved:.2f}%")
-            print(f"   💾 Ahorro: {result.size_reduction:.1f}%")
+            print(f"   ⏱️ Tiempo: {result.optimization_time:.2f}s")
+            print(f"   📊 Ganancia: {result.performance_gain:.2f}%")
+            print(f"   💾 Compresión: {result.compression_ratio*100:.1f}%")
         else:
             print(f"❌ Falló: {result.status}")
 
@@ -663,7 +664,7 @@ async def demo_advanced_optimization():
 
             print(f"✅ Completado: {successful}/{len(results)} pasos")
             print(f"   🔧 Compresión total: {total_compression:.2f}x")
-            print(f"   ⏱️ Tiempo total: {sum(r.processing_time for r in results):.1f}s")
+            print(f"   ⏱️ Tiempo total: {sum(r.optimization_time for r in results):.1f}s")
         except Exception as e:
             print(f"❌ Error: {e}")
 

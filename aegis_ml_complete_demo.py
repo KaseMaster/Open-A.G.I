@@ -239,8 +239,8 @@ async def comprehensive_ml_demo():
     for capability in capabilities:
         print(f"   {capability}")
 
-    print("
-🎉 DEMO COMPLETA EXITOSA!"    print("🌟 Sistema ML completamente integrado y operativo")
+    print("\n🎉 DEMO COMPLETA EXITOSA!")
+    print("🌟 Sistema ML completamente integrado y operativo")
     print("=" * 60)
 
     # 5.6 Próximos pasos sugeridos

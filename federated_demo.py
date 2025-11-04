@@ -22,8 +22,9 @@ async def quick_federated_demo():
         QueryType.COUNT, {}, PrivacyLevel.BASIC
     )
 
-    print("\\n🔍 Query ejecutada:")
-    print(".3f"    print(f"   • Participantes: {result.participant_count}")
+    print("\n🔍 Query ejecutada:")
+    print(f"   • Resultado: {result.result:.3f}")
+    print(f"   • Participantes: {result.participant_count}")
     print(f"   • Muestras: {result.total_samples}")
     print(f"   • Privacidad: {result.privacy_guarantees['privacy_level']}")
 
@@ -35,15 +36,17 @@ async def quick_federated_demo():
 
     results = await analytics.execute_multiple_queries(queries)
 
-    print("\\n⚡ Queries paralelas:")
+    print("\n⚡ Queries paralelas:")
     for i, res in enumerate(results):
         query_name = queries[i][0].value
-        print(".3f"
+        print(f"   • {query_name}: {res.result:.3f}")
+
     # Reporte de privacidad
     privacy = analytics.get_privacy_report()
     dp = privacy['differential_privacy']
-    print(".2f"
-    print("\\n🎉 Federated Analytics funcionando!")
+    print(f"   • Epsilon total: {dp['total_epsilon']:.2f}")
+
+    print("\n🎉 Federated Analytics funcionando!")
 
 if __name__ == "__main__":
     asyncio.run(quick_federated_demo())

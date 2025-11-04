@@ -516,14 +516,16 @@ def aegis_operation(operation_name: str):
 
                 duration = time.time() - start_time
                 if result.success:
-                    logger.info(".2f"                else:
+                    logger.info(f"✅ Operación completada en {duration:.2f}s")
+                else:
                     logger.error(f"❌ Operación fallida: {result.error}")
 
                 return result
 
             except Exception as e:
                 duration = time.time() - start_time
-                logger.error(".2f"                return SDKResponse(success=False, error=str(e))
+                logger.error(f"❌ Error en operación: {e} (duración: {duration:.2f}s)")
+                return SDKResponse(success=False, error=str(e))
 
         return wrapper
     return decorator

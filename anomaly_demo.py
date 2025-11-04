@@ -41,12 +41,13 @@ async def quick_anomaly_demo():
     for result in results:
         anomalies = np.sum(result.anomaly_labels == -1)
         percentage = anomalies / len(result.anomaly_labels) * 100
-        print(".2f"
+        print(f"   • {result.method.value}: {anomalies} anomalías ({percentage:.2f}%)")
+
     # Insights
     insights = detector.get_anomaly_insights(results)
-    print("\\n💡 Insight:", insights[0] if insights else "Detección completada")
+    print("\n💡 Insight:", insights[0] if insights else "Detección completada")
 
-    print("\\n🎉 Anomaly Detection funcionando!")
+    print("\n🎉 Anomaly Detection funcionando!")
 
 if __name__ == "__main__":
     asyncio.run(quick_anomaly_demo())
