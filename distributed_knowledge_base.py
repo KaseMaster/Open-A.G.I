@@ -155,7 +155,7 @@ class MerkleTree:
 class DistributedKnowledgeBase:
     """Base de conocimiento distribuida principal"""
 
-    def __init__(self, node_id: str, storage_path: str = None):
+    def __init__(self, node_id: str, storage_path: Optional[str] = None):
         self.node_id = node_id
         self.storage_path = storage_path or os.path.join(tempfile.gettempdir(), f"aegis_kb_{node_id}")
 
@@ -380,7 +380,7 @@ class DistributedKnowledgeBase:
         if "main" in self.branches:
             self.current_branch = "main"
         else:
-            self.current_branch = list(self.branches.keys())[0] if self.branches else None
+            self.current_branch = list(self.branches.keys())[0] if self.branches else "main"
 
         logger.info(f"📚 Estado cargado: {len(self.entries)} entradas, {len(self.branches)} ramas")
 
@@ -393,7 +393,7 @@ class DistributedKnowledgeBase:
             self._save_branch(branch)
 
     def add_knowledge(self, content: Any, format: KnowledgeFormat,
-                     metadata: Dict[str, Any] = None, parent_versions: List[str] = None) -> str:
+                     metadata: Optional[Dict[str, Any]] = None, parent_versions: Optional[List[str]] = None) -> str:
         """Agrega nuevo conocimiento a la base"""
         metadata = metadata or {}
         parent_versions = parent_versions or []
@@ -464,8 +464,8 @@ class DistributedKnowledgeBase:
         """Obtiene entrada de conocimiento por ID"""
         return self.entries.get(content_id)
 
-    def search_knowledge(self, query: str, format: KnowledgeFormat = None,
-                        author: str = None, limit: int = 50) -> List[KnowledgeEntry]:
+    def search_knowledge(self, query: str, format: Optional[KnowledgeFormat] = None,
+                        author: Optional[str] = None, limit: int = 50) -> List[KnowledgeEntry]:
         """Busca conocimiento por criterios"""
         results = []
 
@@ -494,7 +494,7 @@ class DistributedKnowledgeBase:
         results.sort(key=lambda x: x.timestamp, reverse=True)
         return results[:limit]
 
-    def get_branch_history(self, branch_id: str = None) -> List[KnowledgeEntry]:
+    def get_branch_history(self, branch_id: Optional[str] = None) -> List[KnowledgeEntry]:
         """Obtiene historial de versiones de una rama"""
         branch_id = branch_id or self.current_branch
         if branch_id not in self.branches:
@@ -517,7 +517,7 @@ class DistributedKnowledgeBase:
 
         return history
 
-    def create_branch(self, name: str, from_branch: str = None) -> str:
+    def create_branch(self, name: str, from_branch: Optional[str] = None) -> str:
         """Crea nueva rama de conocimiento"""
         from_branch = from_branch or self.current_branch
         if from_branch not in self.branches:
@@ -540,7 +540,7 @@ class DistributedKnowledgeBase:
         logger.info(f"🌿 Rama creada: {name} ({branch_id})")
         return branch_id
 
-    def merge_branches(self, source_branch: str, target_branch: str = None) -> Dict[str, Any]:
+    def merge_branches(self, source_branch: str, target_branch: Optional[str] = None) -> Dict[str, Any]:
         """Fusiona dos ramas de conocimiento"""
         target_branch = target_branch or self.current_branch
         if source_branch not in self.branches or target_branch not in self.branches:
@@ -685,6 +685,9 @@ class DistributedKnowledgeBase:
             sync_state.missing_versions = missing_versions
             sync_state.conflicts = []  # Limpiar conflictos resueltos
 
+            # Recalculate local version count after adding new entries
+            local_version_ids = set(self.entries.keys())
+            
             result = {
                 "success": True,
                 "local_versions": len(local_version_ids),
@@ -744,7 +747,7 @@ class DistributedKnowledgeBase:
 
 
 # Funciones de utilidad para integración
-def create_knowledge_base(node_id: str, storage_path: str = None) -> DistributedKnowledgeBase:
+def create_knowledge_base(node_id: str, storage_path: Optional[str] = None) -> DistributedKnowledgeBase:
     """Crea nueva base de conocimiento distribuida"""
     return DistributedKnowledgeBase(node_id, storage_path)
 

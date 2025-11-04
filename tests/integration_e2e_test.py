@@ -26,6 +26,7 @@ from crypto_framework import (
     initialize_crypto, create_crypto_engine, SecurityLevel,
     NodeIdentity, SecureMessage
 )
+from cryptography.hazmat.primitives import serialization
 from p2p_network import (
     P2PNetworkManager, NodeType, MessageType, start_network,
     PeerInfo, ConnectionStatus, NetworkProtocol

@@ -150,7 +150,7 @@ class KeyRotationPolicy:
 class SecureKeyManager:
     """Gestor seguro de claves con rotación automática en memoria"""
 
-    def __init__(self, crypto_engine: 'CryptoEngine', policy: KeyRotationPolicy = None):
+    def __init__(self, crypto_engine: 'CryptoEngine', policy: Optional[KeyRotationPolicy] = None):
         self.crypto_engine = crypto_engine
         self.policy = policy or KeyRotationPolicy()
         self.key_history: Dict[str, List[Tuple[bytes, datetime]]] = {}  # peer_id -> [(key, created_at), ...]
@@ -275,7 +275,7 @@ class SecureKeyManager:
         if peer_id not in self.cleanup_tasks:
             self.cleanup_tasks[peer_id] = task
 
-    def emergency_rotation(self, peer_id: str = None):
+    def emergency_rotation(self, peer_id: Optional[str] = None):
         """Activa rotación de emergencia para todos los peers o uno específico"""
         self.emergency_mode = True
 
@@ -431,9 +431,12 @@ class RatchetState:
             # Derivar nueva chain key de recepción
             self.chain_key_recv = self._kdf_ck(self.root_key)
 
-            # NO reiniciar message numbers - mantener sincronización
-            # self.message_number_send = 0
-            # self.message_number_recv = 0
+            # Guardar la clave pública del peer para referencia futura
+            self.dh_recv = peer_dh_public
+
+            # Reiniciar message numbers cuando se avanza el DH ratchet
+            self.message_number_send = 0
+            self.message_number_recv = 0
 
             logger.debug("🔄 DH ratchet avanzado con nueva clave efímera")
 
@@ -495,14 +498,14 @@ class RatchetState:
             info=b"root_key"
         ).derive(input_key)
 
-    def _kdf_ck(self, root_key: bytes) -> bytes:
-        """Derivar chain key desde root key"""
+    def _kdf_ck(self, input_key: bytes) -> bytes:
+        """Derivar chain key usando HKDF"""
         return HKDF(
             algorithm=hashes.SHA256(),
             length=32,
             salt=None,
             info=b"chain_key"
-        ).derive(root_key)
+        ).derive(input_key)
 
     def _derive_message_key(self, chain_key: bytes) -> bytes:
         """Derivar clave de mensaje desde clave de cadena"""
@@ -571,14 +574,18 @@ class SecureMessage:
             elif field_name == 'timestamp':
                 fields[field_name] = float(int.from_bytes(value, 'big'))
             else:
-                fields[field_name] = value
+                # Handle dh_public special case - empty bytes should be None
+                if field_name == 'dh_public' and value == b'':
+                    fields[field_name] = None
+                else:
+                    fields[field_name] = value
 
         return cls(**fields)
 
 class CryptoEngine:
     """Motor criptográfico principal del sistema"""
 
-    def __init__(self, config: CryptoConfig = None):
+    def __init__(self, config: Optional[CryptoConfig] = None):
         self.config = config or CryptoConfig()
         self.identity: Optional[NodeIdentity] = None
         self.peer_identities: Dict[str, PublicNodeIdentity] = {}
@@ -591,7 +598,7 @@ class CryptoEngine:
 
         logger.info(f"CryptoEngine inicializado con nivel {self.config.security_level.value}")
 
-    def generate_node_identity(self, node_id: str = None) -> NodeIdentity:
+    def generate_node_identity(self, node_id: Optional[str] = None) -> NodeIdentity:
         """Generar nueva identidad criptográfica para el nodo"""
         if node_id is None:
             node_id = secrets.token_hex(16)
@@ -615,7 +622,16 @@ class CryptoEngine:
         except Exception as e:
             logger.error(f"Error agregando peer: {e}")
             return False
-    
+
+    def _kdf_ck(self, input_key: bytes) -> bytes:
+        """Derivar chain key usando HKDF"""
+        return HKDF(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=None,
+            info=b"chain_key"
+        ).derive(input_key)
+
     def establish_secure_channel(self, peer_id: str) -> bool:
         """Establecer canal seguro con peer usando X25519 + Double Ratchet COMPLETO"""
         if peer_id not in self.peer_identities:
@@ -633,38 +649,31 @@ class CryptoEngine:
             shared_secret = self.identity.encryption_key.exchange(
                 peer_identity.public_encryption_key
             )
+            logger.debug(f"🔐 Secreto compartido calculado para {peer_id} (longitud: {len(shared_secret)})")
 
             # Derivar root key inicial del Double Ratchet
             root_key = HKDF(
                 algorithm=hashes.SHA256(),
                 length=32,
                 salt=None,
-                info=b"initial_root_key"
+                info=b"double_ratchet_root"
             ).derive(shared_secret)
+            logger.debug(f"🔐 Root key inicial derivada (longitud: {len(root_key)})")
 
-            # Derivar chain keys iniciales
-            chain_key_send = HKDF(
-                algorithm=hashes.SHA256(),
-                length=32,
-                salt=None,
-                info=b"initial_chain_send"
-            ).derive(shared_secret)
-
-            chain_key_recv = HKDF(
-                algorithm=hashes.SHA256(),
-                length=32,
-                salt=None,
-                info=b"initial_chain_recv"
-            ).derive(shared_secret)
-
-            # Inicializar estado del ratchet con Forward Secrecy
+            # Generate our initial ephemeral key pair for DH ratchet
+            initial_dh_send = x25519.X25519PrivateKey.generate()
+            
+            # Initialize ratchet state with symmetric chain keys
+            # Both sides start with the same root key and derive chain keys symmetrically
+            chain_key = self._kdf_ck(root_key)
             self.ratchet_states[peer_id] = RatchetState(
                 root_key=root_key,
-                chain_key_send=chain_key_send,
-                chain_key_recv=chain_key_recv,
-                dh_send=x25519.X25519PrivateKey.generate(),  # Primera clave efímera
-                dh_recv=None  # Se establecerá con el primer mensaje
+                chain_key_send=chain_key,
+                chain_key_recv=chain_key,
+                dh_send=initial_dh_send,
+                dh_recv=None  # Will be set when we receive first message with DH key
             )
+            logger.debug(f"🔐 Estado de ratchet inicializado para {peer_id}")
 
             # Programar rotación de claves
             self._schedule_key_rotation(peer_id)
@@ -688,46 +697,70 @@ class CryptoEngine:
 
         try:
             ratchet = self.ratchet_states[recipient_id]
+            dh_public_to_send = None
 
-            # AVANZAR DH RATCHET: Generar nueva clave efímera para cada mensaje
-            # Esto proporciona Perfect Forward Secrecy
-            new_dh_private = x25519.X25519PrivateKey.generate()
-            current_dh_public = new_dh_private.public_key().public_bytes_raw()
-            ratchet.dh_send = new_dh_private
+            # For the first message, we need to ensure both sides derive the same key
+            # Let's use a simpler approach for now
+            if ratchet.dh_recv is None:
+                # First message: derive key directly from shared secret
+                # This ensures both sides can decrypt
+                peer_identity = self.peer_identities[recipient_id]
+                shared_secret = self.identity.encryption_key.exchange(
+                    peer_identity.public_encryption_key
+                )
+                
+                # Derive message key directly from shared secret
+                message_key = HKDF(
+                    algorithm=hashes.SHA256(),
+                    length=32,
+                    salt=None,
+                    info=b"first_message_key"
+                ).derive(shared_secret)
+                
+                # Don't advance the sending chain for the first message
+                message_number = 0
+                dh_public_to_send = ratchet.dh_send_public.public_bytes_raw()
+                logger.debug(f"🔐 Enviando clave DH pública en primer mensaje a {recipient_id}")
+            else:
+                # Subsequent messages use the normal Double Ratchet
+                message_number = ratchet.message_number_send
+                message_key = ratchet.advance_sending_chain()
+                logger.debug(f"🔐 Generando clave de mensaje para enviar a {recipient_id}, número: {message_number}")
 
-            # Obtener clave de mensaje del chain ratchet
-            message_key = ratchet.advance_sending_chain()
-
-            # Cifrar con ChaCha20-Poly1305 usando la clave derivada
+            # Encrypt
             cipher = ChaCha20Poly1305(message_key)
             nonce = os.urandom(12)
+            logger.debug(f"🔐 Cifrando con nonce: {nonce.hex()}")
             ciphertext = cipher.encrypt(nonce, plaintext, None)
+            logger.debug(f"🔐 Texto cifrado generado (longitud: {len(ciphertext)})")
 
-            # Crear mensaje con metadatos y clave efímera actual para Forward Secrecy
+            # If this was the first message, we need to update the message number
+            if ratchet.dh_recv is None:
+                ratchet.message_number_send = 1
+
             timestamp = time.time()
             message = SecureMessage(
                 ciphertext=ciphertext,
                 nonce=nonce,
                 sender_id=self.identity.node_id,
                 recipient_id=recipient_id,
-                message_number=ratchet.message_number_send - 1,
+                message_number=message_number,
                 timestamp=timestamp,
-                signature=b'',  # Se agregará después
-                dh_public=current_dh_public  # Clave efímera actual para que el receptor pueda avanzar el ratchet
+                signature=b'',
+                dh_public=dh_public_to_send
             )
 
-            # Firmar mensaje (incluyendo la clave efímera para integridad)
+            # Sign full message data including optional dh_public
             message_data = (
                 message.ciphertext + message.nonce +
                 message.sender_id.encode() + message.recipient_id.encode() +
                 message.message_number.to_bytes(4, 'big') +
                 int(timestamp).to_bytes(8, 'big') +
-                message.dh_public
+                (message.dh_public or b'')
             )
-
             message.signature = self.identity.signing_key.sign(message_data)
 
-            logger.debug(f"🔐 Mensaje cifrado con PFS para {recipient_id}")
+            logger.debug(f"🔐 Mensaje cifrado {'(con DH)' if dh_public_to_send else '(sin DH)'} para {recipient_id}")
             return message
 
         except Exception as e:
@@ -736,6 +769,7 @@ class CryptoEngine:
     
     def decrypt_message(self, message: SecureMessage) -> Optional[bytes]:
         """Descifrar mensaje recibido con Perfect Forward Secrecy"""
+        logger.debug(f"Iniciando descifrado de mensaje de {message.sender_id}")
         if message.sender_id not in self.ratchet_states:
             logger.error(f"No hay canal seguro con {message.sender_id}")
             return None
@@ -744,11 +778,16 @@ class CryptoEngine:
             logger.error(f"Peer {message.sender_id} no está en el registro")
             return None
 
+        if not self.identity:
+            logger.error("Identidad local no inicializada")
+            return None
+
         try:
             # Verificar edad del mensaje
             if time.time() - message.timestamp > self.config.max_message_age:
                 logger.warning(f"Mensaje de {message.sender_id} demasiado antiguo")
                 return None
+            logger.debug(f"Verificación de edad de mensaje exitosa")
 
             # Verificar firma (incluyendo clave efímera)
             peer_identity = self.peer_identities[message.sender_id]
@@ -757,34 +796,85 @@ class CryptoEngine:
                 message.sender_id.encode() + message.recipient_id.encode() +
                 message.message_number.to_bytes(4, 'big') +
                 int(message.timestamp).to_bytes(8, 'big') +
-                message.dh_public
+                (message.dh_public or b'')
             )
 
+            logger.debug(f"Verificando firma de mensaje de {message.sender_id}")
+            logger.debug(f"Longitud de message_data: {len(message_data)}")
+            logger.debug(f"Longitud de signature: {len(message.signature)}")
             peer_identity.public_signing_key.verify(message.signature, message_data)
+            logger.debug(f"Firma verificada exitosamente")
 
-            # Obtener ratchet state
             ratchet = self.ratchet_states[message.sender_id]
 
-            # Si hay clave efímera en el mensaje, avanzar DH ratchet
-            if message.dh_public:
-                try:
-                    peer_dh_public = x25519.X25519PublicKey.from_public_bytes(message.dh_public)
-                    logger.debug(f"🔄 Avanzando DH ratchet para {message.sender_id} con clave efímera")
-                    ratchet.advance_dh_ratchet(peer_dh_public)
-                except Exception as e:
-                    logger.warning(f"No se pudo procesar clave efímera de {message.sender_id}: {e}")
+            # Handle first message specially
+            if message.message_number == 0 and ratchet.dh_recv is None and message.dh_public:
+                logger.debug(f"🔑 Primer mensaje de {message.sender_id} con clave DH pública")
+                new_dh_public = x25519.X25519PublicKey.from_public_bytes(message.dh_public)
+                
+                # For the first message, derive the same key that was used for encryption
+                shared_secret = self.identity.encryption_key.exchange(
+                    peer_identity.public_encryption_key
+                )
+                
+                # Derive the same message key that was used for encryption
+                message_key = HKDF(
+                    algorithm=hashes.SHA256(),
+                    length=32,
+                    salt=None,
+                    info=b"first_message_key"
+                ).derive(shared_secret)
+                
+                # Set the peer's DH public key
+                ratchet.dh_recv = new_dh_public
+                ratchet.message_number_recv = 1
+                logger.debug(f"🔐 Clave de primer mensaje derivada directamente (longitud: {len(message_key)})")
+            else:
+                # Handle DH ratchet if a new DH public key is provided
+                if message.dh_public:
+                    logger.debug(f"🔑 Mensaje contiene clave DH pública de {message.sender_id}")
+                    new_dh_public = x25519.X25519PublicKey.from_public_bytes(message.dh_public)
+                    # Only advance if this is a new DH key (not already our current recv key)
+                    if ratchet.dh_recv is None or not self._dh_keys_equal(ratchet.dh_recv, new_dh_public):
+                        logger.debug(f"🔄 Avanzando DH ratchet para {message.sender_id}")
+                        ratchet.advance_dh_ratchet(new_dh_public)
+                    else:
+                        logger.debug(f"🔁 DH key repetida de {message.sender_id}, no se avanza ratchet")
+                elif ratchet.dh_recv is None:
+                    logger.warning(f"Mensaje de {message.sender_id} sin DH key en primer contacto")
+                    return None
 
-            # Obtener clave de mensaje usando el chain ratchet
-            logger.debug(f"📥 Obteniendo clave de mensaje {message.message_number} para {message.sender_id}")
-            message_key = ratchet.advance_receiving_chain()
-            logger.debug(f"🔑 Clave de mensaje obtenida: {message_key is not None}")
+                # Now derive message key using receiving chain
+                logger.debug(f"🔢 Número de mensaje esperado: {ratchet.message_number_recv}, recibido: {message.message_number}")
+                if message.message_number != ratchet.message_number_recv:
+                    logger.error(f"❌ Desincronización de número de mensaje: esperado {ratchet.message_number_recv}, recibido {message.message_number}")
+                    return None
+
+                # Derive message key from receiving chain and advance it
+                logger.debug(f"🔐 Generando clave de mensaje para recibir de {message.sender_id}")
+                message_key = ratchet.advance_receiving_chain()
+                logger.debug(f"🔐 Clave de mensaje avanzada desde cadena (longitud: {len(message_key)})")
+            
             if not message_key:
-                logger.error(f"No se pudo obtener clave para mensaje {message.message_number} de {message.sender_id}")
+                logger.error(f"❌ No se pudo generar clave de mensaje para {message.sender_id}")
                 return None
 
-            # Descifrar con ChaCha20-Poly1305
+            # Descifrar con ChaCha20Poly1305
+            logger.debug(f"Iniciando descifrado con ChaCha20Poly1305")
+            logger.debug(f"Longitud de nonce: {len(message.nonce)}")
+            logger.debug(f"Longitud de ciphertext: {len(message.ciphertext)}")
+            logger.debug(f"Longitud de message_key: {len(message_key)}")
             cipher = ChaCha20Poly1305(message_key)
-            plaintext = cipher.decrypt(message.nonce, message.ciphertext, None)
+            try:
+                logger.debug(f"🔐 Intentando descifrar con nonce: {message.nonce.hex()}")
+                plaintext = cipher.decrypt(message.nonce, message.ciphertext, None)
+                logger.debug(f"Descifrado exitoso, longitud de plaintext: {len(plaintext) if plaintext else 0}")
+            except InvalidSignature:
+                logger.error(f"Firma inválida en descifrado de mensaje de {message.sender_id}")
+                return None
+            except Exception as e:
+                logger.error(f"Error en descifrado de mensaje de {message.sender_id}: {type(e).__name__}: {e}")
+                return None
 
             # Actualizar última actividad del peer
             peer_identity.last_seen = datetime.now(timezone.utc)
@@ -798,7 +888,11 @@ class CryptoEngine:
         except Exception as e:
             logger.error(f"Error descifrando mensaje de {message.sender_id}: {e}")
             return None
-    
+
+    def _dh_keys_equal(self, key1: x25519.X25519PublicKey, key2: x25519.X25519PublicKey) -> bool:
+        """Compara si dos claves DH públicas son iguales"""
+        return key1.public_bytes_raw() == key2.public_bytes_raw()
+
     def sign_data(self, data: bytes) -> bytes:
         """Firmar datos con clave de identidad"""
         if not self.identity:
@@ -900,7 +994,7 @@ def generate_secure_password(length: int = 32) -> str:
     alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
-def derive_key_from_password(password: str, salt: bytes = None, iterations: int = 100000) -> bytes:
+def derive_key_from_password(password: str, salt: Optional[bytes] = None, iterations: int = 100000) -> bytes:
     """Derivar clave criptográfica desde contraseña"""
     if salt is None:
         salt = os.urandom(16)
@@ -974,8 +1068,11 @@ def initialize_crypto(config: Dict[str, Any]) -> CryptoEngine:
         level = SecurityLevel[level_str] if level_str in SecurityLevel.__members__ else SecurityLevel.HIGH
         engine = create_crypto_engine(level)
         node_id = config.get("node_id", None)
-        engine.generate_node_identity(node_id)
-        logger.info(f"🔐 CryptoEngine iniciado (security_level={level.value}, node_id={engine.identity.node_id})")
+        if node_id is not None:
+            engine.generate_node_identity(node_id)
+        else:
+            engine.generate_node_identity()
+        logger.info(f"🔐 CryptoEngine iniciado (security_level={level.value}, node_id={engine.identity.node_id if engine.identity else 'None'})")
         return engine
     except Exception as e:
         logger.error(f"❌ No se pudo inicializar CryptoEngine: {e}")
