@@ -626,9 +626,9 @@ async def demo_advanced_optimization():
         (OptimizationTechnique.COMPRESSION, "Compresión completa")
     ]
 
-    print("
-🔧 Probando técnicas individuales..."    for technique, description in techniques_to_demo:
-        print(f"\\n🎯 Técnica: {description}")
+    print("\n🔧 Probando técnicas individuales...")
+    for technique, description in techniques_to_demo:
+        print(f"\n🎯 Técnica: {description}")
 
         config = OptimizationConfig(
             technique=technique,
@@ -639,15 +639,19 @@ async def demo_advanced_optimization():
         result = await optimizer.optimize_model(model_id, config)
 
         if result.status == "completed":
-            print(".1f"            print(".2f"            print(".2f"            print(".1f"        else:
+            print(f"   ✅ Tamaño reducido: {result.compression_ratio:.1f}x")
+            print(f"   ⏱️ Tiempo: {result.processing_time:.2f}s")
+            print(f"   📊 Accuracy: {result.accuracy_preserved:.2f}%")
+            print(f"   💾 Ahorro: {result.size_reduction:.1f}%")
+        else:
             print(f"❌ Falló: {result.status}")
 
     # Ejecutar pipelines completos
-    print("
-🚀 Probando pipelines completos..."    pipelines_to_test = ["mobile_deployment", "edge_device", "maximum_compression"]
+    print("\n🚀 Probando pipelines completos...")
+    pipelines_to_test = ["mobile_deployment", "edge_device", "maximum_compression"]
 
     for pipeline_name in pipelines_to_test:
-        print(f"\\n📦 Pipeline: {pipeline_name}")
+        print(f"\n📦 Pipeline: {pipeline_name}")
 
         try:
             results = await pipeline.run_pipeline(model_id, pipeline_name)
@@ -658,25 +662,27 @@ async def demo_advanced_optimization():
                 total_compression *= r.compression_ratio
 
             print(f"✅ Completado: {successful}/{len(results)} pasos")
-            print(".2f"            print(".1f"        except Exception as e:
+            print(f"   🔧 Compresión total: {total_compression:.2f}x")
+            print(f"   ⏱️ Tiempo total: {sum(r.processing_time for r in results):.1f}s")
+        except Exception as e:
             print(f"❌ Error: {e}")
 
     # Mostrar estadísticas
     stats = optimizer.get_optimization_stats()
-    print("
-📊 ESTADÍSTICAS FINALES:"    print(f"   • Total optimizaciones: {stats['total_optimizations']}")
+    print("\n📊 ESTADÍSTICAS FINALES:")
+    print(f"   • Total optimizaciones: {stats['total_optimizations']}")
     print(f"   • Optimizaciones exitosas: {stats['completed_optimizations']}")
     print(f"   • Ratio compresión promedio: {stats['avg_compression_ratio']:.2f}")
     print(f"   • Técnicas utilizadas: {', '.join(stats['techniques_used'])}")
 
     # Mostrar historial
     history = optimizer.get_optimization_history()
-    print("
-📈 ÚLTIMAS OPTIMIZACIONES:"    for opt in history[-3:]:  # Mostrar últimas 3
+    print("\n📈 ÚLTIMAS OPTIMIZACIONES:")
+    for opt in history[-3:]:  # Mostrar últimas 3
         print(f"   • {opt.original_model_id} -> {opt.technique.value} ({opt.compression_ratio:.2f}x)")
 
-    print("
-🎉 DEMO COMPLETA EXITOSA!"    print("🌟 Sistema de optimización avanzada funcionando correctamente")
+    print("\n🎉 DEMO COMPLETA EXITOSA!")
+    print("🌟 Sistema de optimización avanzada funcionando correctamente")
     print("=" * 60)
 
 if __name__ == "__main__":

@@ -627,8 +627,8 @@ async def demo_sdk():
         else:
             print(f"⚠️ No se pudieron obtener métricas: {metrics_result.error}")
 
-        print("
-🎉 DEMO COMPLETA EXITOSA!"        print("🌟 SDK de AEGIS completamente funcional")
+        print("\n🎉 DEMO COMPLETA EXITOSA!")
+        print("🌟 SDK de AEGIS completamente funcional")
         print("=" * 60)
 
     except Exception as e:

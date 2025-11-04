@@ -304,7 +304,8 @@ class ForecastingEngine:
                     result = await forecast_func(data, config, analysis)
                     result.training_time = time.time() - start_time
                     results.append(result)
-                    logger.info(".2f"                else:
+                    logger.info(f"Model {model_type.value} completed in {result.training_time:.2f}s")
+                else:
                     logger.warning(f"Modelo {model_type.value} no implementado")
 
             except Exception as e:
@@ -805,7 +806,9 @@ async def demo_advanced_analytics():
 
     for i, forecast in enumerate(forecasts[:3]):  # Top 3 modelos
         print(f"   {i+1}. {forecast.model_name.value.upper()}")
-        print(".1f"        print(".3f"        print(".2f"
+        print(f"       MAE: {forecast.metrics.get('mae', 0):.1f}")
+        print(f"       RMSE: {forecast.metrics.get('rmse', 0):.3f}")
+        print(f"       Tiempo: {forecast.training_time:.2f}s")
         # Insights del modelo
         if forecast.model_params:
             params_str = ", ".join([f"{k}={v}" for k, v in list(forecast.model_params.items())[:2]])
@@ -814,17 +817,18 @@ async def demo_advanced_analytics():
     # Ensemble si existe
     if results['ensemble']:
         ensemble = results['ensemble']
-        print("\\n🤝 ENSEMBLE DE MODELOS:")
-        print(".1f"        print(f"   📊 Modelos combinados: {ensemble.model_params['num_models']}")
+        print("\n🤝 ENSEMBLE DE MODELOS:")
+        print(f"   🎯 Precisión: {ensemble.metrics.get('mae', 0):.1f}")
+        print(f"   📊 Modelos combinados: {ensemble.model_params['num_models']}")
 
     # Generar insights
     insights = await analytics.generate_insights(analysis, forecasts)
-    print("\\n💡 INSIGHTS AUTOMÁTICOS:")
+    print("\n💡 INSIGHTS AUTOMÁTICOS:")
     for insight in insights:
         print(f"   • {insight}")
 
     # Detectar anomalías
-    print("\\n🔍 DETECCIÓN DE ANOMALÍAS:")
+    print("\n🔍 DETECCIÓN DE ANOMALÍAS:")
     anomalies = await analytics.detect_anomalies(time_series)
 
     print(f"   • Anomalías detectadas: {len(anomalies['anomaly_indices'])} "
@@ -833,12 +837,13 @@ async def demo_advanced_analytics():
     print(f"   • Threshold: {anomalies['threshold']}")
 
     # Estadísticas finales
-    print("\\n🎉 DEMO COMPLETA - ESTADÍSTICAS FINALES")
+    print("\n🎉 DEMO COMPLETA - ESTADÍSTICAS FINALES")
     print("=" * 50)
 
     print("📈 MÉTRICAS DE PERFORMANCE:")
-    print(".1f"    print(f"   • Modelos evaluados: {len(forecasts)}")
-    print(".1f"    print(f"   • Horizonte de predicción: {forecast_config.horizon} períodos")
+    print(f"   • Tiempo total: {time.time() - start_time:.1f} segundos")
+    print(f"   • Modelos evaluados: {len(forecasts)}")
+    print(f"   • Horizonte de predicción: {forecast_config.horizon} períodos")
 
     # Comparación de modelos
     if len(forecasts) > 1:
@@ -850,13 +855,13 @@ async def demo_advanced_analytics():
                 'tiempo': f.training_time
             })
 
-        print("\\n🏆 COMPARACIÓN DE MODELOS:")
+        print("\n🏆 COMPARACIÓN DE MODELOS:")
         print("   Modelo      | MAE      | Tiempo")
         print("   -------------|----------|--------")
         for comp in model_comparison:
             print(f"   {comp['modelo']:<12} | {comp['mae']:<8.3f} | {comp['tiempo']:<6.1f}s")
 
-    print("\\n🚀 CARACTERÍSTICAS DEMOSTRADAS:")
+    print("\n🚀 CARACTERÍSTICAS DEMOSTRADAS:")
     print("   ✅ Análisis completo de series temporales")
     print("   ✅ Múltiples modelos de forecasting")
     print("   ✅ Ensemble de modelos")
@@ -865,7 +870,7 @@ async def demo_advanced_analytics():
     print("   ✅ Descomposición estacional")
     print("   ✅ Tests estadísticos avanzados")
 
-    print("\\n💡 PARA PRODUCCIÓN:")
+    print("\n💡 PARA PRODUCCIÓN:")
     print("   • Integrar con bases de datos de series temporales")
     print("   • Agregar soporte para variables exógenas")
     print("   • Implementar forecasting probabilístico")
@@ -873,7 +878,7 @@ async def demo_advanced_analytics():
     print("   • Agregar alerting automático")
     print("   • Implementar modelos de deep learning avanzados")
 
-    print("\\n" + "=" * 60)
+    print("\n" + "=" * 60)
     print("🌟 Advanced Analytics funcionando correctamente!")
     print("=" * 60)
 
