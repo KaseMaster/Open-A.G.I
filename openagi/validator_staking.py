@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Validator Staking System for Quantum Currency
-Implements validator staking, delegation, and liquidity incentives
+Implements validator staking, delegation, and liquidity incentives with multi-token support
 """
 
 import sys
@@ -22,7 +22,7 @@ class StakingPosition:
     position_id: str
     staker_address: str
     validator_id: str
-    token_type: str  # "FLX" or "CHR"
+    token_type: str  # "FLX", "ATR", "CHR" (CHR staking converts to ATR)
     amount: float
     staked_at: float
     lockup_period: float  # in days
@@ -36,6 +36,7 @@ class Delegation:
     delegation_id: str
     delegator_address: str
     validator_id: str
+    token_type: str  # "FLX", "ATR"
     amount: float
     delegated_at: float
     reward_share: float  # percentage of validator rewards to share with delegator (0.0 to 1.0)
@@ -48,8 +49,8 @@ class Validator:
     validator_id: str
     operator_address: str
     chr_score: float  # Reputation score
-    total_staked: float = 0.0
-    total_delegated: float = 0.0
+    total_staked: Dict[str, float]  # {token_type: amount}
+    total_delegated: Dict[str, float]  # {token_type: amount}
     commission_rate: float = 0.1  # 10% commission on rewards
     uptime: float = 1.0  # 0.0 to 1.0
     is_active: bool = True
@@ -67,7 +68,7 @@ class LiquidityPool:
 
 class ValidatorStakingSystem:
     """
-    Implements validator staking, delegation, and liquidity incentives
+    Implements validator staking, delegation, and liquidity incentives with multi-token support
     """
     
     def __init__(self):
@@ -75,11 +76,19 @@ class ValidatorStakingSystem:
         self.delegations: Dict[str, Delegation] = {}
         self.validators: Dict[str, Validator] = {}
         self.liquidity_pools: Dict[str, LiquidityPool] = {}
-        self.pending_rewards: Dict[str, float] = {}  # {address: amount}
+        self.pending_rewards: Dict[str, Dict[str, float]] = {}  # {address: {token_type: amount}}
         self.staking_config = {
-            "min_stake_amount": 1000.0,
+            "min_stake_amount": {
+                "FLX": 1000.0,
+                "ATR": 500.0,
+                "CHR": 2000.0  # CHR staking converts to ATR
+            },
             "max_lockup_period": 365.0,  # days
-            "base_reward_rate": 0.12,  # 12% APR
+            "base_reward_rates": {
+                "FLX": 0.12,  # 12% APR
+                "ATR": 0.15,  # 15% APR (higher for stability token)
+                "CHR": 0.08   # 8% APR (lower for reputation token)
+            },
             "commission_rate": 0.1,  # 10% validator commission
             "unbonding_period": 7.0  # days
         }
@@ -101,6 +110,8 @@ class ValidatorStakingSystem:
                 validator_id=validator_id,
                 operator_address=operator_address,
                 chr_score=chr_score,
+                total_staked={"FLX": 0.0, "ATR": 0.0},
+                total_delegated={"FLX": 0.0, "ATR": 0.0},
                 commission_rate=self.staking_config["commission_rate"]
             )
             self.validators[validator_id] = validator
@@ -109,8 +120,9 @@ class ValidatorStakingSystem:
         """Initialize liquidity pools"""
         pools_data = [
             ("pool-flx-chr", ("FLX", "CHR"), {"FLX": 100000.0, "CHR": 50000.0}),
-            ("pool-flx-psy", ("FLX", "PSY"), {"FLX": 75000.0, "PSY": 37500.0}),
-            ("pool-atr-res", ("ATR", "RES"), {"ATR": 25000.0, "RES": 12500.0})
+            ("pool-flx-atr", ("FLX", "ATR"), {"FLX": 75000.0, "ATR": 37500.0}),
+            ("pool-atr-res", ("ATR", "RES"), {"ATR": 25000.0, "RES": 12500.0}),
+            ("pool-psych-atr", ("PSY", "ATR"), {"PSY": 50000.0, "ATR": 25000.0})
         ]
         
         for pool_id, token_pair, reserves in pools_data:
@@ -132,7 +144,7 @@ class ValidatorStakingSystem:
         Args:
             staker_address: Address of the staker
             validator_id: ID of the validator to stake with
-            token_type: Type of token to stake ("FLX" or "CHR")
+            token_type: Type of token to stake ("FLX", "ATR", or "CHR")
             amount: Amount to stake
             lockup_period: Lockup period in days
             
@@ -140,8 +152,9 @@ class ValidatorStakingSystem:
             Position ID if successful, None otherwise
         """
         # Validate inputs
-        if amount < self.staking_config["min_stake_amount"]:
-            print(f"Staking amount {amount} is below minimum {self.staking_config['min_stake_amount']}")
+        min_stake = self.staking_config["min_stake_amount"].get(token_type, 1000.0)
+        if amount < min_stake:
+            print(f"Staking amount {amount} is below minimum {min_stake} for {token_type}")
             return None
         
         if lockup_period > self.staking_config["max_lockup_period"]:
@@ -157,11 +170,21 @@ class ValidatorStakingSystem:
             print(f"Validator {validator_id} is not active")
             return None
         
+        # Handle CHR staking (converts to ATR)
+        effective_token_type = token_type
+        effective_amount = amount
+        if token_type == "CHR":
+            # CHR staking converts to ATR at a rate based on validator CHR score
+            conversion_rate = 0.5 + validator.chr_score * 0.3  # 50-80% conversion
+            effective_token_type = "ATR"
+            effective_amount = amount * conversion_rate
+            print(f"CHR staking converted {amount} CHR to {effective_amount:.2f} ATR at {conversion_rate:.2%} rate")
+        
         # Create staking position
         position_id = f"stake-{int(time.time())}-{hashlib.md5(staker_address.encode()).hexdigest()[:8]}"
         
-        # Calculate reward rate based on validator CHR score and lockup period
-        base_rate = self.staking_config["base_reward_rate"]
+        # Calculate reward rate based on validator CHR score, lockup period, and token type
+        base_rate = self.staking_config["base_reward_rates"].get(effective_token_type, 0.12)
         chr_bonus = validator.chr_score * 0.05  # Up to 5% bonus for high CHR score
         lockup_bonus = min(lockup_period / 365.0 * 0.03, 0.03)  # Up to 3% bonus for long lockup
         reward_rate = base_rate + chr_bonus + lockup_bonus
@@ -170,7 +193,7 @@ class ValidatorStakingSystem:
             position_id=position_id,
             staker_address=staker_address,
             validator_id=validator_id,
-            token_type=token_type,
+            token_type=token_type,  # Store original token type
             amount=amount,
             staked_at=time.time(),
             lockup_period=lockup_period,
@@ -179,19 +202,20 @@ class ValidatorStakingSystem:
         
         self.staking_positions[position_id] = position
         
-        # Update validator's total staked
-        validator.total_staked += amount
+        # Update validator's total staked for the effective token type
+        validator.total_staked[effective_token_type] = validator.total_staked.get(effective_token_type, 0.0) + effective_amount
         
         return position_id
     
     def delegate_tokens(self, delegator_address: str, validator_id: str, 
-                       amount: float, reward_share: float = 0.5) -> Optional[str]:
+                       token_type: str, amount: float, reward_share: float = 0.5) -> Optional[str]:
         """
         Delegate tokens to a validator
         
         Args:
             delegator_address: Address of the delegator
             validator_id: ID of the validator to delegate to
+            token_type: Type of token to delegate ("FLX" or "ATR")
             amount: Amount to delegate
             reward_share: Percentage of rewards to share with delegator (0.0 to 1.0)
             
@@ -199,12 +223,17 @@ class ValidatorStakingSystem:
             Delegation ID if successful, None otherwise
         """
         # Validate inputs
-        if amount < self.staking_config["min_stake_amount"] / 10:  # Lower minimum for delegation
-            print(f"Delegation amount {amount} is below minimum {self.staking_config['min_stake_amount']/10}")
+        min_delegation = self.staking_config["min_stake_amount"].get(token_type, 1000.0) / 10  # Lower minimum for delegation
+        if amount < min_delegation:
+            print(f"Delegation amount {amount} is below minimum {min_delegation} for {token_type}")
             return None
         
         if not (0.0 <= reward_share <= 1.0):
             print("Reward share must be between 0.0 and 1.0")
+            return None
+        
+        if token_type not in ["FLX", "ATR"]:
+            print(f"Token type {token_type} not supported for delegation")
             return None
         
         if validator_id not in self.validators:
@@ -223,6 +252,7 @@ class ValidatorStakingSystem:
             delegation_id=delegation_id,
             delegator_address=delegator_address,
             validator_id=validator_id,
+            token_type=token_type,
             amount=amount,
             delegated_at=time.time(),
             reward_share=reward_share
@@ -231,7 +261,7 @@ class ValidatorStakingSystem:
         self.delegations[delegation_id] = delegation
         
         # Update validator's total delegated
-        validator.total_delegated += amount
+        validator.total_delegated[token_type] = validator.total_delegated.get(token_type, 0.0) + amount
         
         return delegation_id
     
@@ -269,13 +299,18 @@ class ValidatorStakingSystem:
         pool.active_providers += 1
         
         # Add to pending rewards for the provider
-        # In a real implementation, this would be more sophisticated
+        # Initialize pending rewards for this address if not exists
+        if provider_address not in self.pending_rewards:
+            self.pending_rewards[provider_address] = {}
+        
+        # Reward based on contribution
         reward_amount = sum(token_amounts.values()) * 0.001  # 0.1% incentive
-        self.pending_rewards[provider_address] = self.pending_rewards.get(provider_address, 0.0) + reward_amount
+        for token_type in token_amounts:
+            self.pending_rewards[provider_address][token_type] = self.pending_rewards[provider_address].get(token_type, 0.0) + (reward_amount / len(token_amounts))
         
         return True
     
-    def calculate_rewards(self, time_period_hours: float = 24.0) -> Dict[str, float]:
+    def calculate_rewards(self, time_period_hours: float = 24.0) -> Dict[str, Dict[str, float]]:
         """
         Calculate rewards for stakers, delegators, and liquidity providers
         
@@ -283,7 +318,7 @@ class ValidatorStakingSystem:
             time_period_hours: Time period to calculate rewards for (default 24 hours)
             
         Returns:
-            Dictionary of {address: reward_amount}
+            Dictionary of {address: {token_type: reward_amount}}
         """
         rewards = {}
         
@@ -298,14 +333,24 @@ class ValidatorStakingSystem:
             # Calculate reward amount
             reward_amount = position.amount * position.reward_rate * time_factor
             
+            # Handle CHR staking (rewards in ATR)
+            reward_token_type = "ATR" if position.token_type == "CHR" else position.token_type
+            
             # Add to validator's pending rewards
             validator = self.validators[position.validator_id]
             validator_reward = reward_amount * validator.commission_rate
             staker_reward = reward_amount * (1 - validator.commission_rate)
             
             # Add rewards to respective addresses
-            rewards[validator.operator_address] = rewards.get(validator.operator_address, 0.0) + validator_reward
-            rewards[position.staker_address] = rewards.get(position.staker_address, 0.0) + staker_reward
+            # Validator rewards
+            if validator.operator_address not in rewards:
+                rewards[validator.operator_address] = {}
+            rewards[validator.operator_address][reward_token_type] = rewards[validator.operator_address].get(reward_token_type, 0.0) + validator_reward
+            
+            # Staker rewards
+            if position.staker_address not in rewards:
+                rewards[position.staker_address] = {}
+            rewards[position.staker_address][reward_token_type] = rewards[position.staker_address].get(reward_token_type, 0.0) + staker_reward
             
             # Update claimed rewards
             position.claimed_rewards += staker_reward
@@ -319,13 +364,16 @@ class ValidatorStakingSystem:
             validator = self.validators[delegation.validator_id]
             
             # Calculate base reward (based on validator's total stake)
-            base_reward = validator.total_staked * self.staking_config["base_reward_rate"] * time_factor
+            base_reward_rate = self.staking_config["base_reward_rates"].get(delegation.token_type, 0.12)
+            base_reward = validator.total_staked.get(delegation.token_type, 0.0) * base_reward_rate * time_factor
             
             # Calculate delegator's share
             delegation_share = base_reward * delegation.reward_share
             
             # Add to delegator's rewards
-            rewards[delegation.delegator_address] = rewards.get(delegation.delegator_address, 0.0) + delegation_share
+            if delegation.delegator_address not in rewards:
+                rewards[delegation.delegator_address] = {}
+            rewards[delegation.delegator_address][delegation.token_type] = rewards[delegation.delegator_address].get(delegation.token_type, 0.0) + delegation_share
             
             # Update claimed rewards
             delegation.claimed_rewards += delegation_share
@@ -341,11 +389,17 @@ class ValidatorStakingSystem:
                 
                 # In a real implementation, this would be distributed based on actual liquidity provision
                 # For now, we'll just add to a generic provider reward pool
-                rewards["liquidity_providers"] = rewards.get("liquidity_providers", 0.0) + pool_reward
+                if "liquidity_providers" not in rewards:
+                    rewards["liquidity_providers"] = {}
+                
+                # Distribute rewards in both token types of the pool
+                for token_type in pool.token_pair:
+                    token_reward = provider_reward / len(pool.token_pair)
+                    rewards["liquidity_providers"][token_type] = rewards["liquidity_providers"].get(token_type, 0.0) + token_reward
         
         return rewards
     
-    def claim_rewards(self, address: str) -> float:
+    def claim_rewards(self, address: str) -> Dict[str, float]:
         """
         Claim pending rewards for an address
         
@@ -353,15 +407,15 @@ class ValidatorStakingSystem:
             address: Address to claim rewards for
             
         Returns:
-            Amount of rewards claimed
+            Dictionary of {token_type: amount_claimed}
         """
         if address not in self.pending_rewards:
-            return 0.0
+            return {}
         
-        reward_amount = self.pending_rewards[address]
-        self.pending_rewards[address] = 0.0
+        claimed_rewards = self.pending_rewards[address].copy()
+        self.pending_rewards[address] = {}
         
-        return reward_amount
+        return claimed_rewards
     
     def unstake_tokens(self, position_id: str) -> bool:
         """
@@ -388,9 +442,20 @@ class ValidatorStakingSystem:
             print(f"Lockup period not yet ended. {remaining_time:.2f} days remaining")
             return False
         
+        # Handle CHR staking (converts to ATR)
+        effective_token_type = position.token_type
+        effective_amount = position.amount
+        if position.token_type == "CHR":
+            # Get validator to determine conversion rate
+            validator = self.validators.get(position.validator_id)
+            if validator:
+                conversion_rate = 0.5 + validator.chr_score * 0.3  # 50-80% conversion
+                effective_token_type = "ATR"
+                effective_amount = position.amount * conversion_rate
+        
         # Update validator's total staked
         validator = self.validators[position.validator_id]
-        validator.total_staked -= position.amount
+        validator.total_staked[effective_token_type] = max(0.0, validator.total_staked.get(effective_token_type, 0.0) - effective_amount)
         
         # Mark position as inactive
         position.is_active = False
@@ -424,7 +489,8 @@ class ValidatorStakingSystem:
             "chr_score": validator.chr_score,
             "total_staked": validator.total_staked,
             "total_delegated": validator.total_delegated,
-            "total_staked_and_delegated": validator.total_staked + validator.total_delegated,
+            "total_staked_and_delegated": {token: validator.total_staked.get(token, 0.0) + validator.total_delegated.get(token, 0.0) 
+                                         for token in set(list(validator.total_staked.keys()) + list(validator.total_delegated.keys()))},
             "commission_rate": validator.commission_rate,
             "uptime": validator.uptime,
             "is_active": validator.is_active,
@@ -432,12 +498,13 @@ class ValidatorStakingSystem:
             "active_delegations": len(active_delegations)
         }
     
-    def get_staking_apr(self, validator_id: str) -> Optional[float]:
+    def get_staking_apr(self, validator_id: str, token_type: str = "FLX") -> Optional[float]:
         """
         Get the APR for staking with a validator
         
         Args:
             validator_id: ID of the validator
+            token_type: Type of token to stake
             
         Returns:
             APR as a decimal (0.12 = 12%) or None if validator not found
@@ -448,7 +515,7 @@ class ValidatorStakingSystem:
         validator = self.validators[validator_id]
         
         # Base rate plus CHR score bonus
-        base_rate = self.staking_config["base_reward_rate"]
+        base_rate = self.staking_config["base_reward_rates"].get(token_type, 0.12)
         chr_bonus = validator.chr_score * 0.05  # Up to 5% bonus for high CHR score
         apr = base_rate + chr_bonus
         
@@ -465,12 +532,24 @@ class ValidatorStakingSystem:
         active_stakes = [pos for pos in self.staking_positions.values() if pos.is_active]
         active_delegations = [delg for delg in self.delegations.values() if delg.is_active]
         
-        # Calculate total staked value
-        total_staked = sum(pos.amount for pos in active_stakes)
-        total_delegated = sum(delg.amount for delg in active_delegations)
+        # Calculate total staked value by token type
+        total_staked = {}
+        total_delegated = {}
+        
+        for validator in self.validators.values():
+            for token_type, amount in validator.total_staked.items():
+                total_staked[token_type] = total_staked.get(token_type, 0.0) + amount
+            for token_type, amount in validator.total_delegated.items():
+                total_delegated[token_type] = total_delegated.get(token_type, 0.0) + amount
         
         # Calculate total liquidity
         total_liquidity = sum(pool.total_liquidity for pool in self.liquidity_pools.values())
+        
+        # Calculate total pending rewards
+        total_pending_rewards = {}
+        for address_rewards in self.pending_rewards.values():
+            for token_type, amount in address_rewards.items():
+                total_pending_rewards[token_type] = total_pending_rewards.get(token_type, 0.0) + amount
         
         return {
             "total_validators": len(self.validators),
@@ -481,10 +560,11 @@ class ValidatorStakingSystem:
             "active_delegations": len(active_delegations),
             "total_staked": total_staked,
             "total_delegated": total_delegated,
-            "total_staked_and_delegated": total_staked + total_delegated,
+            "total_staked_and_delegated": {token: total_staked.get(token, 0.0) + total_delegated.get(token, 0.0) 
+                                         for token in set(list(total_staked.keys()) + list(total_delegated.keys()))},
             "total_liquidity_pools": len(self.liquidity_pools),
             "total_liquidity": total_liquidity,
-            "pending_rewards": sum(self.pending_rewards.values())
+            "pending_rewards": total_pending_rewards
         }
 
 def demo_validator_staking():
@@ -499,7 +579,14 @@ def demo_validator_staking():
     print("\n📊 Initial System Metrics:")
     metrics = staking_system.get_system_metrics()
     for key, value in metrics.items():
-        if isinstance(value, float):
+        if isinstance(value, dict):
+            print(f"   {key}:")
+            for sub_key, sub_value in value.items():
+                if isinstance(sub_value, float):
+                    print(f"      {sub_key}: {sub_value:,.2f}")
+                else:
+                    print(f"      {sub_key}: {sub_value}")
+        elif isinstance(value, float):
             print(f"   {key}: {value:,.2f}")
         else:
             print(f"   {key}: {value}")
@@ -514,27 +601,29 @@ def demo_validator_staking():
     for pool_id, pool in staking_system.liquidity_pools.items():
         print(f"   {pool_id}: {pool.token_pair[0]}/{pool.token_pair[1]}, Liquidity=${pool.total_liquidity:,.2f}")
     
-    # Create staking positions
+    # Create staking positions with different token types
     print("\n🔒 Creating Staking Positions:")
     staker_addresses = ["staker-001", "staker-002", "staker-003"]
     validator_ids = list(staking_system.validators.keys())
+    token_types = ["FLX", "ATR", "CHR"]
     
     for i, staker in enumerate(staker_addresses):
         validator_id = validator_ids[i % len(validator_ids)]
+        token_type = token_types[i % len(token_types)]
         amount = 5000.0 + i * 1000.0
         lockup_period = 90.0 + i * 30.0  # 90, 120, 150 days
         
         position_id = staking_system.create_staking_position(
             staker_address=staker,
             validator_id=validator_id,
-            token_type="FLX",
+            token_type=token_type,
             amount=amount,
             lockup_period=lockup_period
         )
         
         if position_id:
-            apr = staking_system.get_staking_apr(validator_id)
-            print(f"   {staker} staked {amount:.2f} FLX with {validator_id} (APR: {apr:.1%})")
+            apr = staking_system.get_staking_apr(validator_id, token_type)
+            print(f"   {staker} staked {amount:.2f} {token_type} with {validator_id} (APR: {apr:.1%})")
         else:
             print(f"   Failed to create staking position for {staker}")
     
@@ -544,18 +633,20 @@ def demo_validator_staking():
     
     for i, delegator in enumerate(delegator_addresses):
         validator_id = validator_ids[i % len(validator_ids)]
+        token_type = "FLX" if i % 2 == 0 else "ATR"
         amount = 2000.0 + i * 500.0
         reward_share = 0.6 + i * 0.1  # 60%, 70%, 80%
         
         delegation_id = staking_system.delegate_tokens(
             delegator_address=delegator,
             validator_id=validator_id,
+            token_type=token_type,
             amount=amount,
             reward_share=reward_share
         )
         
         if delegation_id:
-            print(f"   {delegator} delegated {amount:.2f} tokens to {validator_id} ({reward_share:.0%} reward share)")
+            print(f"   {delegator} delegated {amount:.2f} {token_type} to {validator_id} ({reward_share:.0%} reward share)")
         else:
             print(f"   Failed to create delegation for {delegator}")
     
@@ -566,7 +657,8 @@ def demo_validator_staking():
     
     for i, provider in enumerate(liquidity_providers):
         pool_id = pool_ids[i % len(pool_ids)]
-        token_amounts = {"FLX": 10000.0 + i * 5000.0, "CHR": 5000.0 + i * 2500.0}
+        token_amounts = {staking_system.liquidity_pools[pool_id].token_pair[0]: 10000.0 + i * 5000.0,
+                        staking_system.liquidity_pools[pool_id].token_pair[1]: 5000.0 + i * 2500.0}
         
         success = staking_system.add_liquidity(provider, pool_id, token_amounts)
         if success:
@@ -578,7 +670,14 @@ def demo_validator_staking():
     print("\n📊 Updated System Metrics:")
     metrics = staking_system.get_system_metrics()
     for key, value in metrics.items():
-        if isinstance(value, float):
+        if isinstance(value, dict):
+            print(f"   {key}:")
+            for sub_key, sub_value in value.items():
+                if isinstance(sub_value, float):
+                    print(f"      {sub_key}: {sub_value:,.2f}")
+                else:
+                    print(f"      {sub_key}: {sub_value}")
+        elif isinstance(value, float):
             print(f"   {key}: {value:,.2f}")
         else:
             print(f"   {key}: {value}")
@@ -586,21 +685,27 @@ def demo_validator_staking():
     # Calculate rewards
     print("\n💰 Calculating Rewards:")
     rewards = staking_system.calculate_rewards(time_period_hours=24*7)  # 1 week
-    total_rewards = sum(rewards.values())
-    print(f"   Total rewards calculated: {total_rewards:,.2f} tokens")
+    total_reward_value = sum(sum(token_rewards.values()) for token_rewards in rewards.values())
+    print(f"   Total rewards calculated: {total_reward_value:,.2f} tokens")
     
     # Show top reward recipients
-    sorted_rewards = sorted(rewards.items(), key=lambda x: x[1], reverse=True)
     print("   Top reward recipients:")
-    for address, reward in sorted_rewards[:5]:
-        print(f"      {address}: {reward:.2f} tokens")
+    sorted_recipients = sorted(rewards.items(), key=lambda x: sum(x[1].values()), reverse=True)
+    for address, token_rewards in sorted_recipients[:5]:
+        total_rewards = sum(token_rewards.values())
+        print(f"      {address}: {total_rewards:.2f} tokens")
+        for token_type, amount in token_rewards.items():
+            print(f"         {token_type}: {amount:.2f}")
     
     # Claim rewards
     print("\n💳 Claiming Rewards:")
     for address in staker_addresses[:2]:
         claimed = staking_system.claim_rewards(address)
-        if claimed > 0:
-            print(f"   {address} claimed {claimed:.2f} tokens")
+        if claimed:
+            total_claimed = sum(claimed.values())
+            print(f"   {address} claimed {total_claimed:.2f} tokens:")
+            for token_type, amount in claimed.items():
+                print(f"      {token_type}: {amount:.2f}")
         else:
             print(f"   {address} had no rewards to claim")
     
@@ -610,8 +715,9 @@ def demo_validator_staking():
         info = staking_system.get_validator_info(validator_id)
         if info:
             print(f"   {validator_id}:")
-            print(f"      Total Staked: {info['total_staked']:,.2f}")
-            print(f"      Total Delegated: {info['total_delegated']:,.2f}")
+            print(f"      CHR Score: {info['chr_score']:.2f}")
+            print(f"      Total Staked: {info['total_staked']}")
+            print(f"      Total Delegated: {info['total_delegated']}")
             print(f"      Active Stakes: {info['active_stakes']}")
             print(f"      Active Delegations: {info['active_delegations']}")
     

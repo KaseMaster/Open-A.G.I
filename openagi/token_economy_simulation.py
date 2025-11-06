@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Token Economy Simulation for Quantum Currency System
-Implements multi-token inflation/deflation equilibrium simulation
+Implements multi-token inflation/deflation equilibrium simulation with cyclic flow
 """
 
 import sys
@@ -48,7 +48,7 @@ class EconomicAgent:
 @dataclass
 class MarketEvent:
     """Represents a market event that affects the economy"""
-    event_type: str  # "mint", "burn", "trade", "external_shock"
+    event_type: str  # "mint", "burn", "trade", "external_shock", "conversion"
     timestamp: float
     token_type: str
     amount: float
@@ -57,17 +57,17 @@ class MarketEvent:
 
 class TokenEconomySimulation:
     """
-    Implements multi-token inflation/deflation equilibrium simulation
+    Implements multi-token inflation/deflation equilibrium simulation with cyclic flow
     """
     
     def __init__(self):
-        # Initialize token states
+        # Initialize token states with proper initial supplies and prices
         self.token_states: Dict[str, TokenState] = {
             "CHR": TokenState(
                 token_type="CHR",
                 supply=1000000.0,
                 price=1.0,
-                velocity=1.0,
+                velocity=0.5,  # Lower velocity for non-transferable token
                 inflation_rate=0.0,
                 deflation_rate=0.0,
                 market_cap=1000000.0,
@@ -87,7 +87,7 @@ class TokenEconomySimulation:
                 token_type="PSY",
                 supply=250000.0,
                 price=4.0,
-                velocity=0.5,
+                velocity=1.0,  # Medium velocity for semi-transferable token
                 inflation_rate=0.0,
                 deflation_rate=0.0,
                 market_cap=1000000.0,
@@ -97,7 +97,7 @@ class TokenEconomySimulation:
                 token_type="ATR",
                 supply=125000.0,
                 price=8.0,
-                velocity=0.25,
+                velocity=0.8,  # Lower velocity for stakable token
                 inflation_rate=0.0,
                 deflation_rate=0.0,
                 market_cap=1000000.0,
@@ -107,7 +107,7 @@ class TokenEconomySimulation:
                 token_type="RES",
                 supply=62500.0,
                 price=16.0,
-                velocity=0.125,
+                velocity=1.5,  # Higher velocity for multiplicative token
                 inflation_rate=0.0,
                 deflation_rate=0.0,
                 market_cap=1000000.0,
@@ -127,28 +127,67 @@ class TokenEconomySimulation:
         self.current_time = 0.0
         self.simulation_history: List[Dict] = []
         
-        # Token conversion rates (cyclic flow)
+        # Token conversion rates (cyclic flow based on token properties)
         self.conversion_rates = {
-            ("CHR", "FLX"): 0.1,  # 10% of CHR converts to FLX
-            ("FLX", "PSY"): 0.05,  # 5% of FLX converts to PSY
-            ("PSY", "ATR"): 0.02,  # 2% of PSY converts to ATR
-            ("ATR", "RES"): 0.01,  # 1% of ATR converts to RES
-            ("RES", "CHR"): 0.15   # 15% of RES converts back to CHR
+            ("CHR", "ATR"): 0.1,   # 10% of CHR converts to ATR (stability)
+            ("FLX", "PSY"): 0.05,  # 5% of FLX converts to PSY (synchronization)
+            ("PSY", "ATR"): 0.03,  # 3% of PSY converts to ATR (stability)
+            ("ATR", "RES"): 0.02,  # 2% of ATR converts to RES (expansion)
+            ("RES", "CHR"): 0.15,  # 15% of RES converts back to CHR (ethical alignment)
+            ("FLX", "RES"): 0.01,  # 1% of FLX converts to RES (expansion)
+            ("CHR", "RES"): 0.05   # 5% of CHR converts to RES (expansion)
+        }
+        
+        # Token-specific parameters
+        self.token_params = {
+            "CHR": {
+                "inflation_sensitivity": 0.01,   # Less sensitive to supply changes
+                "deflation_sensitivity": 0.02,   # More sensitive to demand changes
+                "max_supply_change": 0.05        # Max 5% supply change per step
+            },
+            "FLX": {
+                "inflation_sensitivity": 0.03,
+                "deflation_sensitivity": 0.04,
+                "max_supply_change": 0.10
+            },
+            "PSY": {
+                "inflation_sensitivity": 0.02,
+                "deflation_sensitivity": 0.03,
+                "max_supply_change": 0.08
+            },
+            "ATR": {
+                "inflation_sensitivity": 0.015,
+                "deflation_sensitivity": 0.025,
+                "max_supply_change": 0.07
+            },
+            "RES": {
+                "inflation_sensitivity": 0.04,   # More sensitive to supply changes
+                "deflation_sensitivity": 0.05,   # More sensitive to demand changes
+                "max_supply_change": 0.15        # Max 15% supply change per step
+            }
         }
         
         # Economic parameters
-        self.inflation_sensitivity = 0.02  # Sensitivity to supply changes
-        self.deflation_sensitivity = 0.03  # Sensitivity to demand changes
+        self.inflation_sensitivity = 0.02  # General sensitivity to supply changes
+        self.deflation_sensitivity = 0.03  # General sensitivity to demand changes
         self.market_sentiment = 0.0  # -1.0 (bearish) to 1.0 (bullish)
+        
+        # Network health metrics
+        self.network_health = {
+            "coherence_score": 0.8,
+            "validator_performance": 0.85,
+            "transaction_volume": 1000.0,
+            "security_level": 0.95
+        }
     
     def _initialize_agents(self):
         """Initialize economic agents for the simulation"""
         agent_types = [
-            ("validator", 0.9),  # High reputation validators
-            ("developer", 0.7),  # Active developers
-            ("trader", 0.5),     # Active traders
-            ("user", 0.3),       # Regular users
-            ("speculator", 0.2)  # Low reputation speculators
+            ("validator", 0.9),    # High reputation validators
+            ("developer", 0.7),    # Active developers
+            ("trader", 0.5),       # Active traders
+            ("user", 0.3),         # Regular users
+            ("speculator", 0.2)    # Low reputation speculators
         ]
         
         for i, (agent_type, reputation) in enumerate(agent_types):
@@ -184,6 +223,17 @@ class TokenEconomySimulation:
         
         token = self.token_states[token_type]
         
+        # Get token-specific parameters
+        params = self.token_params.get(token_type, {
+            "inflation_sensitivity": self.inflation_sensitivity,
+            "deflation_sensitivity": self.deflation_sensitivity,
+            "max_supply_change": 0.1
+        })
+        
+        # Limit supply change to prevent extreme fluctuations
+        delta_supply = max(-token.supply * params["max_supply_change"], 
+                          min(token.supply * params["max_supply_change"], delta_supply))
+        
         # Update supply
         token.supply += delta_supply
         
@@ -199,8 +249,8 @@ class TokenEconomySimulation:
         
         # Update price based on supply/demand dynamics
         # Simplified model: price is inversely related to supply and directly related to demand
-        supply_factor = 1.0 - (delta_supply / token.supply * self.inflation_sensitivity) if token.supply > 0 else 1.0
-        demand_factor = 1.0 + (delta_demand * self.deflation_sensitivity)
+        supply_factor = 1.0 - (delta_supply / token.supply * params["inflation_sensitivity"]) if token.supply > 0 else 1.0
+        demand_factor = 1.0 + (delta_demand * params["deflation_sensitivity"])
         external_factor = 1.0 + external_factor
         
         # Update price
@@ -231,16 +281,23 @@ class TokenEconomySimulation:
                 
                 # Update token states
                 self.update_token_state(from_token, -convert_amount)
-                self.update_token_state(to_token, convert_amount * (from_state.price / to_state.price))
+                
+                # Conversion rate depends on network health and token properties
+                network_factor = self.network_health["coherence_score"]
+                conversion_efficiency = 0.8 + 0.2 * network_factor  # 80-100% efficiency
+                
+                # Convert to target token with efficiency factor
+                converted_amount = convert_amount * (from_state.price / to_state.price) * conversion_efficiency
+                self.update_token_state(to_token, converted_amount)
                 
                 # Record conversion event
                 if convert_amount > 0:
                     event = MarketEvent(
-                        event_type="trade",
+                        event_type="conversion",
                         timestamp=self.current_time,
                         token_type=f"{from_token}->{to_token}",
                         amount=convert_amount,
-                        description=f"Converted {convert_amount:.2f} {from_token} to {to_token}"
+                        description=f"Converted {convert_amount:.2f} {from_token} to {to_token} at efficiency {conversion_efficiency:.2%}"
                     )
                     self.market_events.append(event)
     
@@ -250,10 +307,16 @@ class TokenEconomySimulation:
             # Agent activity affects token demand/supply
             activity_impact = agent.activity_level * agent.reputation_score
             
-            # Validators mint FLX based on CHR reputation
+            # Validators mint FLX based on CHR reputation and coherence
             if "validator" in agent.agent_id and agent.chr_balance > 100:
-                mint_amount = agent.chr_balance * 0.01 * activity_impact
+                # Mint amount depends on CHR balance and network coherence
+                coherence_factor = self.network_health["coherence_score"]
+                mint_amount = agent.chr_balance * 0.01 * activity_impact * coherence_factor
                 self.update_token_state("FLX", mint_amount)
+                
+                # Validators also earn ATR for stability
+                atr_reward = mint_amount * 0.1 * coherence_factor
+                self.update_token_state("ATR", atr_reward * 0.5)
                 
                 # Record minting event
                 event = MarketEvent(
@@ -262,9 +325,35 @@ class TokenEconomySimulation:
                     token_type="FLX",
                     amount=mint_amount,
                     agent_id=agent.agent_id,
-                    description=f"Validator {agent.agent_id} minted {mint_amount:.2f} FLX"
+                    description=f"Validator {agent.agent_id} minted {mint_amount:.2f} FLX with {atr_reward:.2f} ATR reward"
                 )
                 self.market_events.append(event)
+            
+            # Developers convert FLX to PSY for synchronization
+            if "developer" in agent.agent_id and agent.flx_balance > 50:
+                convert_amount = agent.flx_balance * 0.02 * activity_impact
+                if convert_amount > 0:
+                    # Update agent balances
+                    agent.flx_balance -= convert_amount
+                    # Conversion depends on network synchronization needs
+                    sync_factor = self.network_health["validator_performance"]
+                    psy_amount = convert_amount * (0.3 + 0.4 * sync_factor)
+                    agent.psy_balance += psy_amount
+                    
+                    # Update token states
+                    self.update_token_state("FLX", -convert_amount)
+                    self.update_token_state("PSY", psy_amount * 0.9)  # Some efficiency loss
+                    
+                    # Record conversion event
+                    event = MarketEvent(
+                        event_type="conversion",
+                        timestamp=self.current_time,
+                        token_type="FLX->PSY",
+                        amount=convert_amount,
+                        agent_id=agent.agent_id,
+                        description=f"Developer {agent.agent_id} converted {convert_amount:.2f} FLX to {psy_amount:.2f} PSY"
+                    )
+                    self.market_events.append(event)
             
             # Traders exchange tokens
             if "trader" in agent.agent_id:
@@ -295,6 +384,32 @@ class TokenEconomySimulation:
                             description=f"Trader {agent.agent_id} traded {trade_amount:.2f} {from_token} for {to_token}"
                         )
                         self.market_events.append(event)
+            
+            # Users convert CHR to RES for network expansion
+            if "user" in agent.agent_id and agent.chr_balance > 200:
+                convert_amount = agent.chr_balance * 0.01 * activity_impact
+                if convert_amount > 0:
+                    # Update agent balances
+                    agent.chr_balance -= convert_amount
+                    # Conversion depends on network expansion needs
+                    expansion_factor = self.network_health["transaction_volume"] / 1000.0
+                    res_amount = convert_amount * 0.1 * expansion_factor
+                    agent.res_balance += res_amount
+                    
+                    # Update token states
+                    self.update_token_state("CHR", -convert_amount)
+                    self.update_token_state("RES", res_amount * 0.95)  # Some efficiency loss
+                    
+                    # Record conversion event
+                    event = MarketEvent(
+                        event_type="conversion",
+                        timestamp=self.current_time,
+                        token_type="CHR->RES",
+                        amount=convert_amount,
+                        agent_id=agent.agent_id,
+                        description=f"User {agent.agent_id} converted {convert_amount:.2f} CHR to {res_amount:.2f} RES"
+                    )
+                    self.market_events.append(event)
     
     def apply_external_shocks(self):
         """Apply random external market shocks"""
@@ -319,6 +434,50 @@ class TokenEconomySimulation:
             self.market_sentiment += shock_magnitude * 0.1
             self.market_sentiment = max(-1.0, min(1.0, self.market_sentiment))
     
+    def simulate_resonance_multiplication(self):
+        """Simulate the multiplicative properties of RES tokens"""
+        res_state = self.token_states["RES"]
+        if res_state.supply > 0:
+            # RES multiplication depends on network health and transaction volume
+            health_factor = self.network_health["coherence_score"]
+            volume_factor = min(2.0, self.network_health["transaction_volume"] / 1000.0)
+            
+            # Multiplication rate (1-5% per step based on network conditions)
+            multiplication_rate = 0.01 + 0.04 * health_factor * volume_factor
+            
+            # Calculate multiplication amount
+            multiplication_amount = res_state.supply * multiplication_rate
+            
+            # Apply multiplication
+            self.update_token_state("RES", multiplication_amount)
+            
+            # Distribute some to network for expansion incentives
+            network_share = multiplication_amount * 0.2  # 20% to network
+            self.update_token_state("RES", network_share * 0.1)  # Some efficiency loss
+            
+            # Record multiplication event
+            if multiplication_amount > 0:
+                event = MarketEvent(
+                    event_type="multiplication",
+                    timestamp=self.current_time,
+                    token_type="RES",
+                    amount=multiplication_amount,
+                    description=f"RES multiplied by {multiplication_rate:.2%}, added {multiplication_amount:.2f} tokens"
+                )
+                self.market_events.append(event)
+    
+    def update_network_health(self):
+        """Update network health metrics based on token economy state"""
+        # Calculate network health based on token economy metrics
+        total_market_cap = sum(token.market_cap for token in self.token_states.values())
+        avg_price_stability = np.mean([abs(token.price - 1.0) for token in self.token_states.values()])
+        
+        # Update network health metrics
+        self.network_health["coherence_score"] = max(0.1, min(1.0, 0.8 + np.random.normal(0, 0.05)))
+        self.network_health["validator_performance"] = max(0.1, min(1.0, 0.85 + np.random.normal(0, 0.03)))
+        self.network_health["transaction_volume"] = max(100.0, self.network_health["transaction_volume"] * (1.0 + np.random.normal(0, 0.1)))
+        self.network_health["security_level"] = max(0.1, min(1.0, 0.95 + np.random.normal(0, 0.01)))
+    
     def calculate_equilibrium_metrics(self) -> Dict:
         """
         Calculate equilibrium metrics for the token economy
@@ -330,11 +489,13 @@ class TokenEconomySimulation:
             "timestamp": self.current_time,
             "total_market_cap": sum(token.market_cap for token in self.token_states.values()),
             "market_sentiment": self.market_sentiment,
+            "network_health": self.network_health,
             "total_supply": {token_type: token.supply for token_type, token in self.token_states.items()},
             "average_price": {token_type: token.price for token_type, token in self.token_states.items()},
             "inflation_rates": {token_type: token.inflation_rate for token_type, token in self.token_states.items()},
             "deflation_rates": {token_type: token.deflation_rate for token_type, token in self.token_states.items()},
-            "token_ratios": {}
+            "token_ratios": {},
+            "velocity_metrics": {token_type: token.velocity for token_type, token in self.token_states.items()}
         }
         
         # Calculate token ratios
@@ -347,6 +508,9 @@ class TokenEconomySimulation:
     
     def run_simulation_step(self):
         """Run one step of the token economy simulation"""
+        # Update network health
+        self.update_network_health()
+        
         # Simulate token conversions
         self.simulate_token_conversions()
         
@@ -355,6 +519,9 @@ class TokenEconomySimulation:
         
         # Apply external shocks
         self.apply_external_shocks()
+        
+        # Simulate RES multiplication
+        self.simulate_resonance_multiplication()
         
         # Calculate and store equilibrium metrics
         metrics = self.calculate_equilibrium_metrics()
@@ -490,6 +657,7 @@ class TokenEconomySimulation:
             "token_cycle_efficiency": self.get_token_cycle_efficiency(),
             "market_events_count": len(self.market_events),
             "total_agents": len(self.agents),
+            "network_health": self.network_health,
             "equilibrium_analysis": {}
         }
         
@@ -564,6 +732,8 @@ def demo_token_economy_simulation():
     print(f"   Total Market Cap: ${metrics['total_market_cap']:,.2f}")
     print(f"   Market Sentiment: {metrics['market_sentiment']:.3f}")
     print(f"   Token Cycle Efficiency: {simulation.get_token_cycle_efficiency():.3f}")
+    print(f"   Network Health - Coherence: {metrics['network_health']['coherence_score']:.3f}")
+    print(f"   Network Health - Validator Performance: {metrics['network_health']['validator_performance']:.3f}")
     
     # Show token ratios
     print("\n⚖️  Token Supply Ratios:")

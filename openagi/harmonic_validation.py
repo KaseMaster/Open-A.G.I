@@ -2,12 +2,12 @@
 """
 Harmonic Validation Module for Quantum Currency System
 Implements Recursive Φ-Resonance Validation (RΦV) for coherence-based consensus
-
 This module provides functions to:
 1. Compute frequency spectra from time series data
 2. Calculate coherence scores between nodes
 3. Perform recursive validation with φ-scaling and λ-decay
 4. Generate harmonic snapshots and proof bundles
+5. Integrate with token economy based on coherence scores
 
 Part of the Open-A.G.I framework for quantum-harmonic currency
 """
@@ -306,7 +306,66 @@ def update_snapshot_coherence(snapshot: HarmonicSnapshot, CS: float) -> Harmonic
     return snapshot
 
 
-# Example usage and testing functions
+def calculate_token_rewards(coherence_score: float, validator_chr_score: float) -> Dict[str, float]:
+    """
+    Calculate token rewards based on coherence score and validator CHR reputation
+    
+    Args:
+        coherence_score: The coherence score (0-1)
+        validator_chr_score: The validator's CHR reputation score (0-1)
+        
+    Returns:
+        Dictionary with token rewards {token_type: amount}
+    """
+    # Base rewards
+    base_flx_reward = 100.0
+    base_chr_reward = 50.0
+    base_atr_reward = 25.0
+    base_psy_reward = 10.0
+    base_res_reward = 5.0
+    
+    # Multipliers based on coherence score
+    coherence_multiplier = 0.5 + coherence_score * 0.5  # 0.5-1.0x
+    
+    # Multipliers based on validator CHR score
+    chr_multiplier = 0.8 + validator_chr_score * 0.4  # 0.8-1.2x
+    
+    # Combined multiplier
+    combined_multiplier = coherence_multiplier * chr_multiplier
+    
+    rewards = {
+        "FLX": base_flx_reward * combined_multiplier,
+        "CHR": base_chr_reward * combined_multiplier,
+        "ATR": base_atr_reward * combined_multiplier,
+        "PSY": base_psy_reward * combined_multiplier,
+        "RES": base_res_reward * combined_multiplier
+    }
+    
+    return rewards
+
+
+def validate_harmonic_transaction(tx: Dict[str, Any], config: Dict[str, float]) -> bool:
+    """
+    Validate a harmonic transaction based on coherence score and CHR reputation
+    
+    Args:
+        tx: Transaction dictionary with coherence and CHR data
+        config: Configuration with thresholds
+        
+    Returns:
+        True if transaction is valid, False otherwise
+    """
+    cs = tx.get("aggregated_cs", 0)
+    chr_score = tx.get("sender_chr", 0)
+    mint_th = config.get("mint_threshold", 0.75)
+    chr_th = config.get("min_chr", 0.6)
+
+    # Both coherence and reputation must be high enough
+    if cs >= mint_th and chr_score >= chr_th:
+        return True
+    return False
+
+
 def generate_test_signal(freq: float, phase: float, duration: float, sample_rate: float) -> Tuple[np.ndarray, np.ndarray]:
     """
     Generate a test sinusoidal signal
@@ -358,3 +417,9 @@ if __name__ == "__main__":
     if proof:
         print(f"Aggregated Coherence Score: {proof.aggregated_CS:.3f}")
         print(f"Validation result: {'PASS' if is_valid else 'FAIL'}")
+        
+        # Test token rewards calculation
+        rewards = calculate_token_rewards(proof.aggregated_CS, 0.85)
+        print(f"Token rewards for coherence {proof.aggregated_CS:.3f}:")
+        for token, amount in rewards.items():
+            print(f"  {token}: {amount:.2f}")
