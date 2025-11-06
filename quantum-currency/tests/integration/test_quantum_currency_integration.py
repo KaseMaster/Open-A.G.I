@@ -39,6 +39,12 @@ class TestQuantumCurrencyIntegration(unittest.TestCase):
             "chr": {}
         }
         
+        # Configuration for validation
+        self.config = {
+            "mint_threshold": 0.75,
+            "min_chr": 0.6
+        }
+        
     def test_full_harmonic_validation_cycle(self):
         """Test a full harmonic validation cycle with multiple nodes"""
         # Step 1: Generate snapshots from all validators
@@ -88,7 +94,7 @@ class TestQuantumCurrencyIntegration(unittest.TestCase):
             }
             
             # Validate transaction
-            is_valid = validate_harmonic_tx(tx_mint)
+            is_valid = validate_harmonic_tx(tx_mint, self.config)
             
             print(f"   FLX mint transaction from {local_snapshot.node_id}: {'Valid' if is_valid else 'Invalid'}")
             
