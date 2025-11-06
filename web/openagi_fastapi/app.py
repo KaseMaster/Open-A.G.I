@@ -25,9 +25,40 @@ UI_DIR = (Path(__file__).resolve().parent.parent.parent / 'dapps' / 'secure-chat
 EVENT_SECRET = os.environ.get("OPENAGI_EVENT_SECRET", "openagi-dev-secret")
 
 
+# Import Quantum Coherence AI
+try:
+    import sys
+    sys.path.append(os.path.join(ROOT, "openagi"))
+    from openagi.quantum_coherence_ai import QuantumCoherenceAI
+    quantum_ai = QuantumCoherenceAI("openagi-network-001")
+    AI_AVAILABLE = True
+except Exception as e:
+    print(f"Warning: Could not import Quantum Coherence AI: {e}")
+    quantum_ai = None
+    AI_AVAILABLE = False
+
+
 class CryptoPayload(BaseModel):
     payload: str
     room_id: str
+
+
+class AIHealthResponse(BaseModel):
+    status: str
+    model_version: str
+    predictions_made: int
+    system_status: str
+
+
+class AIPredictionRequest(BaseModel):
+    validator_count: int = 5
+
+
+class AIPredictionResponse(BaseModel):
+    predicted_coherence: float
+    risk_level: str
+    confidence_interval: tuple
+    factors: list
 
 
 @app.get("/status")
@@ -49,6 +80,77 @@ def status():
     except Exception:
         pass
     return {"ok": True, "status": st}
+
+
+@app.get("/ai/health")
+def ai_health():
+    """Get health status of Quantum Coherence AI"""
+    if not AI_AVAILABLE or not quantum_ai:
+        raise HTTPException(status_code=503, detail="AI system not available")
+    
+    health_report = quantum_ai.get_system_health_report()
+    return AIHealthResponse(
+        status="operational",
+        model_version=health_report["ai_model_version"],
+        predictions_made=health_report["predictions_made"],
+        system_status=health_report["system_status"]
+    )
+
+
+@app.post("/ai/predict_coherence")
+async def predict_coherence(request: AIPredictionRequest):
+    """Predict network coherence stability"""
+    if not AI_AVAILABLE or not quantum_ai:
+        raise HTTPException(status_code=503, detail="AI system not available")
+    
+    try:
+        # Generate mock snapshots for demonstration
+        from openagi.harmonic_validation import HarmonicSnapshot
+        import numpy as np
+        
+        snapshots = []
+        for i in range(request.validator_count):
+            times = np.linspace(0, 1, 100)
+            values = np.sin(2 * np.pi * 5 * times) + 0.1 * np.random.random(100)
+            spectrum = [(f, np.random.random()) for f in np.linspace(0, 100, 10)]
+            
+            snapshot = HarmonicSnapshot(
+                node_id=f"validator-{i+1}",
+                timestamp=time.time(),
+                times=times.tolist(),
+                values=values.tolist(),
+                spectrum=spectrum,
+                spectrum_hash=f"spectrum_hash_{i}",
+                CS=0.75 + np.random.random() * 0.2,
+                phi_params={"phi": 1.618, "lambda": 0.618}
+            )
+            snapshots.append(snapshot)
+        
+        # Get prediction from AI
+        prediction = await quantum_ai.predict_coherence_stability(snapshots)
+        
+        return AIPredictionResponse(
+            predicted_coherence=prediction.predicted_coherence,
+            risk_level=prediction.risk_level,
+            confidence_interval=prediction.confidence_interval,
+            factors=prediction.factors
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error in prediction: {str(e)}")
+
+
+@app.post("/ai/run_cycle")
+async def run_ai_cycle():
+    """Run a complete autonomous AI cycle"""
+    if not AI_AVAILABLE or not quantum_ai:
+        raise HTTPException(status_code=503, detail="AI system not available")
+    
+    try:
+        await quantum_ai.run_autonomous_cycle()
+        return {"ok": True, "message": "AI cycle completed successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error running AI cycle: {str(e)}")
 
 
 def _load_key() -> bytes:
@@ -173,6 +275,7 @@ def _is_valid_session(token: str) -> tuple[bool, str | None]:
         return (False, None)
     return (True, s.get("address"))
 
+
 def _get_room(room_id: str) -> dict | None:
     try:
         rooms_path = os.path.join(CHAT_DIR, "rooms.json")
@@ -189,6 +292,7 @@ def _get_room(room_id: str) -> dict | None:
         return None
     return None
 
+
 def _is_member(room_id: str, address: str | None) -> bool:
     if not address:
         return False
@@ -202,6 +306,10 @@ def _is_member(room_id: str, address: str | None) -> bool:
         return addr_l in [m.lower() for m in members]
     except Exception:
         return False
+
+
+# Registro simple de conexiones por sala
+room_connections: dict[str, set] = {}
 
 
 @app.websocket("/ws/{room_id}")
@@ -370,5 +478,3 @@ def auth_logout(token: str = Query(...)):
         # Best-effort removal; ignore errors
         pass
     return {"ok": True}
-# Registro simple de conexiones por sala
-room_connections: dict[str, set] = {}

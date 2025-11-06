@@ -16,7 +16,7 @@ from enum import Enum
 from typing import Dict, List, Optional, Any, Callable
 import logging
 from collections import defaultdict
-from cryptography.hazmat.primitives.asymmetric import ed25519
+from openagi.harmonic_validation import recursive_validate, HarmonicSnapshot, HarmonicProofBundle
 
 # Configuración de logging temprana
 logging.basicConfig(level=logging.INFO)
@@ -605,6 +605,12 @@ class PBFTConsensus:
                 logger.warning("Propuesta con timestamp inválido")
                 return False
 
+            # Validar transacciones token-sensitive con Recursive Φ-Resonance Validation
+            if self._contains_harmonic_payload(change_data):
+                if not await self._validate_harmonic_proof(change_data):
+                    logger.warning("Prueba de coherencia armónica inválida")
+                    return False
+
             # Validaciones específicas del dominio
             change_type = change_data.get("type")
             if change_type == "knowledge_update":
@@ -627,6 +633,42 @@ class PBFTConsensus:
         """Valida una actualización de reputación"""
         required_fields = ["node_id", "score_delta", "reason"]
         return all(field in change_data for field in required_fields)
+
+    def _contains_harmonic_payload(self, change_data: Dict[str, Any]) -> bool:
+        """Verifica si una propuesta contiene datos sensibles a tokens que requieren validación armónica"""
+        change_type = change_data.get("type", "")
+        # Verificar si es una transacción que involucra tokens FLX, PSY, ATR, RES
+        if change_type == "token_transaction":
+            token_type = change_data.get("token_type", "")
+            amount = change_data.get("amount", 0)
+            # Requiere validación armónica para tokens FLX, PSY y transferencias grandes
+            return token_type in ["FLX", "PSY", "ATR", "RES"] or amount > 1000  # umbral configurable
+        return False
+
+    async def _validate_harmonic_proof(self, change_data: Dict[str, Any]) -> bool:
+        """Valida la prueba de coherencia armónica adjunta a una propuesta"""
+        try:
+            # Extraer proof bundle de los datos
+            harmonic_proof = change_data.get("harmonic_proof", {})
+            if not harmonic_proof:
+                logger.warning("No se encontró prueba armónica en la propuesta")
+                return False
+
+            # Verificar que tenga el aggregated_CS requerido
+            aggregated_CS = harmonic_proof.get("aggregated_CS", 0)
+            mint_threshold = change_data.get("mint_threshold", 0.75)  # valor por defecto
+            
+            if aggregated_CS < mint_threshold:
+                logger.warning(f"Coherencia insuficiente: {aggregated_CS} < {mint_threshold}")
+                return False
+
+            # En implementación completa, verificaríamos las firmas y snapshots individuales
+            # Por ahora aceptamos la prueba si supera el umbral
+            return True
+
+        except Exception as e:
+            logger.error(f"Error validando prueba armónica: {e}")
+            return False
 
     async def _apply_change(self, change_data: Dict[str, Any]) -> None:
         """Aplica un cambio consensuado al estado del sistema"""
