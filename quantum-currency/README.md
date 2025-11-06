@@ -81,10 +81,7 @@ The Quantum Currency Implementation is a revolutionary blockchain-based currency
 ```bash
 # Clone the repository
 git clone https://github.com/KaseMaster/Open-A.G.I.git
-cd Open-A.G.I
-
-# Switch to the quantum currency branch
-git checkout feature/quantum-currency-beta
+cd Open-A.G.I/quantum-currency
 
 # Build and run the quantum currency system
 docker-compose up -d
@@ -105,7 +102,7 @@ pip install -r requirements.txt
 pip install -r requirements-dev.txt
 
 # Run the system
-python openagi/main.py
+python src/api/main.py
 ```
 
 ## 🧪 Testing
@@ -126,7 +123,7 @@ python -m pytest tests/api/
 python -m pytest tests/integration/
 
 # Run with coverage
-python -m pytest --cov=openagi --cov-report=html
+python -m pytest --cov=src --cov-report=html
 ```
 
 ### Test Coverage
@@ -170,7 +167,7 @@ python -m pytest --cov=openagi --cov-report=html
 ```bash
 # Clone the repository
 git clone https://github.com/KaseMaster/Open-A.G.I.git
-cd Open-A.G.I
+cd Open-A.G.I/quantum-currency
 
 # Create virtual environment
 python -m venv quantum-currency-env
@@ -193,8 +190,8 @@ pre-commit install
   ```bash
   black .
   flake8 .
-  mypy --package openagi
-  bandit -r openagi/
+  mypy --package src
+  bandit -r src/
   ```
 
 ## 🤝 Contributing

@@ -12,7 +12,9 @@ from unittest.mock import patch, Mock
 # Add the parent directory to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from openagi.rest_api import app
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'api'))
+from main import app
 
 
 class TestLedgerAPI(unittest.TestCase):
@@ -72,22 +74,22 @@ class TestLedgerAPI(unittest.TestCase):
         data = json.loads(response.data)
         self.assertEqual(data['status'], 'rejected')
 
-    @patch('openagi.rest_api.make_snapshot')
+    @patch('main.make_snapshot')
     def test_snapshot_endpoint(self, mock_make_snapshot):
         """Test POST /snapshot endpoint"""
         # Mock the snapshot creation
-        mock_snapshot = Mock()
-        mock_snapshot.__dict__ = {
-            "node_id": "test-node",
-            "timestamp": 1234567890,
-            "times": [0.0, 0.1, 0.2],
-            "values": [1.0, 1.1, 1.2],
-            "spectrum": [(1.0, 0.5), (2.0, 0.3)],
-            "spectrum_hash": "test_hash",
-            "CS": 0.85,
-            "phi_params": {"phi": 1.618, "lambda": 0.618},
-            "signature": "test_signature"
-        }
+        from openagi.harmonic_validation import HarmonicSnapshot
+        mock_snapshot = HarmonicSnapshot(
+            node_id="test-node",
+            timestamp=1234567890,
+            times=[0.0, 0.1, 0.2],
+            values=[1.0, 1.1, 1.2],
+            spectrum=[(1.0, 0.5), (2.0, 0.3)],
+            spectrum_hash="test_hash",
+            CS=0.85,
+            phi_params={"phi": 1.618, "lambda": 0.618},
+            signature="test_signature"
+        )
         mock_make_snapshot.return_value = mock_snapshot
         
         snapshot_data = {

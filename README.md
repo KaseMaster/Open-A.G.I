@@ -303,7 +303,7 @@ else:
 - Reportes de incidentes
 
 ### 5. 🤖 Pipeline CI/CD Seguro
-```bash
+```
 # Pipeline automatizado incluye:
 # - Tests unitarios e integración
 # - Security scanning (bandit, safety, semgrep)

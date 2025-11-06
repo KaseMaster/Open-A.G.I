@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Unit tests for consensus protocol integration with harmonic validation
+Unit tests for consensus protocol integration
 """
 
 import sys
@@ -8,38 +8,76 @@ import os
 import unittest
 import numpy as np
 
-# Add the parent directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+# Add the openagi directory to the path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'openagi'))
 
-from consensus_algorithm import ConsensusEngine
-from openagi.harmonic_validation import make_snapshot, recursive_validate
+from openagi.consensus_protocol import pre_prepare_block
 
 
 class TestConsensusProtocol(unittest.TestCase):
     """Test suite for consensus protocol integration"""
 
-    def setUp(self):
-        """Set up test fixtures before each test method."""
-        self.consensus = ConsensusEngine("test-node", ["test-node", "node-1", "node-2"])
+    def test_pre_prepare_block_with_harmonic_transactions(self):
+        """Test pre-prepare block with harmonic transactions"""
+        # Create a block with harmonic transactions
+        block = {
+            "transactions": [
+                {
+                    "id": "tx-001",
+                    "sender": "validator-1",
+                    "receiver": "validator-1",
+                    "amount": 100.0,
+                    "token": "FLX",
+                    "action": "mint",
+                    "aggregated_cs": 0.85,
+                    "sender_chr": 0.85,
+                    "type": "harmonic"
+                }
+            ]
+        }
         
-    def test_consensus_initialization(self):
-        """Test that consensus protocol initializes correctly"""
-        self.assertIsNotNone(self.consensus)
-        self.assertEqual(self.consensus.node_id, "test-node")
-        self.assertEqual(self.consensus.view_number, 0)
+        config = {"mint_threshold": 0.75, "min_chr": 0.6}
         
-    def test_node_state_initialization(self):
-        """Test that node states are initialized correctly"""
-        self.assertIn("test-node", self.consensus.node_states)
-        self.assertIn("node-1", self.consensus.node_states)
-        self.assertIn("node-2", self.consensus.node_states)
+        # Process block through consensus protocol
+        processed_block = pre_prepare_block(block, config)
+        self.assertIsNotNone(processed_block)
+        self.assertEqual(len(processed_block["transactions"]), 1)
+
+    def test_pre_prepare_block_without_transactions(self):
+        """Test pre-prepare block without transactions"""
+        # Create a block without transactions
+        block = {
+            "data": "some other data"
+        }
         
-    def test_harmonic_validation_integration(self):
-        """Test integration with harmonic validation"""
-        # This test would verify that the consensus engine works with harmonic validation
-        # For now, we'll just verify the basic structure
-        self.assertTrue(hasattr(self.consensus, "active_proposals"))
-        self.assertTrue(hasattr(self.consensus, "committed_proposals"))
+        config = {"mint_threshold": 0.75, "min_chr": 0.6}
+        
+        # Process block through consensus protocol
+        processed_block = pre_prepare_block(block, config)
+        self.assertIsNotNone(processed_block)
+        self.assertEqual(processed_block, block)
+
+    def test_pre_prepare_block_without_harmonic_transactions(self):
+        """Test pre-prepare block without harmonic transactions"""
+        # Create a block with regular transactions
+        block = {
+            "transactions": [
+                {
+                    "id": "tx-001",
+                    "sender": "user-1",
+                    "receiver": "user-2",
+                    "amount": 100.0,
+                    "type": "transfer"
+                }
+            ]
+        }
+        
+        config = {"mint_threshold": 0.75, "min_chr": 0.6}
+        
+        # Process block through consensus protocol
+        processed_block = pre_prepare_block(block, config)
+        self.assertIsNotNone(processed_block)
+        self.assertEqual(len(processed_block["transactions"]), 1)
 
 
 if __name__ == "__main__":

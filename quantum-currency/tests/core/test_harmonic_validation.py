@@ -7,16 +7,16 @@ import sys
 import os
 import numpy as np
 
-# Add the openagi directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'openagi'))
+# Add the src directory to the path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from openagi.harmonic_validation import (
+from core.harmonic_validation import (
     HarmonicSnapshot, 
     make_snapshot, 
     compute_coherence_score
 )
-from openagi.token_rules import validate_harmonic_tx, apply_token_effects
-from openagi.validator_staking import ValidatorStakingSystem
+from core.token_rules import validate_harmonic_tx, apply_token_effects
+from core.validator_staking import ValidatorStakingSystem
 
 
 class TestHarmonicValidation(unittest.TestCase):
@@ -82,7 +82,7 @@ class TestHarmonicValidation(unittest.TestCase):
         )
         
         # Very different values for the second snapshot
-        different_values = [10.0, 5.0, 2.0, 8.0, 3.0, 1.0]
+        different_values = [1.0, -1.0, 1.0, -1.0, 1.0, -1.0]
         snapshot2 = make_snapshot(
             node_id="validator-2",
             times=self.test_times,
@@ -109,8 +109,8 @@ class TestTokenRules(unittest.TestCase):
         
         self.test_ledger = {
             "balances": {
-                "validator-1": {"FLX": 1000.0, "CHR": 500.0},
-                "validator-2": {"FLX": 1500.0, "CHR": 750.0}
+                "validator-1": {"FLX": 1000.0, "CHR": 500.0, "PSY": 200.0, "ATR": 300.0, "RES": 50.0},
+                "validator-2": {"FLX": 1500.0, "CHR": 750.0, "PSY": 150.0, "ATR": 400.0, "RES": 75.0}
             },
             "chr": {
                 "validator-1": 0.85,
@@ -140,11 +140,18 @@ class TestTokenRules(unittest.TestCase):
             secret_key="secret-2"
         )
         
+        # Compute coherence score
+        from core.harmonic_validation import compute_coherence_score
+        coherence_score = compute_coherence_score(snapshot1, [snapshot2])
+        
         tx = {
-            "local_snapshot": snapshot1.__dict__,
-            "snapshot_bundle": [snapshot2.__dict__],
             "sender": "validator-1",
-            "amount": 100.0
+            "receiver": "validator-1",
+            "amount": 100.0,
+            "token": "FLX",
+            "action": "mint",
+            "aggregated_cs": coherence_score,
+            "sender_chr": 0.85
         }
         
         is_valid = validate_harmonic_tx(tx, self.test_config)
@@ -172,18 +179,25 @@ class TestTokenRules(unittest.TestCase):
             secret_key="secret-2"
         )
         
+        # Compute coherence score
+        from core.harmonic_validation import compute_coherence_score
+        coherence_score = compute_coherence_score(snapshot1, [snapshot2])
+        
         tx = {
-            "local_snapshot": snapshot1.__dict__,
-            "snapshot_bundle": [snapshot2.__dict__],
             "sender": "validator-1",
-            "amount": 100.0
+            "receiver": "validator-1",
+            "amount": 100.0,
+            "token": "FLX",
+            "action": "mint",
+            "aggregated_cs": coherence_score,
+            "sender_chr": 0.4  # Low CHR score
         }
         
         is_valid = validate_harmonic_tx(tx, self.test_config)
         self.assertFalse(is_valid)
         
-    def test_apply_token_effects(self):
-        """Test applying token effects to the ledger"""
+    def test_apply_token_effects_flx_mint(self):
+        """Test applying FLX mint token effects to the ledger"""
         # Create test snapshots with high coherence
         test_times = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
         test_values = [1.0, 1.1, 1.2, 1.1, 1.0, 0.9]
@@ -204,22 +218,48 @@ class TestTokenRules(unittest.TestCase):
             secret_key="secret-2"
         )
         
+        # Compute coherence score
+        from core.harmonic_validation import compute_coherence_score
+        coherence_score = compute_coherence_score(snapshot1, [snapshot2])
+        
         tx = {
-            "local_snapshot": snapshot1.__dict__,
-            "snapshot_bundle": [snapshot2.__dict__],
             "sender": "validator-1",
-            "amount": 100.0
+            "receiver": "validator-1",
+            "amount": 100.0,
+            "token": "FLX",
+            "action": "mint",
+            "aggregated_cs": coherence_score,
+            "sender_chr": 0.85
         }
         
         # Store initial balances
         initial_flx = self.test_ledger["balances"]["validator-1"]["FLX"]
+        
+        # Apply token effects
+        apply_token_effects(self.test_ledger, tx)
+        
+        # Check that FLX balance increased
+        self.assertGreater(self.test_ledger["balances"]["validator-1"]["FLX"], initial_flx)
+        
+    def test_apply_token_effects_chr_reward(self):
+        """Test applying CHR reward token effects to the ledger"""
+        tx = {
+            "sender": "validator-1",
+            "receiver": "validator-1",
+            "amount": 100.0,
+            "token": "CHR",
+            "action": "reward",
+            "aggregated_cs": 0.9,
+            "sender_chr": 0.85
+        }
+        
+        # Store initial balances
         initial_chr = self.test_ledger["balances"]["validator-1"]["CHR"]
         
         # Apply token effects
         apply_token_effects(self.test_ledger, tx)
         
-        # Check that balances increased
-        self.assertGreater(self.test_ledger["balances"]["validator-1"]["FLX"], initial_flx)
+        # Check that CHR balance increased
         self.assertGreater(self.test_ledger["balances"]["validator-1"]["CHR"], initial_chr)
 
 
@@ -252,7 +292,7 @@ class TestValidatorStaking(unittest.TestCase):
         # Check that the validator's total staked increased
         validator_info = self.staking_system.get_validator_info(validator_id)
         if validator_info is not None:
-            self.assertEqual(validator_info["total_staked"], amount)
+            self.assertEqual(validator_info["total_staked"]["FLX"], amount)
         
     def test_unstake_tokens(self):
         """Test unstaking tokens"""
