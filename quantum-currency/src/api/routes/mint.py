@@ -4,7 +4,7 @@ Mint route for Quantum Currency API
 """
 
 from flask import Blueprint, request, jsonify
-from openagi.token_rules import validate_harmonic_tx, apply_token_effects
+from core.token_rules import validate_harmonic_tx, apply_token_effects
 
 mint_bp = Blueprint('mint', __name__)
 

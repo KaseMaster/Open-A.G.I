@@ -4,7 +4,7 @@ Snapshot route for Quantum Currency API
 """
 
 from flask import Blueprint, request, jsonify
-from openagi.harmonic_validation import make_snapshot
+from core.harmonic_validation import make_snapshot
 
 snapshot_bp = Blueprint('snapshot', __name__)
 

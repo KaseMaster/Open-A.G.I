@@ -11,8 +11,8 @@ import sqlite3
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from flask import Flask, request, jsonify
-from openagi.harmonic_validation import make_snapshot, compute_coherence_score, HarmonicSnapshot
-from openagi.token_rules import validate_harmonic_tx, apply_token_effects
+from core.harmonic_validation import make_snapshot, compute_coherence_score, HarmonicSnapshot
+from core.token_rules import validate_harmonic_tx, apply_token_effects
 
 app = Flask(__name__)
 ledger = {"balances": {}, "chr": {}}

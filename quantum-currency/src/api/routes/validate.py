@@ -4,7 +4,7 @@ Validation route for Quantum Currency API
 """
 
 from flask import Blueprint, request, jsonify
-from openagi.harmonic_validation import compute_coherence_score, HarmonicSnapshot
+from core.harmonic_validation import compute_coherence_score, HarmonicSnapshot
 
 validate_bp = Blueprint('validate', __name__)
 
