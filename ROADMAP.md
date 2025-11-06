@@ -75,6 +75,20 @@ Q1 2026
 ### Target Release Date
 Q3 2026
 
+## Phase 4.5 - OpenAGI Deep Integration Plan
+
+### Objectives
+- Enhance coherence AI to manage validator orchestration autonomously.
+- Integrate reinforcement learning loops for economic balance optimization.
+- Enable AI-governed consensus parameter tuning and token issuance control.
+- Deploy federated learning pipelines for decentralized model updates.
+
+### Deliverables
+- `ai/agi_coordinator.py` — orchestration engine.
+- `ai/reinforcement_policy.py` — validator policy optimization.
+- `ai/predictive_coherence.py` — predictive modeling for harmonic stability.
+- Automated AI → Consensus feedback cycle across all nodes.
+
 ## Version 1.0.0 - Quantum Currency Production Release
 
 ### Planned Features
@@ -107,6 +121,30 @@ Q1 2027
 - Global resource optimization
 - Planetary-scale coordination
 - Post-scarcity economic models
+
+## Milestone Tags
+
+| Version | Tag | Description |
+|----------|-----|-------------|
+| 0.1.0-beta | `v0.1.0-beta` | Initial public beta with full token integration |
+| 0.2.0 | `v0.2.0-mainnet` | Mainnet deployment and bridge rollout |
+| 0.3.0 | `v0.3.0-enterprise` | Enterprise features and DeFi tools |
+| 1.0.0 | `v1.0.0-production` | Global production release |
+
+## Continuous Integration & Testing
+
+- **CI/CD**: Automated testing and Docker build pipeline via GitHub Actions.
+- **Static Analysis**: Linting (pylint), type checking (mypy), and code formatting (black).
+- **Dynamic Tests**: Multi-node simulations, API validation, and performance benchmarks.
+- **Security Checks**: Dependency scanning and secret detection pre-commit.
+- **Deployment**: Automatic Docker image push and tag release for each milestone.
+
+## Community & Governance Framework
+
+- **Governance Token:** CHR (Coheron) used for weighted quadratic voting.
+- **Proposal System:** On-chain governance for upgrades and funding.
+- **Validator Council:** Elected body overseeing coherence thresholds.
+- **Transparency:** Open audits, financial disclosures, and community reports.
 
 ## Contributing to the Roadmap
 
