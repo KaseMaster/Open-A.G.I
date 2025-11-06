@@ -4,7 +4,15 @@
 
 The Quantum Currency System is a revolutionary blockchain-based currency that leverages quantum-harmonic validation for consensus and incorporates advanced AI capabilities through OpenAGI integration. This implementation features a multi-token economy, quantum-secured transactions, and autonomous validator orchestration.
 
+With the v0.2.0 upgrade, the system introduces the **Coherence Attunement Layer (CAL)** integrated with the **Recursive Φ-Resonance Validation (RΦV)** consensus engine, transforming it into a self-referential cognitive economy.
+
 ## Key Features
+
+### 🔑 CAL-RΦV Fusion (v0.2.0 Flagship Feature)
+- **Coherence Attunement Layer**: Multi-dimensional coherence scoring with Ω-state recursion
+- **Ω-State Integration**: Replaces FFT-based spectral correlation with dynamic, self-referential dimensional consistency
+- **AI Co-governance**: Full OpenAGI integration for autonomous economic optimization
+- **Harmonic Gating**: Token-specific cognitive mechanisms for CHR, FLX, PSY, ATR, and RES tokens
 
 ### 🔑 Recursive Φ-Resonance Validation (RΦV)
 - Novel consensus mechanism based on quantum harmonic principles
@@ -25,6 +33,7 @@ The system implements five distinct tokens, each with unique utility functions:
 - Advanced AI system for predictive analytics and autonomous orchestration
 - Integrates with OpenAGI framework for enhanced capabilities
 - Provides real-time network health monitoring and optimization
+- Implements reinforcement learning for economic balance optimization
 
 ### 🔐 Hardware Security Integration
 - HSM-based key management with quantum-resistant cryptography
@@ -43,6 +52,7 @@ The system implements five distinct tokens, each with unique utility functions:
 │                 🪙 QUANTUM CURRENCY SYSTEM                           │
 ├─────────────────────────────────────────────────────────────────────┤
 │  🧠 Core Components                                                  │
+│     • Coherence Attunement Layer (CAL)                              │
 │     • Harmonic Validation Engine (RΦV)                              │
 │     • Multi-Token Economy (FLX, CHR, PSY, ATR, RES)                  │
 │     • Validator Staking & Delegation System                         │
@@ -50,7 +60,7 @@ The system implements five distinct tokens, each with unique utility functions:
 │     • Hardware Security Module (HSM) Integration                    │
 ├─────────────────────────────────────────────────────────────────────┤
 │  🔄 Consensus & Validation                                           │
-│     • Recursive Φ-Resonance Validation (RΦV)                        │
+│     • CAL-RΦV Fusion (Ω-State Recursion)                            │
 │     • Coherence Score Computation                                   │
 │     • Snapshot Generation & Validation                              │
 │     • Transaction Validation Rules                                  │
@@ -79,8 +89,16 @@ The system implements five distinct tokens, each with unique utility functions:
 
 ## Core Components
 
+### Coherence Attunement Layer (CAL)
+The new flagship component of v0.2.0, implementing multi-dimensional coherence scoring:
+
+1. **Ω-State Computation**: Multi-dimensional state vectors representing node coherence
+2. **Modulator Function**: Adaptive weighting for dynamic coherence optimization
+3. **Recursive Validation**: Self-referential dimensional consistency checks
+4. **Harmonic Gating**: Token-specific cognitive mechanisms
+
 ### Harmonic Validation Engine
-The heart of the Quantum Currency system, implementing Recursive Φ-Resonance Validation (RΦV):
+Enhanced with CAL integration, implementing Recursive Φ-Resonance Validation (RΦV):
 
 1. **Spectrum Analysis**: Computes frequency spectra from time series data using FFT
 2. **Coherence Scoring**: Calculates coherence scores between nodes using cross-spectral density
@@ -118,6 +136,7 @@ Implements a comprehensive staking mechanism:
 - `/ai/health` - Get health status of Quantum Coherence AI
 - `/ai/predict` - Get AI-driven coherence predictions
 - `/ai/autonomous` - Run autonomous validator orchestration cycles
+- `/ai/omega` - Get Ω-state computations and coherence metrics
 
 ## Security Features
 
@@ -160,8 +179,8 @@ Built-in regulatory compliance features:
 ## Future Roadmap
 
 ### Short-term Goals
-- Mainnet deployment and launch
-- Enhanced AI integration
+- Mainnet deployment and launch with CAL-RΦV fusion
+- Enhanced AI integration with OpenAGI
 - Mobile wallet applications
 - Cross-chain bridge implementations
 

@@ -15,17 +15,25 @@ quantum-currency/
 │   │   └── validator_staking.py
 │   ├── models/            # Data models
 │   │   ├── harmonic_wallet.py
+│   │   ├── coherence_attunement_layer.py
 │   │   └── quantum_coherence_ai.py
 │   ├── api/               # API endpoints
 │   │   ├── main.py
 │   │   └── routes/
+│   ├── simulation/        # Multi-node simulation framework
+│   │   └── multi_node_simulator.py
+│   ├── dashboard/         # Dashboard and UX components
+│   │   └── dashboard_app.py
 │   └── utils/             # Utility functions
 ├── tests/                 # Test suite
 │   ├── core/
 │   ├── api/
-│   └── integration/
+│   ├── integration/
+│   ├── simulation/
+│   └── dashboard/
 ├── docs/                  # Documentation
 ├── cli/                   # Command-line tools
+│   └── quantum_cli.py
 ├── config/                # Configuration files
 ├── logs/                  # Log files
 ├── database/              # Database files
@@ -36,28 +44,42 @@ quantum-currency/
 
 ## Core Modules
 
+### Coherence Attunement Layer (`src/models/coherence_attunement_layer.py`)
+
+This new module (v0.2.0) implements the Ω-State recursion and modulator functions:
+
+#### Key Functions:
+- `compute_omega_state(token_data, sentiment_data, semantic_data, attention_data)` - Computes multi-dimensional Ω-state vectors
+- `compute_recursive_coherence(omega_states)` - Calculates recursive coherence with penalty components
+- `validate_dimensional_consistency(omega_state)` - Ensures dimensional integrity
+- `compute_modulator(coherence_score)` - Adaptive weighting function
+
+#### Data Classes:
+- `OmegaState` - Represents a node's multi-dimensional coherence state
+- `CoherencePenalties` - Encapsulates cosine, entropy, and variance penalties
+
 ### Harmonic Validation (`src/core/harmonic_validation.py`)
 
-This module implements the Recursive Φ-Resonance Validation (RΦV) algorithm:
+This module implements the Recursive Φ-Resonance Validation (RΦV) algorithm with CAL integration:
 
 #### Key Functions:
 - `compute_spectrum(times, values)` - Computes frequency spectrum using FFT
 - `compute_coherence_score(local_snapshot, remote_snapshots)` - Calculates coherence between nodes
-- `recursive_validate(snapshot_bundle, threshold)` - Performs recursive validation
+- `recursive_validate(snapshot_bundle, threshold)` - Performs recursive validation with Ω-state integration
 - `make_snapshot(node_id, times, values, secret_key)` - Creates signed snapshots
 - `calculate_token_rewards(coherence_score, validator_chr_score)` - Calculates token rewards
 
 #### Data Classes:
-- `HarmonicSnapshot` - Represents a node's harmonic data
+- `HarmonicSnapshot` - Represents a node's harmonic data with Ω-state
 - `HarmonicProofBundle` - Bundle of snapshots with aggregated coherence
 
 ### Token Rules (`src/core/token_rules.py`)
 
-This module defines the rules for the multi-token economy:
+This module defines the rules for the multi-token economy with harmonic gating:
 
 #### Key Functions:
 - `validate_harmonic_tx(tx, config)` - Validates transactions based on coherence and CHR
-- `apply_token_effects(state, tx)` - Updates ledger state after validation
+- `apply_token_effects(state, tx)` - Updates ledger state with harmonic gating
 - `get_token_properties(token_type)` - Returns properties of a token type
 
 #### Token Properties:
@@ -88,7 +110,7 @@ This module implements the validator staking system:
 
 ### Example Endpoint Implementation
 
-```python
+```
 # src/api/routes/example.py
 from flask import Blueprint, request, jsonify
 
@@ -114,11 +136,28 @@ The test suite is organized as follows:
 #### Core Module Tests
 ```python
 import unittest
+from src.models.coherence_attunement_layer import CoherenceAttunementLayer
 from src.core.harmonic_validation import make_snapshot
+
+class TestCoherenceAttunementLayer(unittest.TestCase):
+    def setUp(self):
+        self.cal = CoherenceAttunementLayer()
+    
+    def test_compute_omega_state(self):
+        """Test Ω-state computation"""
+        omega = self.cal.compute_omega_state(
+            token_data={"rate": 5.0},
+            sentiment_data={"energy": 0.7},
+            semantic_data={"shift": 0.3},
+            attention_data=[0.1, 0.2, 0.3, 0.4, 0.5]
+        )
+        
+        self.assertIsNotNone(omega)
+        self.assertEqual(omega.token_rate, 5.0)
 
 class TestHarmonicValidation(unittest.TestCase):
     def test_make_snapshot(self):
-        """Test snapshot creation"""
+        """Test snapshot creation with Ω-state"""
         snapshot = make_snapshot(
             node_id="test-validator",
             times=[0.0, 0.1, 0.2],
@@ -127,6 +166,7 @@ class TestHarmonicValidation(unittest.TestCase):
         )
         
         self.assertEqual(snapshot.node_id, "test-validator")
+        self.assertIsNotNone(snapshot.omega_state)
 ```
 
 #### API Tests
@@ -139,9 +179,12 @@ class TestAPI(unittest.TestCase):
     def setUp(self):
         self.app = app.test_client()
     
-    def test_example_endpoint(self):
-        """Test example endpoint"""
-        response = self.app.get('/example')
+    def test_omega_endpoint(self):
+        """Test Ω-state endpoint"""
+        response = self.app.post('/ai/omega', json={
+            "token_data": {"rate": 5.0},
+            "sentiment_data": {"energy": 0.7}
+        })
         self.assertEqual(response.status_code, 200)
 ```
 
@@ -152,11 +195,35 @@ class TestAPI(unittest.TestCase):
 python -m pytest tests/
 
 # Run specific test file
-python -m pytest tests/core/test_harmonic_validation.py
+python -m pytest tests/core/test_coherence_attunement_layer.py
 
 # Run with coverage
 python -m pytest --cov=src tests/
+
+# Run specific test class
+python -m pytest tests/core/test_coherence_attunement_layer.py::TestCoherenceAttunementLayer
+
+# Run integration tests
+python -m pytest tests/integration/
 ```
+
+### Testing Protocols (v0.2.0)
+
+#### Dimensional Consistency Test
+Validates that all Ω-state components remain within safe bounds:
+- All Ω components must be in [-10, +10]
+- Modulator arguments must be in [-10, +10]
+- Modulator outputs must be in [exp(-10), exp(10)]
+
+#### Harmonic Shock Recovery Test
+Validates system resilience:
+- Ψ must recover ≥ 0.70 within 50 steps after a Ψ drop > 0.3
+- Recovery must follow stable, predictable patterns
+
+#### AI Coherence Regression Test
+Validates AI alignment:
+- AI actions must result in positive ΔΨ 75% of the time when Ψ < 0.8
+- AI must default to "grounding" actions when Ψ is low
 
 ## Code Quality
 
@@ -174,10 +241,16 @@ Use type hints for all function parameters and return values:
 
 ```python
 from typing import List, Dict, Tuple
+from src.models.coherence_attunement_layer import OmegaState
 
 def example_function(data: List[float]) -> Dict[str, float]:
     """Example function with type hints"""
     return {"result": sum(data)}
+
+def compute_omega_states(inputs: List[Dict]) -> List[OmegaState]:
+    """Compute multiple Ω-states with type safety"""
+    cal = CoherenceAttunementLayer()
+    return [cal.compute_omega_state(**input_data) for input_data in inputs]
 ```
 
 ### Linting
@@ -198,159 +271,3 @@ mypy --package src
 ## Contributing
 
 ### Pull Request Process
-
-1. Fork the repository
-2. Create a feature branch
-3. Make changes and write tests
-4. Run all tests and ensure they pass
-5. Update documentation if needed
-6. Submit a pull request
-
-### Code Review Guidelines
-
-All pull requests must:
-- Pass all automated tests
-- Include appropriate test coverage
-- Follow coding standards
-- Include documentation updates
-- Be reviewed by at least one maintainer
-
-### Issue Reporting
-
-When reporting issues, include:
-- Clear description of the problem
-- Steps to reproduce
-- Expected vs actual behavior
-- System information
-- Relevant logs or error messages
-
-## Development Environment
-
-### Setting Up
-
-1. Clone the repository
-2. Create a virtual environment
-3. Install dependencies
-4. Run initial tests
-
-```bash
-git clone https://github.com/KaseMaster/Open-A.G.I.git
-cd Open-A.G.I/quantum-currency
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements-dev.txt
-python -m pytest tests/
-```
-
-### Development Tools
-
-Recommended development tools:
-- VS Code with Python extension
-- PyCharm for advanced features
-- Git for version control
-- Docker for containerization
-
-### Debugging
-
-Use the Python debugger for troubleshooting:
-
-```python
-import pdb; pdb.set_trace()
-```
-
-Or use IDE debugging features.
-
-## API Client Development
-
-### Python Client Example
-
-```python
-import requests
-
-class QuantumCurrencyClient:
-    def __init__(self, base_url="http://localhost:5000"):
-        self.base_url = base_url
-    
-    def create_snapshot(self, node_id, times, values, secret_key):
-        """Create a harmonic snapshot"""
-        data = {
-            "node_id": node_id,
-            "times": times,
-            "values": values,
-            "secret_key": secret_key
-        }
-        response = requests.post(f"{self.base_url}/api/v1/snapshot", json=data)
-        return response.json()
-```
-
-## Extending the System
-
-### Adding New Token Types
-
-1. Update `get_token_properties()` in `token_rules.py`
-2. Add token-specific logic in `apply_token_effects()`
-3. Update tests to include new token type
-4. Document new token properties
-
-### Adding New Validation Rules
-
-1. Modify `validate_harmonic_tx()` in `token_rules.py`
-2. Update configuration parameters if needed
-3. Add new test cases
-4. Update documentation
-
-### Integrating New AI Models
-
-1. Create new model in `src/models/`
-2. Integrate with existing AI modules
-3. Add API endpoints for new functionality
-4. Create tests and documentation
-
-## Performance Considerations
-
-### Optimization Tips
-
-1. Use vectorized operations with NumPy
-2. Cache expensive computations
-3. Minimize database queries
-4. Use connection pooling
-5. Implement proper indexing
-
-### Profiling
-
-Use Python's built-in profiler:
-
-```bash
-python -m cProfile -o profile.out src/api/main.py
-```
-
-## Security Development
-
-### Secure Coding Practices
-
-1. Validate all input data
-2. Use parameterized queries
-3. Implement proper authentication
-4. Sanitize output data
-5. Follow principle of least privilege
-
-### Cryptographic Security
-
-1. Use established cryptographic libraries
-2. Never implement custom crypto
-3. Rotate keys regularly
-4. Use secure random number generation
-5. Implement proper key management
-
-## Documentation Updates
-
-When making changes, update:
-- Code docstrings
-- API documentation
-- User guides
-- README files
-- Inline comments for complex logic
-
----
-
-*This developer guide provides comprehensive information for working with the Quantum Currency system. For specific implementation details, refer to the source code and existing documentation.*

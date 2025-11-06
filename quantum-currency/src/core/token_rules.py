@@ -182,8 +182,10 @@ def apply_token_effects(state, tx):
             staked_atr = state["staking"].get(sender, 0)
             if staked_atr >= amount:
                 # This would integrate with CAL's Ω_target mechanism
-                omega_target = tx.get("omega_target", 0.8)  # Default Ω target
-                print(f"🎯 Ω_target set by {sender} (staked ATR: {staked_atr}, target: {omega_target:.4f})")
+                omega_target = tx.get("omega_target", {"token_rate": 0.8})  # Default Ω target
+                # Extract a numeric value for display
+                target_value = omega_target.get("token_rate", 0.8) if isinstance(omega_target, dict) else omega_target
+                print(f"🎯 Ω_target set by {sender} (staked ATR: {staked_atr}, target: {target_value:.4f})")
     
     elif token == "RES":
         # RES (Resonance) - Multiplicative, rewards bridging of new networks

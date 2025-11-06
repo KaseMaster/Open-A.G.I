@@ -221,15 +221,32 @@ This project is licensed under the MIT License with additional security clauses 
 
 ## 📚 Documentation
 
-- **[Architecture Guide](docs/QUANTUM_CURRENCY_ARCHITECTURE.md)** - Detailed system architecture
-- **[API Reference](docs/QUANTUM_CURRENCY_API.md)** - Complete API documentation
-- **[Deployment Guide](docs/QUANTUM_CURRENCY_DEPLOYMENT.md)** - Installation and deployment instructions
-- **[Security Guide](docs/QUANTUM_CURRENCY_SECURITY.md)** - Security implementation details
-- **[Developer Guide](docs/QUANTUM_CURRENCY_DEVELOPER.md)** - Development and contribution guidelines
+All documentation has been organized into the following categories:
+
+### Architecture
+- **[System Architecture](docs/architecture/QUANTUM_CURRENCY_ARCHITECTURE.md)** - System architecture and design principles
+- **[API Reference](docs/architecture/QUANTUM_CURRENCY_API.md)** - Complete API documentation
+
+### Development
+- **[Developer Guide](docs/development/QUANTUM_CURRENCY_DEVELOPER.md)** - Development and contribution guidelines
+- **[Deployment Guide](docs/development/QUANTUM_CURRENCY_DEPLOYMENT.md)** - Installation and deployment instructions
+- **[Security Guide](docs/development/QUANTUM_CURRENCY_SECURITY.md)** - Security implementation details
+
+### Specifications
+- **[CAL-RΦV Fusion Specification](docs/specifications/CAL_RPHI_FUSION_SPEC.md)** - Technical specification for the core fusion mechanism
+
+### Releases
+- **[Roadmap v0.3.0](docs/releases/ROADMAP_v0.3.0.md)** - Version 0.3.0 development roadmap
+
+### Implementation History
+- **[Implementation Summaries](docs/implementation/)** - Detailed implementation documentation
+- **[Historical Documents](docs/history/)** - Phase completion reports and historical documentation
+
+For a complete overview of all documentation, see [docs/README.md](docs/README.md).
 
 ## 🗺️ Roadmap
 
-See our [ROADMAP.md](ROADMAP.md) for detailed information on planned features and releases.
+See our [ROADMAP.md](docs/releases/ROADMAP_v0.3.0.md) for detailed information on planned features and releases.
 
 ### Current Release: v0.1.0-beta (Quantum Currency Beta)
 - ✅ Full Quantum Currency System Implementation
@@ -240,6 +257,7 @@ See our [ROADMAP.md](ROADMAP.md) for detailed information on planned features an
 ### Upcoming Releases
 - **v0.2.0** - Mainnet deployment and launch (Q1 2026)
 - **v0.3.0** - Enterprise features and compliance (Q3 2026)
+- **v0.4.0** - Advanced monitoring and formal verification (Q4 2026)
 - **v1.0.0** - Production-ready system (Q1 2027)
 
 ## 🙏 Acknowledgments
