@@ -8,6 +8,7 @@ This module provides functions to:
 3. Perform recursive validation with φ-scaling and λ-decay
 4. Generate harmonic snapshots and proof bundles
 5. Integrate with token economy based on coherence scores
+6. Integrate with Coherence Attunement Layer (CAL) for Ω-state recursion
 
 Part of the Open-A.G.I framework for quantum-harmonic currency
 """
@@ -25,6 +26,18 @@ from scipy.signal import csd
 PHI = 1.618033988749895
 LAMBDA = 1.0 / PHI
 
+# Import CAL for Ω-state recursion (v0.2.0 enhancement)
+CoherenceAttunementLayer = None
+OmegaState = None
+CAL_AVAILABLE = False
+
+try:
+    from models.coherence_attunement_layer import CoherenceAttunementLayer as _CoherenceAttunementLayer, OmegaState as _OmegaState
+    CoherenceAttunementLayer = _CoherenceAttunementLayer
+    OmegaState = _OmegaState
+    CAL_AVAILABLE = True
+except ImportError:
+    print("Warning: Coherence Attunement Layer not available. Using FFT-based correlation.")
 
 @dataclass
 class HarmonicSnapshot:
@@ -38,7 +51,8 @@ class HarmonicSnapshot:
     CS: float  # Coherence Score
     phi_params: Dict[str, float]
     signature: Optional[str] = None
-
+    # CAL enhancement: Add Ω-state vector components
+    omega_state: Optional[Dict[str, Any]] = None  # Ω-state vector from CAL
 
 @dataclass
 class HarmonicProofBundle:
@@ -47,11 +61,13 @@ class HarmonicProofBundle:
     aggregated_CS: float
     aggregator_signature: Optional[str] = None
     timestamp: float = 0.0
+    # CAL enhancement: Add Ω-state recursion data
+    omega_coherence: Optional[float] = None  # Ω-state based coherence
+    coherence_penalties: Optional[Dict[str, float]] = None  # Penalty components
 
     def __post_init__(self):
         if self.timestamp is None:
             self.timestamp = time.time()
-
 
 def compute_spectrum(times: np.ndarray, values: np.ndarray) -> List[Tuple[float, float]]:
     """
@@ -77,7 +93,6 @@ def compute_spectrum(times: np.ndarray, values: np.ndarray) -> List[Tuple[float,
     
     # Return as list of tuples
     return list(zip(freqs, amps))
-
 
 def pairwise_coherence(x1: np.ndarray, x2: np.ndarray, fs: float) -> float:
     """
@@ -107,7 +122,6 @@ def pairwise_coherence(x1: np.ndarray, x2: np.ndarray, fs: float) -> float:
     # Return mean coherence (normalized)
     return float(np.mean(coherence.real))
 
-
 def compute_coherence_score(
     local_snapshot: HarmonicSnapshot, 
     remote_snapshots: List[HarmonicSnapshot]
@@ -122,6 +136,33 @@ def compute_coherence_score(
     Returns:
         Aggregated coherence score (0-1)
     """
+    # CAL enhancement: Use Ω-state recursion if available
+    if CAL_AVAILABLE and CoherenceAttunementLayer and OmegaState and local_snapshot.omega_state:
+        # Use CAL's Ω-state based coherence computation
+        cal = CoherenceAttunementLayer()
+        omega_states = []
+        
+        # Convert snapshots to Ω-states
+        for snapshot in [local_snapshot] + remote_snapshots:
+            if snapshot.omega_state:
+                omega_state = OmegaState(
+                    timestamp=snapshot.timestamp,
+                    token_rate=snapshot.omega_state.get("token_rate", 0.0),
+                    sentiment_energy=snapshot.omega_state.get("sentiment_energy", 0.0),
+                    semantic_shift=snapshot.omega_state.get("semantic_shift", 0.0),
+                    meta_attention_spectrum=snapshot.omega_state.get("meta_attention_spectrum", []),
+                    coherence_score=snapshot.omega_state.get("coherence_score", 0.0),
+                    modulator=snapshot.omega_state.get("modulator", 1.0),
+                    time_delay=snapshot.omega_state.get("time_delay", 0.0)
+                )
+                omega_states.append(omega_state)
+        
+        if omega_states:
+            # Compute Ω-state based coherence
+            coherence, penalties = cal.compute_recursive_coherence(omega_states)
+            return coherence
+    
+    # Fallback to FFT-based correlation (original implementation)
     if not remote_snapshots:
         return 0.0
     
@@ -155,7 +196,6 @@ def compute_coherence_score(
     # Return mean coherence score
     return float(np.mean(coherence_scores))
 
-
 def apply_recursive_decay(
     coherence_series: List[float], 
     tau_steps: int = 3
@@ -186,7 +226,6 @@ def apply_recursive_decay(
         return 0.0
         
     return total / weight_sum
-
 
 def recursive_validate(
     snapshot_bundle: List[HarmonicSnapshot],
@@ -219,23 +258,59 @@ def recursive_validate(
     # Apply recursive decay to get aggregated score
     aggregated_CS = apply_recursive_decay(coherences)
     
+    # CAL enhancement: Compute Ω-state based coherence if available
+    omega_coherence = None
+    coherence_penalties = None
+    
+    if CAL_AVAILABLE and CoherenceAttunementLayer and OmegaState:
+        cal = CoherenceAttunementLayer()
+        omega_states = []
+        
+        # Convert snapshots to Ω-states
+        for snapshot in snapshot_bundle:
+            if snapshot.omega_state:
+                omega_state = OmegaState(
+                    timestamp=snapshot.timestamp,
+                    token_rate=snapshot.omega_state.get("token_rate", 0.0),
+                    sentiment_energy=snapshot.omega_state.get("sentiment_energy", 0.0),
+                    semantic_shift=snapshot.omega_state.get("semantic_shift", 0.0),
+                    meta_attention_spectrum=snapshot.omega_state.get("meta_attention_spectrum", []),
+                    coherence_score=snapshot.omega_state.get("coherence_score", 0.0),
+                    modulator=snapshot.omega_state.get("modulator", 1.0),
+                    time_delay=snapshot.omega_state.get("time_delay", 0.0)
+                )
+                omega_states.append(omega_state)
+        
+        if omega_states:
+            # Compute Ω-state based coherence with penalties
+            coherence, penalties = cal.compute_recursive_coherence(omega_states)
+            coherence_penalties = {
+                "cosine": penalties.cosine_penalty,
+                "entropy": penalties.entropy_penalty,
+                "variance": penalties.variance_penalty
+            }
+            omega_coherence = coherence
+    
     # Create proof bundle
     proof_bundle = HarmonicProofBundle(
         snapshots=snapshot_bundle,
-        aggregated_CS=aggregated_CS
+        aggregated_CS=aggregated_CS,
+        omega_coherence=omega_coherence,
+        coherence_penalties=coherence_penalties
     )
     
-    # Validate against threshold
-    is_valid = aggregated_CS >= threshold
+    # Validate against threshold (use Ω-coherence if available, otherwise FFT-based)
+    validation_score = omega_coherence if omega_coherence is not None else aggregated_CS
+    is_valid = validation_score >= threshold
     
     return is_valid, proof_bundle
-
 
 def make_snapshot(
     node_id: str,
     times: List[float],
     values: List[float],
-    secret_key: Optional[str] = None
+    secret_key: Optional[str] = None,
+    omega_state: Optional[Dict[str, Any]] = None  # CAL enhancement
 ) -> HarmonicSnapshot:
     """
     Create a harmonic snapshot with optional signature
@@ -245,6 +320,7 @@ def make_snapshot(
         times: Time series timestamps
         values: Time series values
         secret_key: Optional secret key for signing
+        omega_state: Optional Ω-state vector from CAL
         
     Returns:
         HarmonicSnapshot object
@@ -276,7 +352,8 @@ def make_snapshot(
             "phi": PHI,
             "lambda": LAMBDA,
             "tau": 1.0  # Placeholder value
-        }
+        },
+        omega_state=omega_state  # CAL enhancement
     )
     
     # Add signature if secret key provided
@@ -289,7 +366,6 @@ def make_snapshot(
         ).hexdigest()
     
     return snapshot
-
 
 def update_snapshot_coherence(snapshot: HarmonicSnapshot, CS: float) -> HarmonicSnapshot:
     """
@@ -304,7 +380,6 @@ def update_snapshot_coherence(snapshot: HarmonicSnapshot, CS: float) -> Harmonic
     """
     snapshot.CS = CS
     return snapshot
-
 
 def calculate_token_rewards(coherence_score: float, validator_chr_score: float) -> Dict[str, float]:
     """
@@ -343,7 +418,6 @@ def calculate_token_rewards(coherence_score: float, validator_chr_score: float) 
     
     return rewards
 
-
 def validate_harmonic_transaction(tx: Dict[str, Any], config: Dict[str, float]) -> bool:
     """
     Validate a harmonic transaction based on coherence score and CHR reputation
@@ -365,7 +439,6 @@ def validate_harmonic_transaction(tx: Dict[str, Any], config: Dict[str, float]) 
         return True
     return False
 
-
 def generate_test_signal(freq: float, phase: float, duration: float, sample_rate: float) -> Tuple[np.ndarray, np.ndarray]:
     """
     Generate a test sinusoidal signal
@@ -383,7 +456,6 @@ def generate_test_signal(freq: float, phase: float, duration: float, sample_rate
     x = np.sin(2 * np.pi * freq * t + phase)
     return t, x
 
-
 if __name__ == "__main__":
     # Example usage
     print("Harmonic Validation Module - Test")
@@ -399,27 +471,54 @@ if __name__ == "__main__":
     x3 += 0.2 * np.random.randn(len(x3))
     
     # Create snapshots
-    snapshot_a = make_snapshot("node-A", t1.tolist(), x1.tolist(), "secretA")
-    snapshot_b = make_snapshot("node-B", t2.tolist(), x2.tolist(), "secretB")
-    snapshot_c = make_snapshot("node-C", t3.tolist(), x3.tolist(), "secretC")
+    snap1 = make_snapshot("node-A", t1.tolist(), x1.tolist())
+    snap2 = make_snapshot("node-B", t2.tolist(), x2.tolist())
+    snap3 = make_snapshot("node-C", t3.tolist(), x3.tolist())
     
-    # Test coherence computation
-    coherence_ab = pairwise_coherence(x1, x2, 1000)
-    coherence_ac = pairwise_coherence(x1, x3, 1000)
+    # Compute coherence between snapshots
+    coherence_ab = compute_coherence_score(snap1, [snap2])
+    coherence_ac = compute_coherence_score(snap1, [snap3])
     
-    print(f"Coherence A-B (should be high): {coherence_ab:.3f}")
-    print(f"Coherence A-C (should be lower): {coherence_ac:.3f}")
+    print(f"Coherence A-B: {coherence_ab:.4f}")
+    print(f"Coherence A-C: {coherence_ac:.4f}")
     
     # Test recursive validation
-    bundle = [snapshot_a, snapshot_b, snapshot_c]
+    bundle = [snap1, snap2, snap3]
     is_valid, proof = recursive_validate(bundle, threshold=0.5)
     
+    print(f"Bundle validation: {'Valid' if is_valid else 'Invalid'}")
     if proof:
-        print(f"Aggregated Coherence Score: {proof.aggregated_CS:.3f}")
-        print(f"Validation result: {'PASS' if is_valid else 'FAIL'}")
+        print(f"Aggregated CS: {proof.aggregated_CS:.4f}")
+    
+    # Test CAL integration if available
+    if CAL_AVAILABLE and CoherenceAttunementLayer:
+        print("CAL integration available - Ω-state recursion enabled")
+        cal = CoherenceAttunementLayer()
         
-        # Test token rewards calculation
-        rewards = calculate_token_rewards(proof.aggregated_CS, 0.85)
-        print(f"Token rewards for coherence {proof.aggregated_CS:.3f}:")
-        for token, amount in rewards.items():
-            print(f"  {token}: {amount:.2f}")
+        # Create Ω-state
+        omega = cal.compute_omega_state(
+            token_data={"rate": 150.0},
+            sentiment_data={"energy": 0.7},
+            semantic_data={"shift": 0.3},
+            attention_data=[0.1, 0.2, 0.3, 0.4, 0.5]
+        )
+        
+        # Create snapshot with Ω-state
+        snap_with_omega = make_snapshot(
+            "node-D", 
+            t1.tolist(), 
+            x1.tolist(),
+            omega_state={
+                "token_rate": omega.token_rate,
+                "sentiment_energy": omega.sentiment_energy,
+                "semantic_shift": omega.semantic_shift,
+                "meta_attention_spectrum": omega.meta_attention_spectrum,
+                "coherence_score": omega.coherence_score,
+                "modulator": omega.modulator,
+                "time_delay": omega.time_delay
+            }
+        )
+        
+        print(f"Ω-state coherence: {omega.coherence_score:.4f}")
+    else:
+        print("CAL integration not available - using FFT-based correlation")
