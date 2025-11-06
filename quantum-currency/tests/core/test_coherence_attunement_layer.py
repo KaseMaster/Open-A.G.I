@@ -9,7 +9,7 @@ import unittest
 import numpy as np
 
 # Add the src directory to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 from models.coherence_attunement_layer import CoherenceAttunementLayer, OmegaState
 from core.harmonic_validation import make_snapshot, compute_coherence_score, recursive_validate
@@ -26,7 +26,7 @@ class TestCoherenceAttunementLayer(unittest.TestCase):
     def test_omega_state_computation(self):
         """Test Ω-state vector computation"""
         omega = self.cal.compute_omega_state(
-            token_data={"rate": 150.0},
+            token_data={"rate": 5.0},  # Within bounds
             sentiment_data={"energy": 0.7},
             semantic_data={"shift": 0.3},
             attention_data=[0.1, 0.2, 0.3, 0.4, 0.5]
@@ -47,7 +47,7 @@ class TestCoherenceAttunementLayer(unittest.TestCase):
         omega_states = []
         for i in range(3):
             omega = self.cal.compute_omega_state(
-                token_data={"rate": 100.0 + i * 20},
+                token_data={"rate": 3.0 + i * 2},  # Within bounds
                 sentiment_data={"energy": 0.5 + i * 0.1},
                 semantic_data={"shift": 0.2 + i * 0.05},
                 attention_data=[0.1 + i*0.1, 0.2 + i*0.1, 0.3 + i*0.1, 0.4 + i*0.1, 0.5 + i*0.1]
@@ -71,9 +71,9 @@ class TestCoherenceAttunementLayer(unittest.TestCase):
         
     def test_dimensional_consistency_validation(self):
         """Test dimensional consistency validation"""
-        # Create a valid Ω-state
+        # Create a valid Ω-state with values within bounds
         omega = self.cal.compute_omega_state(
-            token_data={"rate": 150.0},
+            token_data={"rate": 5.0},  # Within bounds
             sentiment_data={"energy": 0.7},
             semantic_data={"shift": 0.3},
             attention_data=[0.1, 0.2, 0.3, 0.4, 0.5]
@@ -90,7 +90,7 @@ class TestCoherenceAttunementLayer(unittest.TestCase):
         # Create some Ω-states first
         for i in range(5):
             self.cal.compute_omega_state(
-                token_data={"rate": 100.0 + i * 10},
+                token_data={"rate": 3.0 + i * 1},  # Within bounds
                 sentiment_data={"energy": 0.5 + i * 0.1},
                 semantic_data={"shift": 0.2 + i * 0.05},
                 attention_data=[0.1, 0.2, 0.3, 0.4, 0.5]
@@ -109,7 +109,7 @@ class TestCoherenceAttunementLayer(unittest.TestCase):
         # Create some Ω-states
         for i in range(3):
             self.cal.compute_omega_state(
-                token_data={"rate": 100.0 + i * 10},
+                token_data={"rate": 3.0 + i * 1},  # Within bounds
                 sentiment_data={"energy": 0.5 + i * 0.1},
                 semantic_data={"shift": 0.2 + i * 0.05},
                 attention_data=[0.1, 0.2, 0.3, 0.4, 0.5]
@@ -125,7 +125,7 @@ class TestCoherenceAttunementLayer(unittest.TestCase):
         """Test integration with harmonic validation module"""
         # Create Ω-state
         omega = self.cal.compute_omega_state(
-            token_data={"rate": 150.0},
+            token_data={"rate": 5.0},  # Within bounds
             sentiment_data={"energy": 0.7},
             semantic_data={"shift": 0.3},
             attention_data=[0.1, 0.2, 0.3, 0.4, 0.5]
