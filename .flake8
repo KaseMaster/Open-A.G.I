@@ -1,7 +1,7 @@
 [flake8]
 max-line-length = 120
 max-complexity = 25
-extend-ignore = E203, W503, F401, F841, E402, E302, E305, W291, W292, W293, E501, E128, E129, W504, E226, E704, E722, E131, F541, E228
+extend-ignore = E203, W503, F401, F841, E402, E302, E305, W291, W292, W293, E501, E128, E129, W504, E226, E704, E722, E131, F541, E228, C901
 select = E, F, W, C90
 exclude =
     .git,

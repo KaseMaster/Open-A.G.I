@@ -737,9 +737,11 @@ async def demo_production_use_cases():
     print("✅ Resultado:")
     print(f"   • Caso de uso: {customer_result.use_case_name}")
     print(f"   • Éxito: {'Sí' if customer_result.success else 'No'}")
-    print(".3f"    print(f"   • Sentimiento detectado: {customer_result.results.get('sentiment_analysis', 'N/A')}")
+    print(f"   • Tiempo de ejecución: {customer_result.metrics.get('execution_time', 0):.3f}s")
+    print(f"   • Sentimiento detectado: {customer_result.results.get('sentiment_analysis', 'N/A')}")
     print(f"   • Respuesta generada: {customer_result.results.get('generated_response', '')[:80]}...")
-    print(".3f"
+    print(f"   • Confianza: {customer_result.metrics.get('confidence', 0):.3f}")
+
     # ===== DEMO 2: CONTENT MODERATION =====
     print("\\n\\n🛡️ DEMO 2: Content Moderation System")
 
@@ -748,7 +750,7 @@ async def demo_production_use_cases():
 
     print("✅ Resultado:")
     print(f"   • Decisión: {moderation_result.results.get('moderation_decision', 'N/A')}")
-    print(".3f"    print(f"   • Acción requerida: {'Sí' if moderation_result.results.get('action_required', False) else 'No'}")
+    print(f"   • Acción requerida: {'Sí' if moderation_result.results.get('action_required', False) else 'No'}")
     print(f"   • Explicación: {moderation_result.results.get('explanation', '')[:60]}...")
 
     # ===== DEMO 3: MEDICAL DIAGNOSIS ASSISTANT =====
@@ -761,7 +763,8 @@ async def demo_production_use_cases():
     print(f"   • Nivel de urgencia: {medical_result.results.get('diagnosis_assistance', {}).get('symptom_analysis', {}).get('urgency_level', 'N/A')}")
     print(f"   • Nivel de riesgo: {medical_result.metrics.get('risk_level', 'N/A')}")
     print(f"   • Recomendaciones: {len(medical_result.results.get('recommendations', {}).get('immediate_actions', []))} acciones inmediatas")
-    print(".3f"
+    print(f"   • Tiempo de ejecución: {medical_result.metrics.get('processing_time', 0):.3f}s")
+
     # ===== DEMO 4: PERFORMANCE METRICS =====
     print("\\n\\n📊 DEMO 4: Performance Metrics")
 
@@ -770,11 +773,13 @@ async def demo_production_use_cases():
     print("📈 Estadísticas de producción:")
     print(f"   • Total de ejecuciones: {demo_stats['total_demo_runs']}")
     print(f"   • Tasa de éxito: {(demo_stats['successful_runs'] / demo_stats['total_demo_runs'] * 100):.1f}%")
-    print(".3f"    print(".1f"    print(".1f"    print(".1f"
+    print(f"   • Tiempo de respuesta promedio: {demo_stats['avg_response_time']:.1f}s")
+
     # Breakdown por caso de uso
     print("\\n   📋 Breakdown por caso de uso:")
     for use_case, stats in demo_stats['use_case_breakdown'].items():
-        print(".1f"
+        print(f"   • {use_case}: {stats['runs']} ejecuciones, {stats['success_rate'] * 100:.1f}% de éxito")
+
     # ===== DEMO 5: MONITORING INTEGRATION =====
     print("\\n\\n📈 DEMO 5: Monitoring Integration")
 
@@ -788,7 +793,7 @@ async def demo_production_use_cases():
 
     # Performance report
     perf_report = monitoring_data['performance_report']
-    print(".3f"    print(f"   • Error rate: {perf_report.error_rate:.1f}%")
+    print(f"   • Error rate: {perf_report.error_rate:.1f}%")
 
     # ===== RESULTADOS FINALES =====
     print("\\n\\n🎉 DEMO COMPLETA - RESULTADOS FINALES")

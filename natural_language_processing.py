@@ -901,15 +901,15 @@ async def demo_natural_language_processing():
     print(f"✅ Texto de ejemplo preparado ({len(sample_text)} caracteres)")
 
     # Procesar texto completo
-    print("\\n🚀 Procesando texto con NLP completo...")
+    print("\n🚀 Procesando texto con NLP completo...")
     start_time = time.time()
 
     results = await nlp_system.process_text(sample_text)
 
     processing_time = time.time() - start_time
-    print(".2f"
+    print(f"⏱️ Processing time: {processing_time:.2f}s")
     # Mostrar resultados detallados
-    print("\\n📊 RESULTADOS DETALLADOS:")
+    print("\n📊 RESULTADOS DETALLADOS:")
 
     if 'classification' in results:
         classification = results['classification']
@@ -971,7 +971,8 @@ async def demo_natural_language_processing():
 
     print(f"Texto 1: {text1}")
     print(f"Texto 2: {text2}")
-    print(".3f"
+    print(f"   • Similitud: {similarity:.3f}")
+
     # Estadísticas finales
     print("\\n\\n🎉 DEMO COMPLETA - RESULTADOS FINALES")
     print("=" * 50)
@@ -985,8 +986,9 @@ async def demo_natural_language_processing():
     print(f"   ✅ Text generation operativo")
     print(f"   ✅ Keywords extraction automático")
     print(f"   ✅ Text similarity analysis")
-    print(".2f"
-    print("\\n🚀 CAPACIDADES DEMOSTRADAS:")
+    print(f"   ⏱️ Tiempo total: {time.time() - start_time:.2f}s")
+
+    print("\n🚀 CAPACIDADES DEMOSTRADAS:")
     print("   ✅ BERT-based text classification")
     print("   ✅ Named Entity Recognition con transformers")
     print("   ✅ Sentiment analysis multi-lingual")

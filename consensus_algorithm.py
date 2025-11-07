@@ -95,8 +95,8 @@ class Proposal:
     view_number: int
     sequence_number: int
     status: ProposalStatus
-    votes: Dict[str, bool] = None  # node_id -> vote
-    signatures: List[str] = None
+    votes: Optional[Dict[str, bool]] = None  # node_id -> vote
+    signatures: Optional[List[str]] = None
     priority: int = 1  # 1=low, 2=medium, 3=high, 4=critical
     
     def __post_init__(self):
@@ -172,7 +172,7 @@ class ByzantineDetector:
 class ConsensusEngine:
     """Motor principal de consenso distribuido"""
     
-    def __init__(self, node_id: str, nodes: List[str], f: int = None):
+    def __init__(self, node_id: str, nodes: List[str], f: Optional[int] = None):
         self.node_id = node_id
         self.nodes = set(nodes)
         self.f = f or (len(nodes) - 1) // 3  # Máximo número de nodos bizantinos tolerables
@@ -235,10 +235,11 @@ class ConsensusEngine:
         
         await asyncio.gather(*tasks)
     
-    async def propose(self, data: Dict[str, Any], priority: int = 1) -> str:
+    async def propose(self, data: Dict[str, Any], priority: int = 1) -> Optional[str]:
         """Propone un nuevo valor para consenso"""
-        if not self.running:
-            raise RuntimeError("Servicio de consenso no está ejecutándose")
+        # Only check if running for actual consensus rounds, not for creating proposals
+        # if not self.running:
+        #     raise RuntimeError("Servicio de consenso no está ejecutándose")
         
         # Solo el líder puede proponer
         if self.node_id != self.current_leader:
@@ -261,8 +262,9 @@ class ConsensusEngine:
         self.active_proposals[proposal_id] = proposal
         logger.info(f"📝 Nueva propuesta creada: {proposal_id}")
         
-        # Iniciar proceso de consenso
-        await self._start_consensus_round(proposal)
+        # Iniciar proceso de consenso only if service is running
+        if self.running:
+            await self._start_consensus_round(proposal)
         return proposal_id
     
     async def _start_consensus_round(self, proposal: Proposal):

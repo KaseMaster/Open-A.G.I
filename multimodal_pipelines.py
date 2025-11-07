@@ -668,7 +668,8 @@ async def demo_multimodal_pipelines():
     print("✅ Resultado VQA:")
     print(f"   • Pregunta: {vqa_input.text}")
     print(f"   • Respuesta: {vqa_result.primary_output}")
-    print(".3f"    print(f"   • Modalidades usadas: {vqa_result.modalities_used}")
+    print(f"   • Tiempo de procesamiento: {vqa_result.processing_time:.3f}s")
+    print(f"   • Modalidades usadas: {vqa_result.modalities_used}")
 
     # ===== DEMO 2: IMAGE CAPTIONING =====
     print("\\n\\n📝 DEMO 2: Image Captioning")
@@ -687,7 +688,8 @@ async def demo_multimodal_pipelines():
 
     print("✅ Resultado Captioning:")
     print(f"   • Caption: {caption_result.primary_output}")
-    print(".3f"    print(f"   • Estilo: {caption_config.custom_components['style']}")
+    print(f"   • Tiempo de procesamiento: {caption_result.processing_time:.3f}s")
+    print(f"   • Estilo: {caption_config.custom_components['style']}")
 
     # ===== DEMO 3: MULTIMODAL SENTIMENT ANALYSIS =====
     print("\\n\\n😊 DEMO 3: Multimodal Sentiment Analysis")
@@ -706,7 +708,7 @@ async def demo_multimodal_pipelines():
     print("✅ Resultado Sentiment:")
     print(f"   • Texto: {sentiment_input.text}")
     print(f"   • Sentimiento: {sentiment_result.primary_output}")
-    print(".3f"    print(f"   • Confianza multimodal: {sentiment_result.confidence_scores.get('multimodal', 0):.3f}")
+    print(f"   • Confianza multimodal: {sentiment_result.confidence_scores.get('multimodal', 0):.3f}")
 
     # ===== DEMO 4: CROSS-MODAL RETRIEVAL =====
     print("\\n\\n🔍 DEMO 4: Cross-Modal Retrieval")

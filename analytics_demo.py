@@ -49,7 +49,8 @@ async def quick_analytics_demo():
     print("\\n🔮 FORECASTS:")
     for forecast in forecasts:
         mae = forecast.metrics.get('mae', 'N/A')
-        print(".3f"
+        print(f"   📊 {forecast.model_name.value}: MAE={mae:.3f}")
+
     # Insights
     insights = await analytics.generate_insights(analysis, forecasts)
     print("\\n💡 INSIGHTS:")

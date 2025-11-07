@@ -538,7 +538,9 @@ class AutoMLTrainer:
                 "candidate": candidate
             }
 
-            logger.info(".3f"            return metrics
+            training_time = time.time() - start_time
+            logger.info(f"✅ Modelo {candidate.model_id} entrenado en {training_time:.3f}s")
+            return metrics
 
         except Exception as e:
             logger.error(f"❌ Error entrenando {candidate.model_id}: {e}")
@@ -603,7 +605,8 @@ class AEGISAutoML:
             )
 
             logger.info(f"🏆 Mejor modelo: {best_candidate.model_id} "
-                       ".3f"
+                       f"(Score: {best_metrics[config.target_metric]:.3f})")
+
             # Paso 5: Crear ensemble (opcional)
             ensemble_models = []
             if config.ensemble_size > 1 and len(evaluation_results) >= config.ensemble_size:
@@ -657,7 +660,7 @@ class AEGISAutoML:
 
             self.completed_runs.append(result)
 
-            logger.info("✅ AutoML completado exitosamente"
+            logger.info("✅ AutoML completado exitosamente")
             return result
 
         except Exception as e:
@@ -749,8 +752,10 @@ async def demo_automl():
 
     if result.status == "completed":
         print("\\n🎉 AutoML completado exitosamente!")
-        print(".1f"        print(f"   📊 Modelos evaluados: {result.models_evaluated}")
-        print(".3f"        print(f"   🏆 Mejor modelo: {result.best_model_id}")
+        print(f"   ⏱️ Tiempo total: {result.training_time:.1f}s")
+        print(f"   📊 Modelos evaluados: {result.models_evaluated}")
+        print(f"   🏆 Mejor score: {result.best_score:.3f}")
+        print(f"   🤝 Ensemble: {'✅' if result.ensemble_models else '❌'}")
 
         if result.ensemble_models:
             print(f"   🤝 Ensemble creado: {len(result.ensemble_models)} modelos")
@@ -764,7 +769,8 @@ async def demo_automl():
         print("\\n🏗️ Modelos generados:")
         for i, candidate in enumerate(result.models_generated[:5]):  # Primeros 5
             print(f"   {i+1}. {candidate.architecture.value} - "
-                  ".3f"                  ".1f")
+                  f"{candidate.training_time_estimate:.3f}s - "
+                  f"{candidate.expected_accuracy:.1f}")
 
     else:
         print(f"❌ AutoML falló: {result.status}")
@@ -775,7 +781,7 @@ async def demo_automl():
     print(f"   • Ejecuciones totales: {stats['total_runs']}")
     print(f"   • Ejecuciones exitosas: {stats['completed_runs']}")
     print(f"   • Score promedio: {stats['avg_score']:.3f}")
-    print(".1f"    print(f"   • Modelos generados: {stats['total_models_generated']}")
+    print(f"   • Modelos generados: {stats['total_models_generated']}")
     print(f"   • Optimizaciones aplicadas: {stats['optimization_applied']}")
 
     print("\\n" + "=" * 60)

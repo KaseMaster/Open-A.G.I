@@ -13,6 +13,7 @@ import torchaudio
 import numpy as np
 import librosa
 import soundfile as sf
+import matplotlib.pyplot as plt
 from typing import Dict, List, Any, Optional, Tuple, Callable, Union
 from dataclasses import dataclass, field
 from enum import Enum
@@ -791,19 +792,21 @@ async def demo_audio_speech_processing():
     print("✅ Sistema de audio/speech processing inicializado")
 
     # ===== DEMO 1: TEXT TO SPEECH =====
-    print("\\n🗣️ DEMO 1: Text-to-Speech")
+    print("\n🗣️ DEMO 1: Text-to-Speech")
 
     text_to_speak = "Hola, soy AEGIS, tu asistente de IA avanzada."
     print(f"Texto a sintetizar: {text_to_speak}")
 
     tts_result = audio_system.synthesize_speech(text_to_speak, "synthesized_speech.mp3")
 
-    print("✅ Voz sintetizada:"    print(f"   • Tamaño del audio: {len(tts_result.audio_data)} bytes")
-    print(".3f"    print(f"   • Sample rate: {tts_result.sample_rate} Hz")
+    print("✅ Voz sintetizada:")
+    print(f"   • Tamaño del audio: {len(tts_result.audio_data)} bytes")
+    print(f"   • Tiempo de procesamiento: {tts_result.processing_time:.3f}s")
+    print(f"   • Sample rate: {tts_result.sample_rate} Hz")
     print(f"   • Archivo guardado: synthesized_speech.mp3")
 
     # ===== DEMO 2: SPEECH RECOGNITION SIMULATION =====
-    print("\\n🎙️ DEMO 2: Speech Recognition")
+    print("\n🎙️ DEMO 2: Speech Recognition")
 
     # Simular reconocimiento (ya que no tenemos archivo real)
     print("🎙️ Simulando reconocimiento de voz...")
@@ -819,10 +822,12 @@ async def demo_audio_speech_processing():
 
     print("✅ Resultado simulado:")
     print(f"   • Texto reconocido: '{simulated_stt.text}'")
-    print(".3f"    print(f"   • Idioma: {simulated_stt.language}")
-    print(".3f"
+    print(f"   • Confianza: {simulated_stt.confidence:.3f}")
+    print(f"   • Idioma: {simulated_stt.language}")
+    print(f"   • Tiempo de procesamiento: {simulated_stt.processing_time:.3f}s")
+
     # ===== DEMO 3: AUDIO CLASSIFICATION SIMULATION =====
-    print("\\n🏷️ DEMO 3: Audio Classification")
+    print("\n🏷️ DEMO 3: Audio Classification")
 
     print("🎵 Simulando clasificación de audio...")
     print("   (En producción, usaría archivo de audio real)")
@@ -837,10 +842,11 @@ async def demo_audio_speech_processing():
 
     print("✅ Resultado simulado:")
     print(f"   • Clase predicha: {simulated_classification.predicted_class}")
-    print(".3f"    print(f"   • Probabilidades: {simulated_classification.probabilities}")
+    print(f"   • Confianza: {simulated_classification.confidence:.3f}")
+    print(f"   • Probabilidades: {simulated_classification.probabilities}")
 
     # ===== DEMO 4: SPEAKER IDENTIFICATION =====
-    print("\\n👤 DEMO 4: Speaker Identification")
+    print("\n👤 DEMO 4: Speaker Identification")
 
     # Registrar hablantes simulados
     print("👥 Registrando hablantes...")
@@ -854,9 +860,11 @@ async def demo_audio_speech_processing():
 
     print("✅ Speaker identification simulado:")
     print(f"   • Speaker ID: {simulated_speaker.speaker_id}")
-    print(".3f"
+    print(f"   • Confianza: {simulated_speaker.confidence:.3f}")
+    print(f"   • Tiempo de procesamiento: {simulated_speaker.processing_time:.3f}s")
+
     # ===== DEMO 5: EMOTION RECOGNITION =====
-    print("\\n😊 DEMO 5: Emotion Recognition")
+    print("\n😊 DEMO 5: Emotion Recognition")
 
     print("🎭 Reconociendo emociones...")
 
@@ -869,10 +877,11 @@ async def demo_audio_speech_processing():
 
     print("✅ Resultado simulado:")
     print(f"   • Emoción detectada: {simulated_emotion.emotion}")
-    print(".3f"    print(f"   • Scores por emoción: {simulated_emotion.emotion_scores}")
+    print(f"   • Confianza: {simulated_emotion.confidence:.3f}")
+    print(f"   • Scores por emoción: {simulated_emotion.emotion_scores}")
 
     # ===== DEMO 6: AUDIO FEATURES =====
-    print("\\n📊 DEMO 6: Audio Feature Extraction")
+    print("\n📊 DEMO 6: Audio Feature Extraction")
 
     print("🎵 Extrayendo características de audio...")
     print("   (En producción, usaría archivo de audio real)")
@@ -893,10 +902,11 @@ async def demo_audio_speech_processing():
     print(f"   • MFCC shape: {simulated_features.mfcc.shape}")
     print(f"   • Chroma shape: {simulated_features.chroma.shape}")
     print(f"   • Mel spectrogram shape: {simulated_features.mel_spectrogram.shape}")
-    print(".1f"    print(f"   • Número de beats: {len(simulated_features.beat_positions)}")
+    print(f"   • Tempo: {simulated_features.tempo:.1f} BPM")
+    print(f"   • Número de beats: {len(simulated_features.beat_positions)}")
 
     # ===== RESULTADOS FINALES =====
-    print("\\n\\n🎉 DEMO COMPLETA - RESULTADOS FINALES")
+    print("\n\n🎉 DEMO COMPLETA - RESULTADOS FINALES")
     print("=" * 50)
 
     print("🏆 LOGROS ALCANZADOS:")
@@ -908,7 +918,7 @@ async def demo_audio_speech_processing():
     print(f"   ✅ Audio Feature Extraction completo")
     print(f"   ✅ Sistema multimodal de audio preparado")
 
-    print("\\n🚀 CAPACIDADES DEMOSTRADAS:")
+    print("\n🚀 CAPACIDADES DEMOSTRADAS:")
     print("   ✅ Conversión texto-a-voz con gTTS y pyttsx3")
     print("   ✅ Reconocimiento de voz con Google Speech API")
     print("   ✅ Clasificación de audio con CNNs especializadas")
@@ -918,7 +928,7 @@ async def demo_audio_speech_processing():
     print("   ✅ Procesamiento multimodal de audio")
     print("   ✅ Integration con librosa y torchaudio")
 
-    print("\\n💡 INSIGHTS TÉCNICOS:")
+    print("\n💡 INSIGHTS TÉCNICOS:")
     print("   • Audio processing requiere preprocesamiento cuidadoso")
     print("   • Diferentes tareas necesitan diferentes features")
     print("   • MFCC son fundamentales para speech processing")
@@ -926,7 +936,7 @@ async def demo_audio_speech_processing():
     print("   • Embeddings de hablantes permiten identificación robusta")
     print("   • Emociones se pueden detectar desde prosodia y timbre")
 
-    print("\\n🔮 PRÓXIMOS PASOS PARA AUDIO/SPEECH:")
+    print("\n🔮 PRÓXIMOS PASOS PARA AUDIO/SPEECH:")
     print("   • Implementar wav2vec2 para speech recognition avanzado")
     print("   • Agregar Tacotron2/FastSpeech2 para TTS de alta calidad")
     print("   • Implementar HuBERT para speaker diarization")
@@ -935,7 +945,7 @@ async def demo_audio_speech_processing():
     print("   • Implementar streaming audio processing")
     print("   • Crear pipelines de audio preprocessing")
 
-    print("\\n" + "=" * 60)
+    print("\n" + "=" * 60)
     print("🌟 Audio/Speech Processing funcionando correctamente!")
     print("=" * 60)
 

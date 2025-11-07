@@ -321,11 +321,13 @@ def render_text_analysis():
 
         with st.spinner("Analizando texto..."):
             # Llamar a la API
+            start_time = time.time()
             result = app.api_request("POST", "/api/v1/text/analyze", json={
                 "text": text_input,
                 "tasks": tasks,
                 "language": language
             })
+            processing_time = time.time() - start_time
 
             if result and result.get("success"):
                 data = result["data"]
@@ -341,7 +343,8 @@ def render_text_analysis():
                 # Agregar al historial
                 app.add_to_history("text_analysis", data["results"])
 
-                st.info(".3f"            else:
+                st.info(f"✅ Análisis completado en {processing_time:.3f}s")
+            else:
                 st.error("Error en el análisis de texto")
 
 def render_image_analysis():
@@ -399,7 +402,8 @@ def render_image_analysis():
                                     st.json(data["results"][task])
 
                             app.add_to_history("image_analysis", data["results"])
-                            st.info(".3f"                        else:
+                            st.info("✅ Análisis completado")
+                        else:
                             st.error("Error en el análisis de imagen")
                     else:
                         st.error(f"API Error: {response.status_code}")

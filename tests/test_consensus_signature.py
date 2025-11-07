@@ -3,6 +3,7 @@ import time
 import base64
 import os
 import sys
+import pytest
 from typing import Any, Dict, List
 
 # Asegurar que el directorio del proyecto está en sys.path
@@ -24,6 +25,7 @@ class DummyNetworkManager:
         self.sent_messages.append({"channel_type": channel_type, "payload": payload})
 
 
+@pytest.mark.asyncio
 async def test_outgoing_signature_added_and_valid():
     # Identidad local
     priv = ed25519.Ed25519PrivateKey.generate()
@@ -64,6 +66,7 @@ async def test_outgoing_signature_added_and_valid():
     pub.verify(signature_bytes, msg_bytes)
 
 
+@pytest.mark.asyncio
 async def test_incoming_signature_verification():
     # Setup PBFT y handler
     priv_local = ed25519.Ed25519PrivateKey.generate()

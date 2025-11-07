@@ -27,6 +27,7 @@ try:
     from consensus_protocol import HybridConsensus
     from distributed_state_persistence import DistributedStateManager, StateType
     from ed25519_identity_manager import Ed25519IdentityManager
+    from cryptography.hazmat.primitives import serialization  # Add this import
     HAS_ALL_COMPONENTS = True
 except ImportError as e:
     print(f"⚠️ Componentes faltantes para tests: {e}")

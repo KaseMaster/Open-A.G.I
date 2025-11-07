@@ -19,6 +19,7 @@ from rich.text import Text
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.live import Live
 from rich.prompt import Prompt, Confirm
+from rich.group import Group
 import logging
 
 # Importar componentes del framework

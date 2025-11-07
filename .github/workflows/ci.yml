@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if (Test-Path -Path "requirements-test.txt") { pip install -r requirements.txt
+          if (Test-Path -Path "requirements-test.txt") { pip install -r requirements-test.txt } else { pip install -r requirements.txt }
           pip install pytest flake8 bandit pip-audit cryptography click
 
       - name: Lint (flake8)
@@ -49,11 +49,12 @@ jobs:
           pip-audit -f json -o pip-audit.json || exit 0
 
       - name: Upload pip-audit report
-        if: always()
+        if: always() && (success() || failure())
         uses: actions/upload-artifact@v4
         with:
           name: pip-audit-${{ matrix.python-version }}
           path: pip-audit.json
+          if-no-files-found: ignore
 
       - name: Security scan (bandit)
         continue-on-error: true
@@ -61,11 +62,12 @@ jobs:
           bandit -r . -f json -o bandit.json || exit 0
 
       - name: Upload bandit report
-        if: always()
+        if: always() && (success() || failure())
         uses: actions/upload-artifact@v4
         with:
           name: bandit-${{ matrix.python-version }}
           path: bandit.json
+          if-no-files-found: ignore
 
   linux-lint-and-test:
     runs-on: ubuntu-latest
@@ -103,11 +105,12 @@ jobs:
           pip-audit -f json -o pip-audit.json || exit 0
 
       - name: Upload pip-audit report
-        if: always()
+        if: always() && (success() || failure())
         uses: actions/upload-artifact@v4
         with:
           name: pip-audit-ubuntu-${{ matrix.python-version }}
           path: pip-audit.json
+          if-no-files-found: ignore
 
       - name: Security scan (bandit)
         continue-on-error: true
@@ -115,11 +118,12 @@ jobs:
           bandit -r . -f json -o bandit.json || exit 0
 
       - name: Upload bandit report
-        if: always()
+        if: always() && (success() || failure())
         uses: actions/upload-artifact@v4
         with:
           name: bandit-ubuntu-${{ matrix.python-version }}
           path: bandit.json
+          if-no-files-found: ignore
 
   docker-smoke-test:
     needs: [lint-and-test, linux-lint-and-test]
@@ -186,11 +190,12 @@ jobs:
           output-file: sbom.spdx.json
 
       - name: Upload SBOM artifact
-        if: always()
+        if: always() && (success() || failure())
         uses: actions/upload-artifact@v4
         with:
           name: sbom-spdx
           path: sbom.spdx.json
+          if-no-files-found: ignore
 
       - name: Install Cosign
         if: github.event_name == 'release' || (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
@@ -262,11 +267,12 @@ jobs:
           sha256sum sbom.spdx.json > sbom.spdx.json.sha256
 
       - name: Upload SBOM checksum artifact
-        if: always()
+        if: always() && (success() || failure())
         uses: actions/upload-artifact@v4
         with:
           name: sbom-spdx-sha256
           path: sbom.spdx.json.sha256
+          if-no-files-found: ignore
 
       - name: Publish SBOM to release assets
         if: github.event_name == 'release'
@@ -288,11 +294,14 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         with:
           args: --verbose --redact --report-format json --report-path gitleaks.json
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
       - name: Upload gitleaks report
-        if: always()
+        if: always() && (success() || failure())
         uses: actions/upload-artifact@v4
         with:
           name: gitleaks-report
           path: gitleaks.json
+          if-no-files-found: ignore
+          if-no-files-found: ignore

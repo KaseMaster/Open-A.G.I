@@ -25,7 +25,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -57,7 +57,7 @@ jobs:
           --durations=10 --tb=short -m "not integration and not e2e"
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         flags: unittests
@@ -72,22 +72,23 @@ jobs:
     # ===== LINTING Y CALIDAD =====
     - name: Run linting
       run: |
-        poetry run flake8 aegis/ tests/ --count --select=E9,F63,F7,F82 --show-source --statistics
-        poetry run flake8 aegis/ tests/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        poetry run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     - name: Run mypy type checking
       run: |
-        poetry run mypy aegis/ --ignore-missing-imports --no-strict-optional
+        poetry run mypy . --ignore-missing-imports --no-strict-optional
 
     - name: Run security linting
       run: |
-        poetry run bandit -r aegis/ -f json -o security_report.json || true
+        poetry run bandit -r . -f json -o security_report.json || true
 
     - name: Upload security report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-report-${{ matrix.python-version }}
         path: security_report.json
+        if-no-files-found: ignore
 
   # ===== TESTS DE SEGURIDAD =====
   security:
@@ -98,7 +99,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
@@ -119,12 +120,13 @@ jobs:
         poetry run pip-audit --format json > pip_audit_report.json || true
 
     - name: Upload security reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-audit-reports
         path: |
           safety_report.json
           pip_audit_report.json
+        if-no-files-found: ignore
 
     - name: Fail on critical vulnerabilities
       run: |
@@ -146,7 +148,7 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
 
@@ -164,13 +166,14 @@ jobs:
     - name: Test package installation
       run: |
         pip install dist/*.whl
-        python -c "import aegis; print('✅ Package installation successful')"
+        python -c "import aegis_api; print('✅ Package installation successful')"
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: aegis-package
         path: dist/
+        if-no-files-found: ignore
 
   # ===== DOCKER BUILD =====
   docker:
@@ -202,7 +205,7 @@ jobs:
           type=raw,value=latest,enable={{is_default_branch}}
 
     - name: Build and push Docker image
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         context: .
         push: ${{ github.event_name != 'pull_request' }}

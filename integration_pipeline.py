@@ -757,7 +757,9 @@ async def demo_integration_pipeline():
     print(f"   • Total de ejecuciones: {final_status['pipeline_stats']['total_runs']}")
     print(f"   • Ejecuciones exitosas: {final_status['pipeline_stats']['successful_runs']}")
     print(f"   • Ejecuciones fallidas: {final_status['pipeline_stats']['failed_runs']}")
-    print(".3f"    print(".1f"
+    print(f"   • Tiempo promedio: {final_status['pipeline_stats']['avg_processing_time']:.3f}s")
+    print(f"   • Throughput: {final_status['pipeline_stats']['avg_throughput']:.1f} items/s")
+
     # ===== RESULTADOS FINALES =====
     print("\\n\\n🎉 DEMO COMPLETA - RESULTADOS FINALES")
     print("=" * 50)

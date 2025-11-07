@@ -42,7 +42,8 @@ async def quick_monitoring_demo():
 
     # Performance report
     report = monitoring.performance_analyzer.generate_performance_report(1)
-    print(".3f"    print(f"   • Error rate: {report.error_rate:.1f}%")
+    print(f"   • Throughput: {report.throughput_rps:.3f} RPS")
+    print(f"   • Error rate: {report.error_rate:.1f}%")
 
     monitoring.stop_monitoring()
 

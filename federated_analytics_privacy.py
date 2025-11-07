@@ -671,10 +671,11 @@ async def demo_federated_analytics():
 
     print("✅ Sistema de federated analytics inicializado")
     print(f"   • Participantes: {len(analytics.participants)}")
-    print(".2f"    print(f"   • Budget restante: {analytics.privacy_budget.remaining_budget():.2f}")
+    print(f"   • Presupuesto: {analytics.privacy_budget.get_budget():.2f}")
+    print(f"   • Budget restante: {analytics.privacy_budget.remaining_budget():.2f}")
 
     # ===== DEMO 1: QUERIES INDIVIDUALES =====
-    print("\\n📊 DEMO 1: Queries Federadas Individuales")
+    print("\n📊 DEMO 1: Queries Federadas Individuales")
 
     queries_to_execute = [
         (QueryType.COUNT, {}, PrivacyLevel.BASIC, "Conteo básico"),
@@ -686,22 +687,26 @@ async def demo_federated_analytics():
     individual_results = []
 
     for query_type, params, privacy_level, description in queries_to_execute:
-        print(f"\\n🔍 Ejecutando: {description}")
+        print(f"\n🔍 Ejecutando: {description}")
 
         start_time = time.time()
         result = await analytics.execute_federated_query(query_type, params, privacy_level)
         execution_time = time.time() - start_time
 
-        print(".3f"        print(".1f"        print(f"   • Participantes: {result.participant_count}")
+        print(f"   • Resultado: {result.result}")
+        print(f"   • Tiempo: {execution_time:.3f}s")
+        print(f"   • Participantes: {result.participant_count}")
         print(f"   • Muestras totales: {result.total_samples}")
         print(f"   • Hash verificación: {result.verification_hash}")
 
         # Mostrar garantías de privacidad
         privacy = result.privacy_guarantees['differential_privacy']
-        print(".3f"        print(".2f"        individual_results.append(result)
+        print(f"   • Epsilon: {privacy['epsilon']:.3f}")
+        print(f"   • Delta: {privacy['delta']:.2f}")
+        individual_results.append(result)
 
     # ===== DEMO 2: QUERIES EN PARALELO =====
-    print("\\n\\n⚡ DEMO 2: Queries en Paralelo")
+    print("\n\n⚡ DEMO 2: Queries en Paralelo")
 
     parallel_queries = [
         (QueryType.COUNT, {}, PrivacyLevel.BASIC),
@@ -716,13 +721,15 @@ async def demo_federated_analytics():
     parallel_results = await analytics.execute_multiple_queries(parallel_queries)
     parallel_time = time.time() - start_time
 
-    print(".1f"    print(f"   • Queries exitosas: {len(parallel_results)}")
+    print(f"   • Tiempo total: {parallel_time:.1f}s")
+    print(f"   • Queries exitosas: {len(parallel_results)}")
 
     for i, result in enumerate(parallel_results):
         query_name = parallel_queries[i][0].value
-        print(".3f"
+        print(f"   • {query_name}: {result.result:.3f}")
+
     # ===== DEMO 3: ANALYTICS AVANZADOS =====
-    print("\\n\\n🧠 DEMO 3: Analytics Avanzados")
+    print("\n\n🧠 DEMO 3: Analytics Avanzados")
 
     # Ejecutar analytics con federated learning
     fl_analytics = await analytics.run_federated_learning_analytics()
@@ -734,7 +741,7 @@ async def demo_federated_analytics():
     print(f"   • Privacidad preservada: {'✅' if fl_analytics['privacy_preserved'] else '❌'}")
 
     # ===== DEMO 4: REPORTES Y ESTADÍSTICAS =====
-    print("\\n\\n📋 DEMO 4: Reportes y Estadísticas")
+    print("\n\n📋 DEMO 4: Reportes y Estadísticas")
 
     # Resumen de analytics
     summary = analytics.get_analytics_summary()
@@ -742,21 +749,28 @@ async def demo_federated_analytics():
     print("📊 RESUMEN DE ANALYTICS:")
     print(f"   • Queries totales: {summary['total_queries']}")
     print(f"   • Queries exitosas: {summary['successful_queries']}")
-    print(".1f"    print(f"   • Tipos de query: {summary['query_types']}")
+    print(f"   • Tiempo promedio: {summary['avg_execution_time']:.1f}s")
+    print(f"   • Tipos de query: {summary['query_types']}")
     print(f"   • Participantes totales: {summary['total_participants']}")
     print(f"   • Participantes activos: {summary['active_participants']}")
 
     # Reporte de privacidad
     privacy_report = analytics.get_privacy_report()
 
-    print("\\n🔒 REPORTE DE PRIVACIDAD:")
+    print("\n🔒 REPORTE DE PRIVACIDAD:")
     dp = privacy_report['differential_privacy']
-    print(".3f"    print(".1f"    print(".2f"    print(".1f"    print(f"   • Niveles usados: {privacy_report['privacy_levels_used']}")
+    print(f"   • Epsilon total: {dp['total_epsilon']:.3f}")
+    print(f"   • Delta total: {dp['total_delta']:.1f}")
+    print(f"   • Budget usado: {dp['budget_used']:.2f}")
+    print(f"   • Budget restante: {dp['budget_remaining']:.1f}")
+    print(f"   • Niveles usados: {privacy_report['privacy_levels_used']}")
 
     participants = privacy_report['participants']
-    print(".1f"    print(".2f"
+    print(f"   • Participantes protegidos: {participants['protected_count']:.1f}")
+    print(f"   • Participantes verificados: {participants['verified_count']:.2f}")
+
     # ===== RESULTADOS FINALES =====
-    print("\\n\\n🎉 DEMO COMPLETA - RESULTADOS FINALES")
+    print("\n\n🎉 DEMO COMPLETA - RESULTADOS FINALES")
     print("=" * 50)
 
     print("🏆 LOGROS ALCANZADOS:")
@@ -768,7 +782,7 @@ async def demo_federated_analytics():
     print(f"   ✅ Secure aggregation funcionando")
     print(f"   ✅ Reportes de privacidad generados")
 
-    print("\\n🚀 CAPACIDADES DEMOSTRADAS:")
+    print("\n🚀 CAPACIDADES DEMOSTRADAS:")
     print("   ✅ Queries federadas COUNT, SUM, MEAN, HISTOGRAM")
     print("   ✅ Múltiples niveles de privacidad (Basic, Enhanced, Maximum)")
     print("   ✅ Secure aggregation protocols")
@@ -779,14 +793,14 @@ async def demo_federated_analytics():
     print("   ✅ Participant management")
     print("   ✅ Result verification con hashing")
 
-    print("\\n💡 INSIGHTS TÉCNICOS:")
+    print("\n💡 INSIGHTS TÉCNICOS:")
     print("   • Federated analytics permite insights sin comprometer privacidad")
     print("   • Differential privacy añade ruido controlado para protección")
     print("   • Secure aggregation previene ataques de inferencia")
     print("   • El paralelismo mejora significativamente el throughput")
     print("   • Los reportes de privacidad ayudan con compliance (GDPR, CCPA)")
 
-    print("\\n🔮 PRÓXIMOS PASOS PARA FEDERATED ANALYTICS:")
+    print("\n🔮 PRÓXIMOS PASOS PARA FEDERATED ANALYTICS:")
     print("   • Implementar homomorphic encryption para computations complejas")
     print("   • Agregar multi-party computation (MPC) protocols")
     print("   • Crear sistema de zero-knowledge proofs")
@@ -795,7 +809,7 @@ async def demo_federated_analytics():
     print("   • Agregar soporte para queries SQL-like federadas")
     print("   • Implementar model training federado con analytics")
 
-    print("\\n" + "=" * 60)
+    print("\n" + "=" * 60)
     print("🌟 Federated Analytics funcionando correctamente!")
     print("=" * 60)
 

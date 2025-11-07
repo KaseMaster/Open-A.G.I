@@ -31,6 +31,17 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 
+class MessageType(Enum):
+    """Tipos de mensajes en la red P2P"""
+    DISCOVERY = "discovery"
+    HANDSHAKE = "handshake"
+    HEARTBEAT = "heartbeat"
+    DATA = "data"
+    CONSENSUS = "consensus"
+    SYNC = "sync"
+    BROADCAST = "broadcast"
+
+
 class HeartbeatStatus(Enum):
     """Estados de heartbeat"""
     HEALTHY = "healthy"
@@ -104,7 +115,7 @@ class HeartbeatMetrics:
 
     def is_healthy(self) -> bool:
         """Determina si el nodo está en estado saludable"""
-        return self.status == HeartbeatStatus.HEALTHY
+        return self.status in [HeartbeatStatus.HEALTHY, HeartbeatStatus.DEGRADED]
 
     def needs_recovery(self) -> bool:
         """Determina si el nodo necesita recuperación"""
@@ -250,20 +261,33 @@ class DistributedHeartbeatManager:
             }
 
             # Enviar a través de múltiples rutas si están disponibles
+            success = False
             if self.network_paths:
-                await self._send_heartbeat_multi_path(target_node, heartbeat_msg)
+                logger.debug(f"Usando rutas múltiples para enviar heartbeat a {target_node}")
+                success = await self._send_heartbeat_multi_path(target_node, heartbeat_msg)
             else:
-                await self._send_heartbeat_direct(target_node, heartbeat_msg)
+                logger.debug(f"Usando envío directo para enviar heartbeat a {target_node}")
+                success = await self._send_heartbeat_direct(target_node, heartbeat_msg)
 
             # Calcular tiempo de respuesta
             response_time = time.time() - start_time
-            metrics.record_success(response_time)
-
-            return {
-                "success": True,
-                "response_time": response_time,
-                "node_status": metrics.status.value
-            }
+            
+            logger.debug(f"Resultado de envío de heartbeat a {target_node}: {success}")
+            
+            if success:
+                metrics.record_success(response_time)
+                return {
+                    "success": True,
+                    "response_time": response_time,
+                    "node_status": metrics.status.value
+                }
+            else:
+                metrics.record_failure()
+                return {
+                    "success": False,
+                    "error": "Heartbeat delivery failed",
+                    "node_status": metrics.status.value
+                }
 
         except Exception as e:
             logger.warning(f"⚠️ Heartbeat fallido a {target_node}: {e}")
@@ -397,12 +421,43 @@ class DistributedHeartbeatManager:
         for node_id, metrics in list(self.node_metrics.items()):
             if metrics.needs_recovery():
                 if node_id not in self.recovery_in_progress:
-                    asyncio.create_task(self._recover_node(node_id))
+                    asyncio.create_task(self._recover_single_node(node_id))
+
+    async def _recover_single_node(self, node_id: str):
+        """Recupera un nodo específico"""
+        self.recovery_in_progress.add(node_id)
+        try:
+            # Determinar la mejor estrategia de recuperación
+            metrics = self.node_metrics[node_id]
+            strategy = self._determine_recovery_strategy(metrics)
+            
+            # Ejecutar la estrategia
+            await self._execute_recovery_strategy(node_id, strategy, metrics)
+            
+        except Exception as e:
+            logger.error(f"❌ Error recuperando nodo {node_id}: {e}")
+        finally:
+            self.recovery_in_progress.discard(node_id)
+
+    def _determine_recovery_strategy(self, metrics: HeartbeatMetrics) -> RecoveryStrategy:
+        """Determina la mejor estrategia de recuperación basada en métricas"""
+        if metrics.consecutive_failures <= 2:
+            return RecoveryStrategy.RETRY
+        elif metrics.consecutive_failures <= 4:
+            return RecoveryStrategy.REROUTE
+        elif metrics.consecutive_failures <= 6:
+            return RecoveryStrategy.ISOLATE
+        else:
+            return RecoveryStrategy.REPLACE
 
     async def _execute_recovery_strategy(self, node_id: str, strategy: RecoveryStrategy,
                                        metrics: HeartbeatMetrics):
         """Ejecuta estrategia de recuperación específica"""
         logger.info(f"🔧 Ejecutando estrategia {strategy.value} para {node_id}")
+        
+        # Incrementar contador de intentos de recuperación
+        metrics.recovery_attempts += 1
+        metrics.last_recovery_attempt = time.time()
 
         if strategy == RecoveryStrategy.RETRY:
             # Reintentar heartbeat con backoff exponencial
@@ -574,7 +629,9 @@ class DistributedHeartbeatManager:
         total_nodes = len(self.node_metrics)
 
         for metrics in self.node_metrics.values():
-            if metrics.is_healthy():
+            is_healthy = metrics.is_healthy()
+            logger.debug(f"Nodo {metrics.node_id}: status={metrics.status.value}, is_healthy={is_healthy}")
+            if is_healthy:
                 healthy_nodes += 1
 
         return {

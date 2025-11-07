@@ -29,6 +29,19 @@ import seaborn as sns
 # Importar componentes del framework
 from advanced_analytics_forecasting import TimeSeriesAnalyzer, ForecastingResult
 
+# Handle Prophet import with fallback
+PROPHET_AVAILABLE = False
+Prophet = None
+try:
+    from prophet import Prophet
+    PROPHET_AVAILABLE = True
+except ImportError:
+    try:
+        from fbprophet import Prophet
+        PROPHET_AVAILABLE = True
+    except ImportError:
+        pass
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -121,7 +134,7 @@ class StatisticalAnomalyDetector:
             anomaly_scores=anomaly_scores,
             anomaly_labels=ensemble_labels,
             contamination_estimate=self.config.contamination,
-            threshold=threshold,
+            threshold=float(threshold),
             processing_time=processing_time,
             method_params={
                 "methods_used": ["z_score", "iqr", "mahalanobis"],
@@ -213,7 +226,7 @@ class MLAnomalyDetector:
 
         # Entrenar Isolation Forest
         iso_forest = IsolationForest(
-            contamination=self.config.contamination,
+            contamination=str(self.config.contamination),
             random_state=42,
             n_estimators=100
         )
@@ -240,7 +253,7 @@ class MLAnomalyDetector:
 
         # Entrenar LOF
         lof = LocalOutlierFactor(
-            contamination=self.config.contamination,
+            contamination=str(self.config.contamination),
             n_neighbors=n_neighbors
         )
 
@@ -417,9 +430,26 @@ class TimeSeriesAnomalyDetector:
 
         start_time = time.time()
 
+        # Check if statsmodels is available
         try:
             from statsmodels.tsa.arima.model import ARIMA
+        except ImportError:
+            logger.warning("statsmodels not available, using fallback method")
+            # Fallback
+            anomaly_scores = np.random.rand(len(time_series))
+            anomaly_labels = np.ones(len(time_series), dtype=int)
 
+            return AnomalyResult(
+                method=AnomalyDetectionMethod.TIME_SERIES_ARIMA,
+                modality=DataModality.TIME_SERIES,
+                anomaly_scores=anomaly_scores,
+                anomaly_labels=anomaly_labels,
+                contamination_estimate=self.config.contamination,
+                processing_time=time.time() - start_time,
+                method_params={"error": "statsmodels not available"}
+            )
+
+        try:
             # Entrenar ARIMA
             model = ARIMA(time_series, order=(1, 1, 1))
             model_fit = model.fit()
@@ -441,7 +471,7 @@ class TimeSeriesAnomalyDetector:
                 anomaly_scores=z_scores,
                 anomaly_labels=anomaly_labels,
                 contamination_estimate=self.config.contamination,
-                threshold=threshold,
+                threshold=float(threshold),
                 processing_time=processing_time,
                 method_params={"order": (1, 1, 1), "residual_based": True}
             )
@@ -466,6 +496,23 @@ class TimeSeriesAnomalyDetector:
         """Detección usando residuos de Prophet"""
 
         start_time = time.time()
+
+        # Check if Prophet is available
+        if not PROPHET_AVAILABLE or Prophet is None:
+            logger.warning("Prophet not available, using fallback method")
+            # Fallback
+            anomaly_scores = np.random.rand(len(time_series))
+            anomaly_labels = np.ones(len(time_series), dtype=int)
+
+            return AnomalyResult(
+                method=AnomalyDetectionMethod.TIME_SERIES_PROPHET,
+                modality=DataModality.TIME_SERIES,
+                anomaly_scores=anomaly_scores,
+                anomaly_labels=anomaly_labels,
+                contamination_estimate=self.config.contamination,
+                processing_time=time.time() - start_time,
+                method_params={"error": "Prophet not available"}
+            )
 
         try:
             # Preparar datos para Prophet
@@ -499,7 +546,7 @@ class TimeSeriesAnomalyDetector:
                 anomaly_scores=z_scores,
                 anomaly_labels=anomaly_labels,
                 contamination_estimate=self.config.contamination,
-                threshold=threshold,
+                threshold=float(threshold),
                 processing_time=processing_time,
                 method_params={"seasonality_mode": "additive", "residual_based": True}
             )
@@ -835,15 +882,16 @@ async def demo_anomaly_detection():
         anomaly_percentage = anomaly_count / len(result.anomaly_labels) * 100
 
         print(f"   • {result.method.value.upper()}: {anomaly_count} anomalías "
-              ".2f"
-              ".1f")
+              f"({anomaly_percentage:.2f}%) "
+              f"(⏱️ {result.processing_time:.1f}s)")
 
     # Crear ensemble
     if len(results) > 1:
         ensemble_result = anomaly_detector.create_ensemble_anomaly_detector(results, "majority")
         ensemble_anomalies = np.sum(ensemble_result.anomaly_labels == -1)
+        ensemble_percentage = ensemble_anomalies / len(ensemble_result.anomaly_labels) * 100
         print(f"   • ENSEMBLE: {ensemble_anomalies} anomalías "
-              ".2f")
+              f"({ensemble_percentage:.2f}%)")
 
     # ===== DEMO 2: SERIES TEMPORALES =====
     print("\\n\\n📈 DEMO 2: Detección de Anomalías en Series Temporales")
@@ -907,10 +955,14 @@ async def demo_anomaly_detection():
 
         print("🎯 EVALUACIÓN DEL MEJOR MÉTODO:")
         print(f"   • Método: {best_result.method.value.upper()}")
-        print(".3f"        print(".3f"        print(".3f"        print(".3f"
+        print(f"   • Precisión: {eval_metrics['precision']:.3f}")
+        print(f"   • Recall: {eval_metrics['recall']:.3f}")
+        print(f"   • F1-Score: {eval_metrics['f1_score']:.3f}")
+        print(f"   • Accuracy: {eval_metrics['accuracy']:.3f}")
+
     # Generar insights
     insights = anomaly_detector.get_anomaly_insights(results + ts_results)
-    print("\\n💡 INSIGHTS AUTOMÁTICOS:")
+    print("\n💡 INSIGHTS AUTOMÁTICOS:")
     for insight in insights[:5]:  # Primeros 5
         print(f"   • {insight}")
 

@@ -807,15 +807,15 @@ async def demo_advanced_computer_vision():
     results = await vision_system.process_image(image)
 
     processing_time = time.time() - start_time
-    print(".2f"
+    print(f"⏱️ Procesamiento completado en {processing_time:.2f} segundos")
     # Mostrar resultados detallados
-    print("\\n📊 RESULTADOS DETALLADOS:")
+    print("\n📊 RESULTADOS DETALLADOS:")
 
     if 'detection' in results:
         detection = results['detection']
         print(f"🎯 OBJECT DETECTION ({detection.model_name}):")
         print(f"   • Objetos detectados: {len(detection.boxes)}")
-        print(".3f")
+        print(f"   • Confidence promedio: {np.mean(detection.scores):.3f}")
         print(f"   • Tamaño imagen: {detection.image_size}")
         if len(detection.boxes) > 0:
             print("   • Primeras 3 detecciones:")
@@ -823,26 +823,26 @@ async def demo_advanced_computer_vision():
                 box = detection.boxes[i]
                 score = detection.scores[i]
                 label = detection.labels[i]
-                print(".2f")
+                print(f"     {i+1}. {label} (conf: {score:.2f})")
 
     if 'segmentation' in results:
         segmentation = results['segmentation']
-        print(f"\\n🎨 IMAGE SEGMENTATION ({segmentation.model_name}):")
+        print(f"\n🎨 IMAGE SEGMENTATION ({segmentation.model_name}):")
         print(f"   • Máscaras generadas: {len(segmentation.masks)}")
-        print(".3f")
+        print(f"   • Confidence promedio: {np.mean(segmentation.scores):.3f}")
         print(f"   • Tamaño imagen: {segmentation.image_size}")
 
     if 'classification' in results:
         classification = results['classification']
-        print(f"\\n🏷️ IMAGE CLASSIFICATION ({classification.model_name}):")
+        print(f"\n🏷️ IMAGE CLASSIFICATION ({classification.model_name}):")
         print(f"   • Clase predicha: {classification.predicted_class}")
-        print(".3f")
+        print(f"   • Confidence: {classification.confidence:.3f}")
         print("   • Top-3 predicciones:")
         for i, (class_id, prob) in enumerate(classification.top_k_classes[:3]):
-            print(".3f")
+            print(f"     {i+1}. {class_id} (prob: {prob:.3f})")
 
     # Benchmarking
-    print("\\n\\n🏁 BENCHMARKING DE MODELOS:")
+    print("\n\n🏁 BENCHMARKING DE MODELOS:")
 
     # Crear algunas imágenes sintéticas para benchmark
     benchmark_images = []
@@ -856,11 +856,11 @@ async def demo_advanced_computer_vision():
     for task, metrics in benchmark_results.items():
         if 'avg_time' in metrics:
             print(f"   • {task.upper()}:")
-            print(".3f")
-            print(".3f")
+            print(f"     Tiempo promedio: {metrics['avg_time']:.3f}s")
+            print(f"     Memoria usada: {metrics.get('memory_mb', 0):.3f}MB")
 
     # Visualización
-    print("\\n\\n📊 GENERANDO VISUALIZACIONES:")
+    print("\n\n📊 GENERANDO VISUALIZACIONES:")
 
     if 'detection' in results:
         fig_detection = vision_system.visualizer.plot_detection_results(
@@ -875,7 +875,7 @@ async def demo_advanced_computer_vision():
         print("✅ Visualización de classification guardada como 'classification_results.png'")
 
     # Estadísticas finales
-    print("\\n\\n🎉 DEMO COMPLETA - RESULTADOS FINALES")
+    print("\n\n🎉 DEMO COMPLETA - RESULTADOS FINALES")
     print("=" * 50)
 
     print("🏆 LOGROS ALCANZADOS:")
@@ -885,8 +885,8 @@ async def demo_advanced_computer_vision():
     print(f"   ✅ Image classification con top-k predictions")
     print(f"   ✅ Benchmarking de performance completado")
     print(f"   ✅ Visualizaciones automáticas generadas")
-    print(".2f"
-    print("\\n🚀 CAPACIDADES DEMOSTRADAS:")
+    print(f"   ✅ Tiempo total de ejecución: {processing_time:.2f} segundos")
+    print("\n🚀 CAPACIDADES DEMOSTRADAS:")
     print("   ✅ Object Detection (Faster R-CNN, Mask R-CNN)")
     print("   ✅ Image Segmentation (Mask R-CNN, DeepLabV3)")
     print("   ✅ Image Classification (ResNet, EfficientNet)")
@@ -896,14 +896,14 @@ async def demo_advanced_computer_vision():
     print("   ✅ Model optimization preparado")
     print("   ✅ Fine-tuning capabilities")
 
-    print("\\n💡 INSIGHTS TÉCNICOS:")
+    print("\n💡 INSIGHTS TÉCNICOS:")
     print("   • Computer vision multimodal permite análisis completo de imágenes")
     print("   • Combinar detección, segmentación y clasificación da entendimiento holístico")
     print("   • Modelos pre-entrenados permiten rápida implementación")
     print("   • Benchmarking ayuda a elegir el mejor modelo para cada tarea")
     print("   • Visualizaciones son cruciales para interpretar resultados")
 
-    print("\\n🔮 PRÓXIMOS PASOS PARA COMPUTER VISION:")
+    print("\n🔮 PRÓXIMOS PASOS PARA COMPUTER VISION:")
     print("   • Implementar YOLOv3/v4/v5 para detección más rápida")
     print("   • Agregar EfficientDet y RetinaNet")
     print("   • Implementar U-Net y PSPNet para segmentation")
@@ -912,7 +912,7 @@ async def demo_advanced_computer_vision():
     print("   • Crear sistema de data augmentation avanzado")
     print("   • Agregar quantization para edge deployment")
 
-    print("\\n" + "=" * 60)
+    print("\n" + "=" * 60)
     print("🌟 Advanced Computer Vision funcionando correctamente!")
     print("=" * 60)
 

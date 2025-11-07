@@ -84,8 +84,8 @@ class LoadTester:
             self._print_test_result(result)
 
         # Prueba de estrés del sistema completo
-        print("
-💥 Ejecutando prueba de estrés del sistema completo..."        stress_result = await self.run_stress_test()
+        print("\n💥 Ejecutando prueba de estrés del sistema completo...")
+        stress_result = await self.run_stress_test()
         self.results.append(stress_result)
         self._print_test_result(stress_result)
 
@@ -421,8 +421,8 @@ async def run_load_tests(base_url: str = "http://localhost:8080"):
     try:
         report = await tester.run_all_tests()
 
-        print("
-📊 REPORTE FINAL DE PRUEBAS DE CARGA"        print("=" * 50)
+        print("\n📊 REPORTE FINAL DE PRUEBAS DE CARGA")
+        print("=" * 50)
         print(f"🎯 Tests ejecutados: {report['summary']['total_tests']}")
         print(f"📊 Requests totales: {report['summary']['total_requests']:,}")
         print(f"✅ Requests exitosos: {report['summary']['successful_requests']:,}")
@@ -433,17 +433,17 @@ async def run_load_tests(base_url: str = "http://localhost:8080"):
         print(f"📉 Latencia P99: {report['summary']['p99_response_time_ms']:.1f}ms")
         print(f"🏆 Rating de performance: {report['summary']['performance_rating']}")
 
-        print("
-📋 RESULTADOS POR PRUEBA:"        for test in report['test_results']:
+        print("\n📋 RESULTADOS POR PRUEBA:")
+        for test in report['test_results']:
             print(f"   • {test['name']}: {test['status']}")
             print(f"     RPS: {test['requests_per_second']}, Latencia: {test['avg_response_time']}ms, Error: {test['error_rate']}%")
 
-        print("
-💡 RECOMENDACIONES:"        for rec in report['recommendations']:
+        print("\n💡 RECOMENDACIONES:")
+        for rec in report['recommendations']:
             print(f"   • {rec}")
 
-        print("
-💾 Reporte detallado guardado en: load_test_report.json"        return report
+        print("\n💾 Reporte detallado guardado en: load_test_report.json")
+        return report
 
     except Exception as e:
         print(f"❌ Error ejecutando pruebas de carga: {e}")

@@ -720,7 +720,7 @@ async def demo_model_serving():
     print("   • Modelos: v1_model, v2_model")
 
     # Simular requests
-    print("\\n📤 Simulando requests de predicción...")
+    print("\n📤 Simulando requests de predicción...")
 
     test_requests = [
         {"data": [0.1, 0.2, 0.3, 0.4, 0.5]},
@@ -745,21 +745,24 @@ async def demo_model_serving():
             print(f"   ❌ Request {i+1} failed: {e}")
 
     # Mostrar estadísticas
-    print("\\n📊 ESTADÍSTICAS DEL SERVIDOR:")
+    print("\n📊 ESTADÍSTICAS DEL SERVIDOR:")
     endpoint = server.endpoints.get("sentiment_classifier")
     if endpoint:
         print(f"   • Total requests: {endpoint.total_requests}")
         print(f"   • Active requests: {endpoint.active_requests}")
-        print(".1f"        print(f"   • Cache hits: {len([r for r in test_requests if 'cached' in locals()])}")
+        print(f"   • Avg response time: {endpoint.avg_response_time:.1f}ms")
+        print(f"   • Cache hits: {len([r for r in test_requests if 'cached' in locals()])}")
 
     # Mostrar health status
     health = server.health_status
-    print("\\n❤️ ESTADO DE SALUD:")
+    print("\n❤️ ESTADO DE SALUD:")
     print(f"   • Status: {health['status']}")
-    print(".1f"    print(".1f"    print(f"   • Active endpoints: {health['active_endpoints']}")
+    print(f"   • Uptime: {health['uptime']:.1f} seconds")
+    print(f"   • CPU usage: {health['cpu_usage']:.1f}%")
+    print(f"   • Active endpoints: {health['active_endpoints']}")
     print(f"   • Total models: {health['total_models']}")
 
-    print("\\n🎯 CARACTERÍSTICAS DEMOSTRADAS:")
+    print("\n🎯 CARACTERÍSTICAS DEMOSTRADAS:")
     print("   ✅ Serving de múltiples modelos")
     print("   ✅ A/B Testing automático")
     print("   ✅ Load balancing")
@@ -768,7 +771,7 @@ async def demo_model_serving():
     print("   ✅ Auto-scaling (simulado)")
     print("   ✅ Métricas y observabilidad")
 
-    print("\\n💡 PARA PRODUCCIÓN:")
+    print("\n💡 PARA PRODUCCIÓN:")
     print("   • Configurar HTTPS y autenticación")
     print("   • Implementar rate limiting")
     print("   • Agregar logging estructurado")
@@ -776,7 +779,7 @@ async def demo_model_serving():
     print("   • Implementar circuit breakers")
     print("   • Agregar canary deployments")
 
-    print("\\n" + "=" * 60)
+    print("\n" + "=" * 60)
     print("🌟 Model Serving de alta performance listo!")
     print("=" * 60)
 
