@@ -190,11 +190,12 @@ jobs:
           output-file: sbom.spdx.json
 
       - name: Upload SBOM artifact
-        if: always()
+        if: always() && (success() || failure())
         uses: actions/upload-artifact@v4
         with:
           name: sbom-spdx
           path: sbom.spdx.json
+          if-no-files-found: ignore
 
       - name: Install Cosign
         if: github.event_name == 'release' || (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
@@ -266,11 +267,12 @@ jobs:
           sha256sum sbom.spdx.json > sbom.spdx.json.sha256
 
       - name: Upload SBOM checksum artifact
-        if: always()
+        if: always() && (success() || failure())
         uses: actions/upload-artifact@v4
         with:
           name: sbom-spdx-sha256
           path: sbom.spdx.json.sha256
+          if-no-files-found: ignore
 
       - name: Publish SBOM to release assets
         if: github.event_name == 'release'
@@ -301,4 +303,5 @@ jobs:
         with:
           name: gitleaks-report
           path: gitleaks.json
+          if-no-files-found: ignore
           if-no-files-found: ignore
