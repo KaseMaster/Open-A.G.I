@@ -76,7 +76,6 @@ def save_ledger_to_db():
 
 def load_ledger_from_db():
     """Load the ledger state from the database"""
-    global ledger
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
