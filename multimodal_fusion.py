@@ -666,11 +666,13 @@ async def demo_multimodal_fusion():
         multimodal_input, MultimodalTask.MULTIMODAL_SENTIMENT
     )
 
-    print("\\n📊 RESULTADO DE SENTIMIENTO MULTIMODAL:")
+    print("\n📊 RESULTADO DE SENTIMIENTO MULTIMODAL:")
     print(f"   • Sentimiento predicho: {sentiment_result.prediction}")
-    print(".3f"    print(f"   • Contribuciones por modalidad: {sentiment_result.modality_contributions}")
+    print(f"   • Confianza: {sentiment_result.confidence:.3f}")
+    print(f"   • Contribuciones por modalidad: {sentiment_result.modality_contributions}")
     print(f"   • Scores cross-modal: {sentiment_result.cross_modal_scores}")
-    print(".3f"
+    print(f"   • Tiempo de procesamiento: {sentiment_result.processing_time:.3f}s")
+
     # ===== DEMO 2: FEATURE EXTRACTION =====
     print("\\n📊 DEMO 2: Feature Extraction Multimodal")
 
@@ -717,9 +719,10 @@ async def demo_multimodal_fusion():
 
     print("🔍 CROSS-MODAL RETRIEVAL (Texto -> Imagen):")
     print(f"   • Query: '{query_text}'")
-    print("   • Imágenes similares encontradas:"
+    print("   • Imágenes similares encontradas:")
     for img_id, similarity in similar_images:
-        print(".3f"
+        print(f"      • ID: {img_id} Similarity: {similarity:.3f}")
+
     # ===== DEMO 4: DIFERENTES ESTRATEGIAS DE FUSIÓN =====
     print("\\n🔀 DEMO 4: Comparación de Estrategias de Fusión")
 
@@ -755,7 +758,8 @@ async def demo_multimodal_fusion():
 
     print("\\n🎯 ATTENTION WEIGHTS SIMULADOS:")
     for pair, weight in attention_sim.items():
-        print(".1f"
+        print(f"   • {pair}: {weight:.1f}")
+
     # ===== RESULTADOS FINALES =====
     print("\\n\\n🎉 DEMO COMPLETA - RESULTADOS FINALES")
     print("=" * 50)

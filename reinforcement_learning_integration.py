@@ -970,29 +970,40 @@ async def demo_reinforcement_learning():
     training_time = time.time() - start_time
 
     # Mostrar resultados
-    print("\\n📊 RESULTADOS DE ENTRENAMIENTO:")
+    print("\n📊 RESULTADOS DE ENTRENAMIENTO:")
     print(f"   • Episodes totales: {results['total_episodes']}")
-    print(".2f"    print(".1f"    print(".2f"    print(".1f"    print(".2f"    print(".1f"
+    print(f"   • Tiempo de entrenamiento: {training_time:.2f}s")
+    print(f"   • Recompensa promedio: {results['avg_reward']:.1f}")
+    print(f"   • Recompensa máxima: {results['max_reward']:.2f}")
+    print(f"   • Recompensa mínima: {results['min_reward']:.1f}")
+    print(f"   • Pérdida final: {results['final_loss']:.2f}")
+    print(f"   • Exploración final: {results['final_epsilon']:.1f}")
+
     # Evaluación
     evaluation = results['evaluation']
-    print("\\n🎯 RESULTADOS DE EVALUACIÓN:")
-    print(".2f"    print(".2f"    print(".1f"    print(".1f"
+    print("\n🎯 RESULTADOS DE EVALUACIÓN:")
+    print(f"   • Recompensa media: {evaluation['mean_reward']:.2f}")
+    print(f"   • Recompensa std: {evaluation['std_reward']:.2f}")
+    print(f"   • Éxito rate: {evaluation['success_rate']:.1f}%")
+    print(f"   • Episodios evaluados: {evaluation['episodes']:.1f}")
+
     # Insights
     insights = rl_system.get_training_insights(results)
-    print("\\n💡 INSIGHTS:")
+    print("\n💡 INSIGHTS:")
     for insight in insights:
         print(f"   • {insight}")
 
-    print("\\n🎉 DEMO COMPLETA - RESULTADOS FINALES")
+    print("\n🎉 DEMO COMPLETA - RESULTADOS FINALES")
     print("=" * 50)
 
     print("🏆 LOGROS ALCANZADOS:")
     print(f"   ✅ Agente RL entrenado exitosamente")
-    print(".2f"    print(f"   ✅ {results['total_episodes']} episodios completados")
+    print(f"   ⏱️ Tiempo total: {results['training_time']:.2f}s")
+    print(f"   ✅ {results['total_episodes']} episodios completados")
     print(f"   ✅ Sistema de evaluación funcionando")
     print(f"   ✅ {len(insights)} insights generados automáticamente")
 
-    print("\\n🚀 CAPACIDADES DEMOSTRADAS:")
+    print("\n🚀 CAPACIDADES DEMOSTRADAS:")
     print("   ✅ Deep Q-Network (DQN) implementation")
     print("   ✅ Experience replay y target networks")
     print("   ✅ Epsilon-greedy exploration")

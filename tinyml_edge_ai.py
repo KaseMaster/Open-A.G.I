@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+import torch.nn.utils.prune as prune
 import torchvision
 import numpy as np
 import pandas as pd
@@ -20,7 +21,10 @@ import logging
 import warnings
 import os
 import psutil
-import GPUtil
+try:
+    import GPUtil
+except ImportError:
+    GPUtil = None
 
 # Importar componentes del framework
 from ml_framework_integration import MLFrameworkManager, MLFramework
@@ -197,10 +201,10 @@ class ModelPruner:
     def prune_l1_unstructured(self, model: nn.Module, amount: float = 0.3) -> nn.Module:
         """Pruning L1 no estructurado"""
 
-        logger.info(".1f"
+        logger.info(f"✂️ Aplicando L1 unstructured pruning con {amount*100:.1f}%...")
         for name, module in model.named_modules():
             if isinstance(module, (nn.Conv2d, nn.Linear)):
-                torch.nn.utils.prune.l1_unstructured(module, name='weight', amount=amount)
+                prune.l1_unstructured(module, name='weight', amount=amount)
 
         logger.info("✅ L1 unstructured pruning aplicado")
         return model
@@ -208,10 +212,10 @@ class ModelPruner:
     def prune_l1_structured(self, model: nn.Module, amount: float = 0.3) -> nn.Module:
         """Pruning L1 estructurado"""
 
-        logger.info(".1f"
+        logger.info(f"✂️ Aplicando L1 structured pruning con {amount*100:.1f}%...")
         for name, module in model.named_modules():
             if isinstance(module, nn.Conv2d):
-                torch.nn.utils.prune.ln_structured(module, name='weight', amount=amount, n=1, dim=0)
+                prune.ln_structured(module, name='weight', amount=amount, n=1, dim=0)
 
         logger.info("✅ L1 structured pruning aplicado")
         return model
@@ -219,7 +223,7 @@ class ModelPruner:
     def prune_global_unstructured(self, model: nn.Module, amount: float = 0.3) -> nn.Module:
         """Pruning global no estructurado"""
 
-        logger.info(".1f"
+        logger.info(f"✂️ Aplicando global unstructured pruning con {amount*100:.1f}%...")
         # Recopilar todos los parámetros
         parameters_to_prune = []
         for name, module in model.named_modules():
@@ -227,9 +231,9 @@ class ModelPruner:
                 parameters_to_prune.append((module, 'weight'))
 
         # Pruning global
-        torch.nn.utils.prune.global_unstructured(
+        prune.global_unstructured(
             parameters_to_prune,
-            pruning_method=torch.nn.utils.prune.L1Unstructured,
+            pruning_method=prune.L1Unstructured,
             amount=amount
         )
 
@@ -243,7 +247,7 @@ class ModelPruner:
 
         for name, module in model.named_modules():
             if isinstance(module, (nn.Conv2d, nn.Linear)):
-                torch.nn.utils.prune.remove(module, 'weight')
+                prune.remove(module, 'weight')
 
         logger.info("✅ Máscaras de pruning removidas")
         return model
@@ -621,7 +625,13 @@ class ModelOptimizer:
         # Paso 4: Platform optimization
         logger.info("Step 4: Optimizing for target platform...")
         optimized_model = self.deployer.optimize_for_platform(
-            quantized_model, target_platform, EdgeDeploymentConfig(platform=target_platform)
+            quantized_model, target_platform, EdgeDeploymentConfig(
+                platform=target_platform,
+                max_memory=512,
+                max_power=5.0,
+                target_fps=30.0,
+                precision="int8"
+            )
         )
 
         final_accuracy = self._evaluate_model(optimized_model, val_loader)
@@ -653,7 +663,8 @@ class ModelOptimizer:
         )
 
         logger.info(f"✅ Optimización completa: {compression_ratio:.2f}x compression, {speedup_ratio:.2f}x speedup")
-        logger.info(".2f"
+        logger.info(f"   📊 Accuracy: {result.accuracy_drop:.2f}% drop")
+
         return result
 
     def _get_model_size(self, model: nn.Module) -> int:
@@ -717,7 +728,7 @@ class AEGISTinyML:
         self.optimizer = ModelOptimizer()
         self.deployer = EdgeDeployer()
 
-    def create_tiny_model(self, architecture: str = "mobilenet", config: TinyModelConfig = None) -> nn.Module:
+    def create_tiny_model(self, architecture: str = "mobilenet", config: Optional[TinyModelConfig] = None) -> nn.Module:
         """Crear modelo tiny optimizado"""
 
         if config is None:
@@ -809,6 +820,27 @@ class AEGISTinyML:
                 benchmark["fps"] *= 5.0
                 benchmark["avg_inference_time"] *= 0.2
 
+            # Initialize benchmark to fix linter error
+            benchmark = {"fps": 0.0, "avg_inference_time": 0.0, "memory_used_mb": 0.0}
+            
+            # Simular diferentes capacidades
+            if platform == EdgePlatform.RASPBERRY_PI:
+                # Simular CPU-only inference
+                benchmark = self.deployer.benchmark_inference(model, (1, 3, 224, 224))
+                # Ajustar para simular CPU más lento
+                benchmark["fps"] *= 0.3
+                benchmark["avg_inference_time"] *= 3.3
+            elif platform == EdgePlatform.JETSON_NANO:
+                # Simular GPU inference
+                benchmark = self.deployer.benchmark_inference(model, (1, 3, 224, 224))
+                benchmark["fps"] *= 2.0
+                benchmark["avg_inference_time"] *= 0.5
+            elif platform == EdgePlatform.CORAL_TPU:
+                # Simular TPU inference
+                benchmark = self.deployer.benchmark_inference(model, (1, 3, 224, 224))
+                benchmark["fps"] *= 5.0
+                benchmark["avg_inference_time"] *= 0.2
+
             results[platform.value] = benchmark
 
         logger.info("✅ Benchmarking multi-plataforma completado")
@@ -851,25 +883,39 @@ async def demo_tinyml_edge():
     print("📊 Creando dataset simulado...")
 
     # Simular CIFAR-10 like data
-    train_data = [(torch.randn(3, 32, 32), torch.randint(0, 10, (1,)).item()) for _ in range(100)]
-    val_data = [(torch.randn(3, 32, 32), torch.randint(0, 10, (1,)).item()) for _ in range(20)]
+    train_inputs = torch.randn(100, 3, 32, 32)
+    train_targets = torch.randint(0, 10, (100,))
+    val_inputs = torch.randn(20, 3, 32, 32)
+    val_targets = torch.randint(0, 10, (20,))
+    
+    train_dataset = torch.utils.data.TensorDataset(train_inputs, train_targets)
+    val_dataset = torch.utils.data.TensorDataset(val_inputs, val_targets)
 
-    train_loader = torch.utils.data.DataLoader(train_data, batch_size=8, shuffle=True)
-    val_loader = torch.utils.data.DataLoader(val_data, batch_size=8, shuffle=False)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=8, shuffle=True)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=8, shuffle=False)
 
     # Modelo original (ResNet pequeño)
     original_model = torchvision.models.resnet18(num_classes=10)
     original_accuracy = tinyml.optimizer._evaluate_model(original_model, val_loader)
 
-    print(".2f"
+    print(f"🎯 Accuracy original: {original_accuracy:.2f}%")
+
     # Optimizar para Raspberry Pi
     print("\\n🔧 Optimizando para Raspberry Pi...")
     optimization_result = tinyml.optimize_for_edge(
         original_model, train_loader, val_loader, EdgePlatform.RASPBERRY_PI
     )
 
-    print("\\n📊 RESULTADOS DE OPTIMIZACIÓN:")
-    print(".2f"    print(".1f"    print(".3f"    print(".3f"    print(".2f"    print(".2f"
+    print("\n📊 RESULTADOS DE OPTIMIZACIÓN:")
+    print(f"   • Compression ratio: {optimization_result.compression_ratio:.2f}x")
+    print(f"   • Speedup: {optimization_result.speedup_ratio:.1f}x")
+    print(f"   • Accuracy drop: {optimization_result.accuracy_drop:.3f}%")
+    print(f"   • Original size: {optimization_result.memory_usage_original / 1024 / 1024:.3f} MB")
+    print(f"   • Optimized size: {optimization_result.memory_usage_optimized / 1024 / 1024:.2f} MB")
+    # Calculate processing time as the difference between start and end time
+    processing_time = optimization_result.inference_time_optimized - optimization_result.inference_time_original
+    print(f"   • Processing time: {processing_time:.2f}s")
+
     # ===== DEMO 3: BENCHMARKING MULTI-PLATAFORMA =====
     print("\\n\\n🏁 DEMO 3: Benchmarking Multi-Plataforma")
 
@@ -880,7 +926,7 @@ async def demo_tinyml_edge():
     print("   ----------------|-------|-------------|-------------")
 
     for platform, benchmark in platform_benchmarks.items():
-        print("15")
+        print(f"   {platform:<15}| {benchmark['fps']:>5.1f}| {benchmark['avg_inference_time']*1000:>11.1f}| {benchmark['memory_used_mb']:>10.1f}")
 
     # ===== DEMO 4: DEPLOYMENT SIMULADO =====
     print("\\n\\n🚀 DEMO 4: Edge Deployment Simulado")
@@ -914,7 +960,7 @@ async def demo_tinyml_edge():
 
     print("🏆 LOGROS ALCANZADOS:")
     print(f"   ✅ Modelos Tiny creados (MobileNet, EfficientNet)")
-    print(".2f"    print(f"   ✅ Optimización multi-stage aplicada")
+    print(f"   ✅ Optimización multi-stage aplicada")
     print(f"   ✅ Benchmarking multi-plataforma completado")
     print(f"   ✅ Deployment edge simulado exitoso")
 

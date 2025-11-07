@@ -10,12 +10,14 @@ import json
 import hashlib
 import pickle
 import copy
+import numpy as np
 from typing import Dict, List, Any, Optional, Tuple, Union, Callable
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timedelta
 from pathlib import Path
 import logging
 import uuid
+from enum import Enum
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -216,9 +218,9 @@ class ExperimentRun:
 @dataclass
 class Experiment:
     """Experimento que contiene múltiples runs"""
-    experiment_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     description: str = ""
+    experiment_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     created_at: datetime = field(default_factory=datetime.now)
     updated_at: datetime = field(default_factory=datetime.now)
 
@@ -409,7 +411,7 @@ class ExperimentTracker:
         self.storage_path.mkdir(parents=True, exist_ok=True)
 
     def create_experiment(self, name: str, description: str = "",
-                         tags: List[str] = None) -> str:
+                         tags: Optional[List[str]] = None) -> str:
         """Crear nuevo experimento"""
         experiment = Experiment(
             name=name,
@@ -426,7 +428,7 @@ class ExperimentTracker:
         logger.info(f"🧪 Experiment '{name}' created with ID: {experiment.experiment_id}")
         return experiment.experiment_id
 
-    def start_run(self, experiment_id: str, name: str = "", config: Dict[str, Any] = None) -> Optional[str]:
+    def start_run(self, experiment_id: str, name: str = "", config: Optional[Dict[str, Any]] = None) -> Optional[str]:
         """Iniciar nueva run de experimento"""
         if experiment_id not in self.experiments:
             logger.error(f"Experiment {experiment_id} not found")
@@ -488,7 +490,7 @@ class ExperimentTracker:
         """Obtener experimento"""
         return self.experiments.get(experiment_id)
 
-    def list_experiments(self, tags: List[str] = None) -> List[Experiment]:
+    def list_experiments(self, tags: Optional[List[str]] = None) -> List[Experiment]:
         """Listar experimentos"""
         experiments = list(self.experiments.values())
 
@@ -497,7 +499,7 @@ class ExperimentTracker:
 
         return sorted(experiments, key=lambda e: e.updated_at, reverse=True)
 
-    def compare_runs(self, run_ids: List[str], metrics: List[str] = None) -> Dict[str, Any]:
+    def compare_runs(self, run_ids: List[str], metrics: Optional[List[str]] = None) -> Dict[str, Any]:
         """Comparar múltiples runs"""
         comparison = {}
 
@@ -559,12 +561,12 @@ class AEGISModelOps:
         logger.info(f"💾 MLOps storage initialized at {base_path}")
 
     async def create_experiment(self, name: str, description: str = "",
-                               tags: List[str] = None) -> str:
+                               tags: Optional[List[str]] = None) -> str:
         """Crear experimento"""
         return self.experiment_tracker.create_experiment(name, description, tags)
 
     async def start_run(self, experiment_id: str, name: str = "",
-                       config: Dict[str, Any] = None) -> Optional[str]:
+                       config: Optional[Dict[str, Any]] = None) -> Optional[str]:
         """Iniciar run"""
         return self.experiment_tracker.start_run(experiment_id, name, config)
 
@@ -609,7 +611,7 @@ class AEGISModelOps:
         """Obtener información de experimento"""
         return self.experiment_tracker.get_experiment(experiment_id)
 
-    def list_experiments(self, tags: List[str] = None) -> List[Experiment]:
+    def list_experiments(self, tags: Optional[List[str]] = None) -> List[Experiment]:
         """Listar experimentos"""
         return self.experiment_tracker.list_experiments(tags)
 
@@ -681,6 +683,10 @@ async def demo_model_versioning_tracking():
             print(f"❌ Error iniciando run para {arch}")
             continue
 
+        # Initialize accuracy to fix linter error
+        accuracy = 0.0
+        loss = 0.0
+        
         # Simular entrenamiento y logging
         for epoch in range(1, 6):  # 5 epochs para demo
             # Simular métricas
@@ -703,7 +709,9 @@ async def demo_model_versioning_tracking():
 
         # Terminar run
         success = accuracy > 0.7  # Simular éxito basado en accuracy
+        end_time = time.time()
         await mlops.end_run(run_id, success)
+        duration = time.time() - end_time
 
         runs_data.append({
             "run_id": run_id,
@@ -712,11 +720,11 @@ async def demo_model_versioning_tracking():
             "success": success
         })
 
-        print(".3f"
+        print(f"   ⏱️ Duración: {duration:.3f}s")
     # Obtener información del experimento
     experiment = mlops.get_experiment_info(exp_id)
     if experiment:
-        print(f"\\n📈 Experimento '{experiment.name}':")
+        print(f"\n📈 Experimento '{experiment.name}':")
         print(f"   • Runs totales: {len(experiment.runs)}")
         print(f"   • Runs completados: {len(experiment.get_runs_by_status(ExperimentStatus.COMPLETED))}")
 
@@ -724,7 +732,8 @@ async def demo_model_versioning_tracking():
         best_run = experiment.get_best_run("accuracy")
         if best_run:
             print(f"   • Mejor run: {best_run.name}")
-            print(".3f"
+            print(f"   • Accuracy: {best_run.metrics.get('accuracy', 0):.3f}")
+
     # ===== DEMO 2: MODEL VERSIONING =====
     print("\\n\\n📦 DEMO 2: Model Versioning & Registry")
     print("-" * 40)
@@ -803,7 +812,8 @@ async def demo_model_versioning_tracking():
             print(f"   • {data['name']}: {data['runs']} runs, "
                   f"{data['completed_runs']} completados")
             if data['best_value']:
-                print(".3f"
+                print(f"   • Mejor valor: {data['best_value']:.3f}")
+
     # Comparar runs dentro del experimento
     if experiment and len(experiment.runs) > 1:
         run_ids = [run.run_id for run in experiment.runs if run.status == ExperimentStatus.COMPLETED][:3]

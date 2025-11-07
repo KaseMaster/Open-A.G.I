@@ -702,7 +702,7 @@ async def demo_performance_optimization():
     print(f"📊 Input shape: {input_shape}")
 
     # Ejecutar optimización automática
-    print("\\n🚀 Iniciando optimización automática...")
+    print("\n🚀 Iniciando optimización automática...")
 
     results = await optimizer.optimize_model_automatically(
         model, input_shape,
@@ -711,36 +711,38 @@ async def demo_performance_optimization():
     )
 
     # Mostrar resultados
-    print("\\n📊 RESULTADOS DE OPTIMIZACIÓN:")
+    print("\n📊 RESULTADOS DE OPTIMIZACIÓN:")
     print(f"   • Estado: {results['status']}")
-    print(".1f"    print(f"   • Optimizaciones aplicadas: {len(results['recommendations_applied'])}")
+    print(f"   • Tiempo total: {results['total_time']:.1f}s")
+    print(f"   • Optimizaciones aplicadas: {len(results['recommendations_applied'])}")
 
     if results['original_profile'] and results['optimized_profile']:
         orig = results['original_profile']
         opt = results['optimized_profile']
 
-        print("\\n⚡ COMPARACIÓN DE PERFORMANCE:")
+        print("\n⚡ COMPARACIÓN DE PERFORMANCE:")
         print(f"   • Latencia original: {orig.total_time_ms:.2f}ms")
         print(f"   • Latencia optimizada: {opt.total_time_ms:.2f}ms")
-        print(".1f"        print(f"   • Memoria original: {orig.memory_usage_gb:.2f}GB")
+        print(f"   • Memoria original: {orig.memory_usage_gb:.2f}GB")
         print(f"   • Memoria optimizada: {opt.memory_usage_gb:.2f}GB")
-        print(".1f"
         if results['performance_improvement']:
             impr = results['performance_improvement']
-            print("\\n📈 MEJORAS LOGRADAS:")
-            print(".1f"            print(".1f"            print(".1f"
+            print("\n📈 MEJORAS LOGRADAS:")
+            print(f"   • Latencia: {impr['latency_improvement']:.1f}%")
+            print(f"   • Memoria: {impr['memory_improvement']:.1f}%")
+            print(f"   • CPU: {impr['cpu_improvement']:.1f}%")
     if results['recommendations_applied']:
-        print("\\n🔧 OPTIMIZACIONES APLICADAS:")
+        print("\n🔧 OPTIMIZACIONES APLICADAS:")
         for opt in results['recommendations_applied']:
             print(f"   ✅ {opt}")
 
     # Demo de profiling detallado
-    print("\\n🔍 DEMO DE PROFILING DETALLADO")
+    print("\n🔍 DEMO DE PROFILING DETALLADO")
 
     # Profile con diferentes batch sizes
     profiles = await optimizer.profiler.profile_model(model, input_shape, [1, 4, 16])
 
-    print("\\n📋 PERFILES POR BATCH SIZE:")
+    print("\n📋 PERFILES POR BATCH SIZE:")
     print("   Batch | Forward | Backward | Total | Memory | CPU")
     print("   ------|---------|----------|-------|--------|-----")
 
@@ -753,13 +755,13 @@ async def demo_performance_optimization():
         best_latency = min(profiles, key=lambda p: p.total_time_ms)
         best_memory = min(profiles, key=lambda p: p.memory_usage_gb)
 
-        print("\\n🏆 CONFIGURACIONES ÓPTIMAS:")
+        print("\n🏆 CONFIGURACIONES ÓPTIMAS:")
         print(f"   • Mejor latencia: Batch {best_latency.batch_size} "
               f"({best_latency.total_time_ms:.1f}ms)")
         print(f"   • Mejor memoria: Batch {best_memory.batch_size} "
               f"({best_memory.memory_usage_gb:.2f}GB)")
 
-    print("\\n" + "=" * 60)
+    print("\n" + "=" * 60)
     print("🌟 Performance Optimization funcionando correctamente!")
     print("=" * 60)
 

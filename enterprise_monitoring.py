@@ -813,7 +813,9 @@ async def demo_monitoring_system():
     cpu_stats = monitoring.metrics_collector.get_metric_stats('system.cpu.percent')
     memory_stats = monitoring.metrics_collector.get_metric_stats('system.memory.percent')
 
-    print(".1f"    print(".1f"
+    print(f"   • CPU: {cpu_stats['mean']:.1f}% (min: {cpu_stats['min']:.1f}%, max: {cpu_stats['max']:.1f}%)")
+    print(f"   • Memoria: {memory_stats['mean']:.1f}% (min: {memory_stats['min']:.1f}%, max: {memory_stats['max']:.1f}%)")
+
     # ===== DEMO 2: VERIFICACIÓN DE SALUD =====
     print("\\n\\n🏥 DEMO 2: Health Checks")
 
@@ -822,7 +824,8 @@ async def demo_monitoring_system():
     print("🏥 Estado de componentes:")
     for component, health in health_status.items():
         status_emoji = "🟢" if health.status == "healthy" else "🟡" if health.status == "degraded" else "🔴"
-        print(".3f"
+        print(f"   • {component}: {status_emoji} {health.status} ({health.response_time:.3f}s)")
+
     # ===== DEMO 3: ALERTAS =====
     print("\\n\\n🚨 DEMO 3: Alert System")
 
@@ -849,7 +852,11 @@ async def demo_monitoring_system():
 
     print("📈 Reporte de Performance (última hora):")
     print(f"   • Total requests: {report.total_requests}")
-    print(".3f"    print(".3f"    print(".1f"    print(".1f"    print(f"   • Throughput: {report.throughput_rps:.2f} RPS")
+    print(f"   • Avg response time: {report.avg_response_time:.3f}s")
+    print(f"   • P95 response time: {report.p95_response_time:.3f}s")
+    print(f"   • P99 response time: {report.p99_response_time:.3f}s")
+    print(f"   • Error rate: {report.error_rate:.1f}%")
+    print(f"   • Throughput: {report.throughput_rps:.2f} RPS")
 
     # ===== DEMO 5: DASHBOARD DATA =====
     print("\\n\\n📋 DEMO 5: Dashboard Data")

@@ -30,18 +30,20 @@ async def quick_multimodal_demo():
         multimodal_input, MultimodalTask.MULTIMODAL_SENTIMENT
     )
 
-    print("\\n😊 Multimodal Sentiment:")
+    print("\n😊 Multimodal Sentiment:")
     print(f"   • Sentimiento: {result.prediction}")
-    print(".3f"    print(".3f"
+    print(f"   • Confianza: {result.confidence:.3f}")
+    print(f"   • Tiempo: {result.processing_time:.3f}s")
+
     # Feature extraction
     features = fusion.extract_multimodal_features(multimodal_input)
-    print("\\n📊 Features:")
+    print("\n📊 Features:")
     print(f"   • Texto: {len(features.text_features) if features.text_features is not None else 0} dims")
     print(f"   • Imagen: {len(features.image_features) if features.image_features is not None else 0} dims")
     print(f"   • Audio: {len(features.audio_features) if features.audio_features is not None else 0} dims")
     print(f"   • Fusionadas: {len(features.fused_features) if features.fused_features is not None else 0} dims")
 
-    print("\\n🎉 Multimodal Fusion funcionando!")
+    print("\n🎉 Multimodal Fusion funcionando!")
 
 if __name__ == "__main__":
     asyncio.run(quick_multimodal_demo())

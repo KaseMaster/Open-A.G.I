@@ -25,14 +25,17 @@ async def quick_rl_demo():
         max_steps_per_episode=100
     )
 
-    print("\\n🚀 Entrenando agente RL...")
+    print("\n🚀 Entrenando agente RL...")
     results = await rl.train_rl_agent("cartpole", RLAlgorithm.DQN, config)
 
-    print(".1f"    print(".2f"    print(".1f"
-    insights = rl.get_training_insights(results)
-    print("\\n💡 Insight:", insights[0] if insights else "Entrenamiento completado")
+    print(f"   ⏱️ Tiempo: {results['training_time']:.1f}s")
+    print(f"   🏆 Recompensa: {results['final_reward']:.2f}")
+    print(f"   📊 Éxito: {results['success_rate']:.1f}%")
 
-    print("\\n🎉 RL funcionando!")
+    insights = rl.get_training_insights(results)
+    print("\n💡 Insight:", insights[0] if insights else "Entrenamiento completado")
+
+    print("\n🎉 RL funcionando!")
 
 if __name__ == "__main__":
     asyncio.run(quick_rl_demo())

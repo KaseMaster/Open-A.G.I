@@ -718,10 +718,11 @@ async def demo_generative_ai():
 
     print(f"📝 Prompt: {prompt}")
     print(f"📝 Generated: {text_result.generated_text}")
-    print(".3f"
+    print(f"   ⏱️ Generation time: {text_result.generation_time:.3f}s")
     if 'evaluation' in text_result.parameters:
         eval_metrics = text_result.parameters['evaluation']
-        print(".3f"
+        print(f"   📊 Quality score: {eval_metrics.get('quality_score', 0):.3f}")
+
     # ===== DEMO 2: IMAGE GENERATION =====
     print("\\n\\n🎨 DEMO 2: Image Generation")
 
@@ -738,12 +739,11 @@ async def demo_generative_ai():
         parameters={"height": 256, "width": 256, "simulated": True}
     )
 
-    print("✅ Image generated (simulated):"    print(f"   • Shape: {simulated_image_result.image.shape}")
-    print(".3f"    print(f"   • Model: {simulated_image_result.model_name}")
+    print("✅ Image generated (simulated):")
+    print(f"   • Shape: {simulated_image_result.image.shape}")
+    print(f"   • Generation time: {simulated_image_result.generation_time:.3f}s")
+    print(f"   • Model: {simulated_image_result.model_name}")
 
-    if 'evaluation' in simulated_image_result.parameters:
-        eval_metrics = simulated_image_result.parameters['evaluation']
-        print(".1f"
     # ===== DEMO 3: STORY WITH IMAGES =====
     print("\\n\\n📖 DEMO 3: Story Generation with Images")
 

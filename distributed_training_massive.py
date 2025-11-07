@@ -20,6 +20,7 @@ import threading
 import queue
 import psutil
 from concurrent.futures import ThreadPoolExecutor
+import os
 
 # Importar componentes del framework
 from ml_framework_integration import MLFrameworkManager, MLFramework
@@ -598,15 +599,22 @@ async def demo_distributed_training():
         job_status = orchestrator.get_job_status(job_id)
         if job_status and job_status["latest_metrics"]:
             metrics = job_status["latest_metrics"]
-            print("
-📊 MÉTRICAS FINALES:"            print(".4f"            print(".1f"            print(".1f"            print(".2f"            print(".3f"
-        # Estadísticas del cluster
-        cluster_stats = orchestrator.get_cluster_stats()
-        print("
-🏗️ ESTADÍSTICAS DEL CLUSTER:"        print(f"   • Trabajos completados: {cluster_stats['completed_jobs']}")
-        print(f"   • Nodos utilizados: {cluster_stats['total_nodes']}")
-        print(".1f"    else:
-        print("❌ Entrenamiento falló")
+            print("\n📊 MÉTRICAS FINALES:")
+            print(f"   • Accuracy: {metrics['accuracy']:.4f}")
+            print(f"   • Loss: {metrics['loss']:.4f}")
+            print(f"   • Tiempo total: {metrics['training_time']:.1f}s")
+            print(f"   • Velocidad: {metrics['samples_per_second']:.1f} samples/s")
+            print(f"   • Eficiencia: {metrics['cluster_efficiency']:.2f}%")
+            print(f"   • Convergencia: {metrics['convergence_rate']:.3f}")
+
+            # Estadísticas del cluster
+            cluster_stats = orchestrator.get_cluster_stats()
+            print("\n🏗️ ESTADÍSTICAS DEL CLUSTER:")
+            print(f"   • Trabajos completados: {cluster_stats['completed_jobs']}")
+            print(f"   • Nodos utilizados: {cluster_stats['total_nodes']}")
+            print(f"   • Utilización: {cluster_stats['cluster_utilization']:.1f}%")
+        else:
+            print("❌ Entrenamiento falló")
 
     print("\\n" + "=" * 60)
     print("🌟 Distributed Training funcionando correctamente!")

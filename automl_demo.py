@@ -41,7 +41,7 @@ async def comprehensive_automl_demo():
 
     # Crear DataFrame
     feature_names = [f"feature_{i}" for i in range(n_features)]
-    df = pd.DataFrame(X, columns=feature_names)
+    df = pd.DataFrame(X, columns=pd.Index(feature_names))
     df["target"] = y
 
     print(f"✅ Dataset creado: {len(df)} muestras")
@@ -77,15 +77,16 @@ async def comprehensive_automl_demo():
     demo1_time = time.time() - start_time
 
     if result.status == "completed":
-        print("\\n🎉 ¡AutoML completado exitosamente!")
-        print(".1f"        print(f"   📊 Modelos evaluados: {result.models_evaluated}")
-        print(".3f"        print(f"   🏆 Mejor arquitectura: {result.best_model_id.split('_')[1]}")
+        print("\n🎉 ¡AutoML completado exitosamente!")
+        print(f"   ⏱️ Tiempo total: {demo1_time:.1f}s")
+        print(f"   📊 Modelos evaluados: {result.models_evaluated}")
+        print(f"   🏆 Mejor arquitectura: {result.best_model_id.split('_')[1]}")
 
         if result.ensemble_models:
             print(f"   🤝 Ensemble creado con {len(result.ensemble_models)} modelos")
 
         if result.optimization_applied:
-            print("   🔧 Optimización aplicada al mejor modelo"
+            print("   🔧 Optimización aplicada al mejor modelo")
     else:
         print(f"❌ AutoML falló: revisar configuración")
         return
@@ -113,7 +114,7 @@ async def comprehensive_automl_demo():
             # Crear datos de regresión
             X_reg = np.random.randn(1500, 10)
             y_reg = X_reg[:, 0] * 2.3 + X_reg[:, 1] * -1.7 + X_reg[:, 2] * 0.5 + np.random.randn(1500) * 0.3
-            df_reg = pd.DataFrame(X_reg, columns=[f"feat_{i}" for i in range(10)])
+            df_reg = pd.DataFrame(X_reg, columns=pd.Index([f"feat_{i}" for i in range(10)]))
             df_reg["target"] = y_reg
             task_data = df_reg
         else:  # Image classification
@@ -145,7 +146,9 @@ async def comprehensive_automl_demo():
                 "ensemble": len(task_result.ensemble_models) > 0
             })
 
-            print(".1f"            print(".3f"        else:
+            print(f"   ⏱️ Tiempo: {task_time:.1f}s")
+            print(f"   📊 Score: {task_result.best_score:.3f}")
+        else:
             print("❌ Falló")
 
     # Mostrar comparación
@@ -200,14 +203,17 @@ async def comprehensive_automl_demo():
                     "time": opt_time
                 })
 
-                print(".2f"                print(".3f"                print(".1f"            else:
+                print(f"   ⏱️ Tiempo: {opt_time:.2f}s")
+                print(f"   📊 Compresión: {opt_result.compression_ratio:.3f}")
+                print(f"   🚀 Ganancia: {opt_result.performance_gain:.1f}x")
+            else:
                 print(f"❌ {opt_name} falló")
 
         # Resumen de optimización
         if optimization_results:
             print("\\n📊 RESULTADOS DE OPTIMIZACIÓN:")
             best_opt = max(optimization_results, key=lambda x: x["compression"])
-            print(".2f"            print(".3f"            print(f"   💾 Ahorro máximo: {(1 - best_opt['compression']) * 100:.1f}%")
+            print(f"   💾 Ahorro máximo: {(1 - best_opt['compression']) * 100:.1f}%")
 
     # ===== DEMO 4: ANÁLISIS DE EFICIENCIA =====
     print("\\n\\n📈 DEMO 4: Análisis de Eficiencia AutoML")
@@ -219,8 +225,8 @@ async def comprehensive_automl_demo():
     print("📊 ESTADÍSTICAS GENERALES:")
     print(f"   • Ejecuciones totales: {stats['total_runs']}")
     print(f"   • Tasa de éxito: {stats['completed_runs']}/{stats['total_runs']} "
-          f"({stats['completed_runs']/max(stats['total_runs'],1)*100:.1f}%)")
-    print(".3f"    print(".1f"    print(f"   • Modelos generados: {stats['total_models_generated']}")
+          f"({stats['completed_runs'] / max(stats['total_runs'], 1) * 100:.1f}%)")
+    print(f"   • Modelos generados: {stats['total_models_generated']}")
     print(f"   • Optimizaciones aplicadas: {stats['optimization_applied']}")
 
     # Análisis de eficiencia
@@ -228,7 +234,9 @@ async def comprehensive_automl_demo():
     total_models_all_demos = result.models_evaluated + sum(c["models"] for c in comparison_results)
 
     print("\\n⚡ EFICIENCIA:")
-    print(".1f"    print(".2f"    print(f"   🎯 Modelos por minuto: {total_models_all_demos / (total_time_all_demos/60):.1f}")
+    print(f"   • Tiempo total: {total_time_all_demos:.1f}s")
+    print(f"   • Modelos totales: {total_models_all_demos}")
+    print(f"   🎯 Modelos por minuto: {total_models_all_demos / (total_time_all_demos/60):.1f}")
 
     # ===== RESULTADOS FINALES =====
     print("\\n\\n🎉 DEMO COMPLETA - RESULTADOS FINALES")
@@ -237,7 +245,7 @@ async def comprehensive_automl_demo():
     print("🏆 LOGROS ALCANZADOS:")
     print(f"   ✅ AutoML ejecutado exitosamente")
     print(f"   ✅ {stats['total_runs']} tareas de ML automatizadas")
-    print(".3f"    print(f"   ✅ {stats['total_models_generated']} arquitecturas generadas automáticamente")
+    print(f"   ✅ {stats['total_models_generated']} arquitecturas generadas automáticamente")
     print(f"   ✅ {len(comparison_results)} tipos de tarea diferentes probados")
     print(f"   ✅ Optimización integrada funcionando")
 

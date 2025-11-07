@@ -40,7 +40,7 @@ async def quick_mlops_demo():
     run_results = []
 
     for i, config in enumerate(configs):
-        print(f"\\n🏃 Run {i+1}: lr={config['lr']}, batch={config['batch_size']}")
+        print(f"\n🏃 Run {i+1}: lr={config['lr']}, batch={config['batch_size']}")
 
         # Iniciar run
         run_id = await mlops.start_run(exp_id, f"Config {i+1}", config)
@@ -58,7 +58,8 @@ async def quick_mlops_demo():
 
         run_results.append((run_id, final_acc))
 
-        print(".3f"
+        print(f"   • Run {run_id[:8]}: {final_acc:.3f}")
+
     # Registrar mejor modelo
     best_run = max(run_results, key=lambda x: x[1])
     best_run_id, best_acc = best_run
@@ -76,7 +77,7 @@ async def quick_mlops_demo():
     )
 
     await mlops.register_model_version(model_version)
-    print(f"\\n✅ Mejor modelo registrado: {model_version.model_name} {model_version.version}")
+    print(f"\n✅ Mejor modelo registrado: {model_version.model_name} {model_version.version}")
 
     # Promover a producción
     await mlops.promote_model("demo_classifier", "v1.0", ModelStage.PRODUCTION)
@@ -86,12 +87,12 @@ async def quick_mlops_demo():
     experiments = mlops.list_experiments()
     models = mlops.list_models()
 
-    print("
-📊 RESUMEN:"    print(f"   • Experimentos: {len(experiments)}")
+    print("\n📊 RESUMEN:")
+    print(f"   • Experimentos: {len(experiments)}")
     print(f"   • Modelos: {len(models)}")
     print(f"   • En producción: {len(mlops.list_models(ModelStage.PRODUCTION))}")
 
-    print("\\n🎉 ¡MLOps funcionando perfectamente!")
+    print("\n🎉 ¡MLOps funcionando perfectamente!")
 
 if __name__ == "__main__":
     asyncio.run(quick_mlops_demo())

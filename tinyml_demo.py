@@ -5,6 +5,7 @@ Demostración rápida de TinyML y Edge AI
 """
 
 import torch
+import asyncio
 from tinyml_edge_ai import AEGISTinyML, TinyModelConfig, EdgePlatform
 
 async def quick_tinyml_demo():
@@ -23,10 +24,12 @@ async def quick_tinyml_demo():
     # Benchmarking simulado
     benchmarks = tinyml.benchmark_platforms(model)
 
-    print("\\n📊 Benchmarks por plataforma:")
+    print("\n📊 Benchmarks por plataforma:")
     for platform, benchmark in benchmarks.items():
-        print(".1f"
-    print("\\n🎉 TinyML funcionando!")
+        print(f"   • {platform}: {benchmark['inference_time_ms']:.1f}ms, "
+              f"{benchmark['memory_kb']:.1f}KB")
+
+    print("\n🎉 TinyML funcionando!")
 
 if __name__ == "__main__":
     asyncio.run(quick_tinyml_demo())

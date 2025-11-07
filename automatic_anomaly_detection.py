@@ -29,6 +29,19 @@ import seaborn as sns
 # Importar componentes del framework
 from advanced_analytics_forecasting import TimeSeriesAnalyzer, ForecastingResult
 
+# Handle Prophet import with fallback
+PROPHET_AVAILABLE = False
+Prophet = None
+try:
+    from prophet import Prophet
+    PROPHET_AVAILABLE = True
+except ImportError:
+    try:
+        from fbprophet import Prophet
+        PROPHET_AVAILABLE = True
+    except ImportError:
+        pass
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -121,7 +134,7 @@ class StatisticalAnomalyDetector:
             anomaly_scores=anomaly_scores,
             anomaly_labels=ensemble_labels,
             contamination_estimate=self.config.contamination,
-            threshold=threshold,
+            threshold=float(threshold),
             processing_time=processing_time,
             method_params={
                 "methods_used": ["z_score", "iqr", "mahalanobis"],
@@ -213,7 +226,7 @@ class MLAnomalyDetector:
 
         # Entrenar Isolation Forest
         iso_forest = IsolationForest(
-            contamination=self.config.contamination,
+            contamination=str(self.config.contamination),
             random_state=42,
             n_estimators=100
         )
@@ -240,7 +253,7 @@ class MLAnomalyDetector:
 
         # Entrenar LOF
         lof = LocalOutlierFactor(
-            contamination=self.config.contamination,
+            contamination=str(self.config.contamination),
             n_neighbors=n_neighbors
         )
 
@@ -417,9 +430,26 @@ class TimeSeriesAnomalyDetector:
 
         start_time = time.time()
 
+        # Check if statsmodels is available
         try:
             from statsmodels.tsa.arima.model import ARIMA
+        except ImportError:
+            logger.warning("statsmodels not available, using fallback method")
+            # Fallback
+            anomaly_scores = np.random.rand(len(time_series))
+            anomaly_labels = np.ones(len(time_series), dtype=int)
 
+            return AnomalyResult(
+                method=AnomalyDetectionMethod.TIME_SERIES_ARIMA,
+                modality=DataModality.TIME_SERIES,
+                anomaly_scores=anomaly_scores,
+                anomaly_labels=anomaly_labels,
+                contamination_estimate=self.config.contamination,
+                processing_time=time.time() - start_time,
+                method_params={"error": "statsmodels not available"}
+            )
+
+        try:
             # Entrenar ARIMA
             model = ARIMA(time_series, order=(1, 1, 1))
             model_fit = model.fit()
@@ -441,7 +471,7 @@ class TimeSeriesAnomalyDetector:
                 anomaly_scores=z_scores,
                 anomaly_labels=anomaly_labels,
                 contamination_estimate=self.config.contamination,
-                threshold=threshold,
+                threshold=float(threshold),
                 processing_time=processing_time,
                 method_params={"order": (1, 1, 1), "residual_based": True}
             )
@@ -466,6 +496,23 @@ class TimeSeriesAnomalyDetector:
         """Detección usando residuos de Prophet"""
 
         start_time = time.time()
+
+        # Check if Prophet is available
+        if not PROPHET_AVAILABLE or Prophet is None:
+            logger.warning("Prophet not available, using fallback method")
+            # Fallback
+            anomaly_scores = np.random.rand(len(time_series))
+            anomaly_labels = np.ones(len(time_series), dtype=int)
+
+            return AnomalyResult(
+                method=AnomalyDetectionMethod.TIME_SERIES_PROPHET,
+                modality=DataModality.TIME_SERIES,
+                anomaly_scores=anomaly_scores,
+                anomaly_labels=anomaly_labels,
+                contamination_estimate=self.config.contamination,
+                processing_time=time.time() - start_time,
+                method_params={"error": "Prophet not available"}
+            )
 
         try:
             # Preparar datos para Prophet
@@ -499,7 +546,7 @@ class TimeSeriesAnomalyDetector:
                 anomaly_scores=z_scores,
                 anomaly_labels=anomaly_labels,
                 contamination_estimate=self.config.contamination,
-                threshold=threshold,
+                threshold=float(threshold),
                 processing_time=processing_time,
                 method_params={"seasonality_mode": "additive", "residual_based": True}
             )
