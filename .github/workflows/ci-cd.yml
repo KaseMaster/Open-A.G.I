@@ -72,16 +72,16 @@ jobs:
     # ===== LINTING Y CALIDAD =====
     - name: Run linting
       run: |
-        poetry run flake8 aegis/ tests/ --count --select=E9,F63,F7,F82 --show-source --statistics
-        poetry run flake8 aegis/ tests/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        poetry run flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     - name: Run mypy type checking
       run: |
-        poetry run mypy aegis/ --ignore-missing-imports --no-strict-optional
+        poetry run mypy . --ignore-missing-imports --no-strict-optional
 
     - name: Run security linting
       run: |
-        poetry run bandit -r aegis/ -f json -o security_report.json || true
+        poetry run bandit -r . -f json -o security_report.json || true
 
     - name: Upload security report
       uses: actions/upload-artifact@v4
@@ -166,7 +166,7 @@ jobs:
     - name: Test package installation
       run: |
         pip install dist/*.whl
-        python -c "import aegis; print('✅ Package installation successful')"
+        python -c "import aegis_api; print('✅ Package installation successful')"
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
