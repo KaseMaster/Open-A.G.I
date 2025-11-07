@@ -5,14 +5,14 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Copy requirements files
-COPY requirements.txt requirements-dev.txt ./
+COPY quantum-currency/requirements.txt quantum-currency/requirements-dev.txt ./
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir -r requirements-dev.txt
 
 # Copy source code
-COPY . .
+COPY quantum-currency/src/ src/
 
 # Expose port
 EXPOSE 5000
