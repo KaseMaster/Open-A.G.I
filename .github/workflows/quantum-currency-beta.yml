@@ -28,19 +28,23 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r quantum-currency/requirements.txt
         pip install -r quantum-currency/requirements-dev.txt
+        pip install pytest-cov coverage hypothesis
 
     - name: Lint with flake8
       run: |
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        cd quantum-currency
+        flake8 src --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     - name: Security check with bandit
       run: |
-        bandit -r quantum-currency/src/ -f json -o bandit-report.json || true
+        cd quantum-currency
+        bandit -r src/ -f json -o bandit-report.json || true
 
     - name: Type check with mypy
       run: |
-        mypy --package quantum-currency/src || true  # Allow to fail for now
+        cd quantum-currency
+        mypy src || true  # Allow to fail for now
 
     - name: Run core tests
       run: |
@@ -87,8 +91,8 @@ jobs:
 
     - name: Build Docker images
       run: |
-        docker build -f quantum-currency/Dockerfile -t ghcr.io/${{ github.repository }}:latest .
-        docker build -f quantum-currency/Dockerfile.ci -t ghcr.io/${{ github.repository }}:ci .
+        docker build -f quantum-currency/Dockerfile.minimal -t ghcr.io/${{ github.repository }}:latest .
+        docker build -f quantum-currency/Dockerfile -t ghcr.io/${{ github.repository }}:ci .
 
     - name: Tag with version
       if: startsWith(github.ref, 'refs/tags/')
