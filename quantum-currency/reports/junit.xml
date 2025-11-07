@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="0.472" timestamp="2025-11-07T03:19:37.917327+01:00" hostname="LordDaniG"><testcase classname="" name="quantum-currency.Open-A.G.I.scripts.smoke_p2p_crypto_test" time="0.000"><error message="collection failure">Open-A.G.I\scripts\smoke_p2p_crypto_test.py:12: in &lt;module&gt;
+    from p2p_network import P2PNetworkManager, PeerInfo, NodeType, NetworkProtocol, ConnectionStatus, MessageType
+Open-A.G.I\p2p_network.py:421: in &lt;module&gt;
+    class AegisServiceListenerExt(ServiceListener):
+E   TypeError: NoneType takes no arguments</error></testcase></testsuite></testsuites>

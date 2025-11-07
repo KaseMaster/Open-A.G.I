@@ -1,0 +1,89 @@
+name: Test and Deploy Quantum Currency
+
+on:
+  push:
+    branches: [ main, feature/* ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9, 3.10, 3.11]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Run static analysis
+      run: |
+        black --check .
+        mypy src || true  # Continue even if mypy has issues
+        pylint src > pylint-report.txt || true
+
+    - name: Run security scan
+      run: |
+        bandit -r src -lll > bandit-report.txt || true
+
+    - name: Test with pytest
+      run: |
+        pytest --cov=src --cov-report=xml --cov-report=html
+        pytest tests/ -q --disable-warnings --maxfail=1
+
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-reports
+        path: |
+          coverage.xml
+          htmlcov/
+          pylint-report.txt
+          bandit-report.txt
+
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/feature/')
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+      if: github.ref == 'refs/heads/main'
+
+    - name: Build and push validator image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        file: docker/validator.Dockerfile
+        push: ${{ github.ref == 'refs/heads/main' }}
+        tags: quantumcurrency/validator:latest
+      if: github.ref == 'refs/heads/main'
+
+    - name: Build validator image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        file: docker/validator.Dockerfile
+        push: false
+        tags: quantumcurrency/validator:test
+      if: github.ref != 'refs/heads/main'
