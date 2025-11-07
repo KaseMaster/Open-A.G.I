@@ -9,7 +9,7 @@
 
 [![Version](https://img.shields.io/badge/version-0.1.0--beta-blue.svg?style=for-the-badge)](https://github.com/KaseMaster/Open-A.G.I/releases/tag/v0.1.0-beta)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg?style=for-the-badge&logo=python)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg?style=for-the-badge&logo=python)](https://www.python.org/downloads/)
 
 [![CI/CD Pipeline](https://github.com/KaseMaster/Open-A.G.I/actions/workflows/quantum-currency-beta.yml/badge.svg)](https://github.com/KaseMaster/Open-A.G.I/actions/workflows/quantum-currency-beta.yml)
 [![Code Coverage](https://img.shields.io/codecov/c/github/KaseMaster/Open-A.G.I?style=for-the-badge&logo=codecov)](https://codecov.io/gh/KaseMaster/Open-A.G.I)
@@ -158,7 +158,7 @@ python -m pytest --cov=src --cov-report=html
 
 ### Prerequisites
 
-- Python 3.9+
+- Python 3.10+ (Required for torch>=2.1.0 and numpy>=1.24.0)
 - Docker (for containerized deployment)
 - Git
 
