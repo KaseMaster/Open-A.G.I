@@ -88,6 +88,7 @@ jobs:
       with:
         name: security-report-${{ matrix.python-version }}
         path: security_report.json
+        if-no-files-found: ignore
 
   # ===== TESTS DE SEGURIDAD =====
   security:
@@ -125,6 +126,7 @@ jobs:
         path: |
           safety_report.json
           pip_audit_report.json
+        if-no-files-found: ignore
 
     - name: Fail on critical vulnerabilities
       run: |
@@ -171,6 +173,7 @@ jobs:
       with:
         name: aegis-package
         path: dist/
+        if-no-files-found: ignore
 
   # ===== DOCKER BUILD =====
   docker:
