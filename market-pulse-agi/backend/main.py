@@ -18,8 +18,10 @@ logger = logging.getLogger(__name__)
 class MockApp:
     def get(self, *args, **kwargs):
         return lambda func: func
+
     def post(self, *args, **kwargs):
         return lambda func: func
+
     def on_event(self, *args, **kwargs):
         return lambda func: func
 
@@ -55,12 +57,11 @@ async def initialize_services():
     
     try:
         logger.info("Web3 initialization placeholder - would connect to Ethereum node in production")
-        
-        # Initialize AEGIS node (placeholder)
-        logger.info("AEGIS node initialization placeholder")
-        
-        # Initialize crypto engine (placeholder)
-        logger.info("Crypto engine initialization placeholder")
+        # Assign placeholder values to global variables
+        global w3, aegis_node, crypto_engine
+        w3 = "placeholder"
+        aegis_node = "placeholder"
+        crypto_engine = "placeholder"
         
         logger.info("Backend services initialized successfully")
         
@@ -76,7 +77,6 @@ async def startup_event():
 # Shutdown event
 async def shutdown_event():
     """Cleanup services on shutdown"""
-    global aegis_node
     logger.info("Backend services shutdown completed")
 
 # API Endpoints
@@ -87,6 +87,7 @@ async def root():
         "status": "operational",
         "version": "1.0.0"
     }
+
 
 async def submit_query(query_data: dict):
     """Submit a new market intelligence query"""
@@ -106,6 +107,7 @@ async def submit_query(query_data: dict):
     except Exception as e:
         logger.error(f"Error submitting query: {e}")
         return {"error": str(e)}
+
 
 async def get_query_status(query_id: str):
     """Get the status of a submitted query"""

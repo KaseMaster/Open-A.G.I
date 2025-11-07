@@ -1,7 +1,13 @@
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Query, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import os, json, time, base64, hashlib, secrets, subprocess
+import os
+import json
+import time
+import base64
+import hashlib
+import secrets
+import subprocess
 from pathlib import Path
 
 app = FastAPI(title="OpenAGI Gateway", version="0.1.0")
@@ -208,7 +214,10 @@ def _is_member(room_id: str, address: str | None) -> bool:
 async def ws_room(websocket: WebSocket, room_id: str):
     # Leer token de query para autenticar suscripción
     token = websocket.query_params.get('token')
-    ok, addr = _is_valid_session(token)
+    if token is None:
+        ok, addr = False, None
+    else:
+        ok, addr = _is_valid_session(token)
     if not ok:
         # Cerrar con policy violation
         await websocket.close(code=1008)

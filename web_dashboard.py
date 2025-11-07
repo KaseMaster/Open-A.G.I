@@ -236,6 +236,10 @@ class AEGISWebDashboard:
     
     def _init_flask_app(self):
         """Inicializa la aplicación Flask"""
+        if Flask is None or SocketIO is None:
+            logger.error("Flask o SocketIO no disponibles")
+            return
+            
         self.app = Flask(__name__)
         self.app.config['SECRET_KEY'] = 'aegis-dashboard-secret-key'
         self.socketio = SocketIO(self.app, cors_allowed_origins="*")
@@ -245,7 +249,14 @@ class AEGISWebDashboard:
     
     def _setup_routes(self):
         """Configura las rutas de la aplicación"""
-        
+        if self.app is None:
+            return
+            
+        # Verificar que las funciones necesarias estén disponibles
+        if jsonify is None or request is None or send_from_directory is None:
+            logger.error("Funciones Flask no disponibles")
+            return
+            
         @self.app.route('/')
         def index():
             return self._render_dashboard()
@@ -273,7 +284,9 @@ class AEGISWebDashboard:
     
     def _setup_socketio_events(self):
         """Configura eventos de SocketIO"""
-        
+        if self.socketio is None:
+            return
+            
         @self.socketio.on('connect')
         def handle_connect():
             logger.info("Cliente conectado al dashboard")
@@ -741,7 +754,6 @@ def get_dashboard_instance() -> Optional[AEGISWebDashboard]:
 
 if __name__ == "__main__":
     # Demostración del dashboard
-    import asyncio
     
     config = {
         'host': '0.0.0.0',

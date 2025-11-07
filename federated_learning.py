@@ -439,7 +439,7 @@ async def demo_federated_learning():
     # Simular registro de modelo en ML manager para demo
     print("📝 Registrando modelo global para demo...")
     # Crear metadatos mock para el modelo
-    from ml_framework_integration import ModelMetadata, MLFramework, ModelType
+    from ml_framework_integration import ModelMetadata, ModelType
     mock_metadata = ModelMetadata(
         model_id=dummy_model_id,
         framework=MLFramework.PYTORCH,

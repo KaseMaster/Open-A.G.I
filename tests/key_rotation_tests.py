@@ -20,7 +20,7 @@ async def test_secure_key_manager_initialization():
 
     assert key_manager is not None
     assert isinstance(key_manager, SecureKeyManager)
-    assert key_manager.emergency_mode == False
+    assert key_manager.emergency_mode is False
     assert len(key_manager.active_keys) == 0
     assert len(key_manager.key_history) == 0
 
@@ -93,7 +93,7 @@ async def test_emergency_rotation():
     key_manager.emergency_rotation(peer_id)
 
     # Verificar modo emergencia activado
-    assert key_manager.emergency_mode == True
+    assert key_manager.emergency_mode is True
 
     # Esperar un poco para que se ejecute la rotación
     await asyncio.sleep(0.1)
@@ -138,11 +138,11 @@ async def test_key_validation():
     peer_id = "test_peer"
 
     # Sin claves - debería ser válido
-    assert key_manager.validate_key_age(peer_id) == True
+    assert key_manager.validate_key_age(peer_id) is True
 
     # Con clave nueva - debería ser válido
     await key_manager._rotate_keys(peer_id)
-    assert key_manager.validate_key_age(peer_id) == True
+    assert key_manager.validate_key_age(peer_id) is True
 
     print("✅ Validación de edad de claves funciona")
 
@@ -157,20 +157,20 @@ async def test_key_statistics():
 
     # Obtener stats iniciales
     stats = key_manager.get_key_stats(peer_id)
-    assert stats["has_active_key"] == False
+    assert stats["has_active_key"] is False
     assert stats["keys_in_history"] == 0
-    assert stats["rotation_active"] == False
+    assert stats["rotation_active"] is False
 
     # Después de crear clave
     await key_manager._rotate_keys(peer_id)
     stats = key_manager.get_key_stats(peer_id)
-    assert stats["has_active_key"] == True
+    assert stats["has_active_key"] is True
     assert stats["keys_in_history"] == 0
 
     # Después de iniciar rotación
     await key_manager.start_key_rotation(peer_id)
     stats = key_manager.get_key_stats(peer_id)
-    assert stats["rotation_active"] == True
+    assert stats["rotation_active"] is True
 
     await key_manager.stop_key_rotation(peer_id)
 

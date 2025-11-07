@@ -75,7 +75,7 @@ class TestHeartbeatManager:
     def test_heartbeat_manager_initialization(self):
         """Test inicialización del gestor de heartbeat"""
         assert self.heartbeat_manager.node_id == "test_node"
-        assert self.heartbeat_manager.running == False
+        assert self.heartbeat_manager.running is False
         assert self.heartbeat_manager.heartbeat_interval == 30
         assert self.heartbeat_manager.heartbeat_timeout == 10
         assert len(self.heartbeat_manager.node_metrics) == 0
@@ -110,7 +110,7 @@ class TestHeartbeatManager:
 
         result = await self.heartbeat_manager.send_heartbeat("node_1")
 
-        assert result["success"] == True
+        assert result["success"] is True
         assert "response_time" in result
         assert result["node_status"] == "healthy"
 
@@ -128,7 +128,7 @@ class TestHeartbeatManager:
 
         result = await self.heartbeat_manager.send_heartbeat("node_3")
 
-        assert result["success"] == False
+        assert result["success"] is False
         assert "error" in result
         assert result["node_status"] == "degraded"
 
@@ -178,7 +178,7 @@ class TestHeartbeatManager:
         assert metrics.get_success_rate() == 1.0
         assert abs(metrics.get_average_response_time() - 0.076) < 0.01
         assert metrics.consecutive_failures == 0
-        assert metrics.is_healthy() == True
+        assert metrics.is_healthy() is True
 
         # Simular fallos
         metrics.record_failure()
@@ -187,7 +187,7 @@ class TestHeartbeatManager:
         assert metrics.get_success_rate() == 3/5  # 3 exitosos de 5 totales
         assert metrics.consecutive_failures == 2
         assert metrics.status == HeartbeatStatus.DEGRADED
-        assert metrics.needs_recovery() == False  # Solo 2 fallos, necesita 3+ para UNRESPONSIVE
+        assert metrics.needs_recovery() is False  # Solo 2 fallos, necesita 3+ para UNRESPONSIVE
 
     def test_network_paths_management(self):
         """Test gestión de rutas de red"""
@@ -221,7 +221,7 @@ class TestHeartbeatManager:
             metrics.record_failure()
 
         assert metrics.status == HeartbeatStatus.UNRESPONSIVE
-        assert metrics.needs_recovery() == True
+        assert metrics.needs_recovery() is True
 
         # Ejecutar recuperación (simulada)
         await self.heartbeat_manager._execute_recovery_strategy(
@@ -250,7 +250,7 @@ class TestHeartbeatIntegration:
         # Iniciar sistema
         await heartbeat_manager.start_heartbeat_system()
 
-        assert heartbeat_manager.running == True
+        assert heartbeat_manager.running is True
 
         # Esperar un ciclo de heartbeat
         await asyncio.sleep(0.5)
@@ -266,7 +266,7 @@ class TestHeartbeatIntegration:
         # Detener sistema
         await heartbeat_manager.stop_heartbeat_system()
 
-        assert heartbeat_manager.running == False
+        assert heartbeat_manager.running is False
 
     @pytest.mark.asyncio
     async def test_heartbeat_with_p2p_integration(self):
@@ -287,9 +287,9 @@ class TestHeartbeatIntegration:
 
             # node_1 y node_2 deberían tener éxito, node_3 debería fallar
             if peer in ["node_1", "node_2"]:
-                assert result["success"] == True
+                assert result["success"] is True
             else:
-                assert result["success"] == False
+                assert result["success"] is False
 
         # Verificar estado final
         status = heartbeat_manager.get_heartbeat_status()
@@ -315,7 +315,7 @@ class TestHeartbeatMetrics:
         assert metrics.get_average_response_time() == 0.02  # Promedio de 0.02
         assert metrics.total_heartbeats == 5
         assert metrics.successful_heartbeats == 5
-        assert metrics.is_healthy() == True
+        assert metrics.is_healthy() is True
 
     def test_failure_detection(self):
         """Test detección de fallos"""
@@ -332,7 +332,7 @@ class TestHeartbeatMetrics:
         assert metrics.status == HeartbeatStatus.UNRESPONSIVE  # 3 fallos consecutivos
         assert metrics.consecutive_failures == 3
         assert metrics.get_success_rate() == 3/6  # 50%
-        assert metrics.needs_recovery() == True
+        assert metrics.needs_recovery() is True
 
     def test_health_transitions(self):
         """Test transiciones de estado de salud"""
@@ -340,19 +340,19 @@ class TestHeartbeatMetrics:
 
         # Estado inicial: saludable
         assert metrics.status == HeartbeatStatus.HEALTHY
-        assert metrics.is_healthy() == True
-        assert metrics.needs_recovery() == False
+        assert metrics.is_healthy() is True
+        assert metrics.needs_recovery() is False
 
         # 1 fallo: degradado
         metrics.record_failure()
         assert metrics.status == HeartbeatStatus.DEGRADED
-        assert metrics.is_healthy() == True  # Aún se considera saludable
+        assert metrics.is_healthy() is True  # Aún se considera saludable
 
         # 3 fallos: no responsivo
         metrics.record_failure()
         metrics.record_failure()
         assert metrics.status == HeartbeatStatus.UNRESPONSIVE
-        assert metrics.needs_recovery() == True
+        assert metrics.needs_recovery() is True
 
         # Recuperación
         metrics.record_success(0.05)
