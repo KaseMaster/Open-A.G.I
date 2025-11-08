@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Harmonic Engine (HE) - Core Abstraction Layer replacing worker cluster with single high-performance service
+- Ω-Security Primitives with Coherence-Locked Keys (CLK) and Coherence-Based Throttling (CBT)
+- Meta-Regulator - Autonomous system tuner with Reinforcement Learning capabilities
+- Cosmonic Verification System for full-system verification and self-stabilization
+- Global Harmonic Synchronizer module for planetary-scale coherence synchronization
+- Entropy Monitor for self-healing and memory transmutation
+- Quantum Memory system with ϕ-Lattice Store (UFM)
+- Coherent Database (CDB) with graph structure and wave propagation queries
 - Dimensional Observer Layer for real-time Ω-Ψ telemetry
 - Anomaly detection for semantic_shift and sentiment_energy fields
 - Network health monitoring with trend analysis
@@ -17,10 +25,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation reorganization into structured directories
 - Updated README with new documentation structure
 - Improved project navigation and discoverability
+- Enhanced Ω-state recursion mechanism
+- Improved modulator computation m_t(L) = exp(clamp(λ(L) · proj(I_t(L)), -K, K))
+- Refined coherence metrics integration
 
 ### Fixed
 - Various documentation linking issues
 - Improved cross-reference consistency
+- Test failures due to values exceeding safety bounds
+- Test expectations for coherence scores being too high
+- Various mathematical implementation corrections
 
 ## [0.1.0-beta] - 2025-11-06
 
@@ -73,11 +87,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Various mathematical implementation corrections
 
 ---
-
-## Historical Releases
-
-For detailed information about previous releases and implementation phases, see:
-
-- [Implementation Documentation](docs/implementation/)
-- [Historical Documentation](docs/history/)
-- [Phase Completion Summaries](docs/history/)

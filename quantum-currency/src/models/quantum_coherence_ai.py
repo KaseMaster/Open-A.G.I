@@ -566,98 +566,6 @@ class QuantumCoherenceAI:
         logger.info(f"⚙️ Umbral de coherencia ajustado: {new_threshold:.4f}")
         return new_threshold
 
-    async def run_autonomous_cycle(self):
-        """
-        Ejecutar un ciclo completo de IA autónoma:
-        1. Recopilar datos
-        2. Realizar predicciones
-        3. Generar recomendaciones
-        4. Tomar decisiones
-        5. Explicar acciones
-        """
-        logger.info("🔄 Iniciando ciclo autónomo de IA...")
-        
-        try:
-            # 1. Recopilar datos actuales
-            current_snapshots = self._get_current_snapshots()
-            validator_metrics = self.validator_console.nodes
-            token_economy_state = self._get_token_economy_state()
-            
-            # 2. Predecir estabilidad de coherencia
-            coherence_prediction = await self.predict_coherence_stability(current_snapshots)
-            
-            # 3. Optimizar orquestación de validadores
-            validator_recommendations = await self.optimize_validator_orchestration(
-                validator_metrics, 
-                coherence_prediction
-            )
-            
-            # 4. Optimizar parámetros económicos
-            economic_optimization = await self.optimize_economic_parameters(
-                token_economy_state,
-                coherence_prediction
-            )
-            
-            # 5. Coordinar aprendizaje federado
-            validator_nodes = list(validator_metrics.keys())
-            federated_session = await self.coordinate_federated_learning(validator_nodes)
-            
-            # 6. Tomar decisiones de gobernanza si hay propuestas activas
-            active_proposals = self.governance_system.get_active_proposals()
-            for proposal in active_proposals:
-                if proposal:  # Verificar que la propuesta no sea None
-                    ai_decision = await self.make_governance_decision(
-                        {"proposal_type": "parameter_change", "parameters": proposal},
-                        economic_optimization
-                    )
-                    
-                    # Explicar la decisión
-                    explanation = await self.explain_decision(ai_decision)
-                    logger.info(f"📝 Explicación generada: {len(explanation.get('feature_importance', []))} factores importantes")
-            
-            # 7. Ajustar umbral de coherencia adaptativamente
-            current_coherence = coherence_prediction.predicted_coherence
-            validator_health = {vid: metrics.harmonic_coherence for vid, metrics in validator_metrics.items()}
-            new_threshold = await self.adaptive_threshold_tuning(current_coherence, validator_health)
-            
-            logger.info("✅ Ciclo autónomo de IA completado exitosamente")
-            
-        except Exception as e:
-            logger.error(f"Error en ciclo autónomo de IA: {e}")
-
-    def _get_current_snapshots(self) -> List[HarmonicSnapshot]:
-        """Obtener snapshots actuales de validadores"""
-        # En una implementación real, esto obtendría datos reales de validadores
-        # Por ahora, generamos datos de ejemplo
-        snapshots = []
-        for i in range(5):
-            # Generar datos de ejemplo
-            times = np.linspace(0, 1, 100)
-            values = np.sin(2 * np.pi * 5 * times) + 0.1 * np.random.random(100)
-            spectrum = [(f, np.random.random()) for f in np.linspace(0, 100, 10)]
-            
-            snapshot = HarmonicSnapshot(
-                node_id=f"validator-{i+1}",
-                timestamp=time.time(),
-                times=times.tolist(),
-                values=values.tolist(),
-                spectrum=spectrum,
-                spectrum_hash=f"spectrum_hash_{i}",
-                CS=0.75 + np.random.random() * 0.2,  # Coherencia entre 0.75 y 0.95
-                phi_params={"phi": 1.618, "lambda": 0.618}
-            )
-            snapshots.append(snapshot)
-        
-        return snapshots
-
-    def _get_token_economy_state(self) -> Dict[str, Any]:
-        """Obtener estado actual de la economía de tokens"""
-        return {
-            "token_states": self.token_economy.token_states,
-            "total_market_cap": sum(state.market_cap for state in self.token_economy.token_states.values()),
-            "active_agents": len(self.token_economy.agents)
-        }
-
     def get_system_health_report(self) -> Dict[str, Any]:
         """Generar informe de salud del sistema"""
         return {
@@ -669,6 +577,172 @@ class QuantumCoherenceAI:
             "last_training": self.last_training_time,
             "system_status": "operational"
         }
+
+    async def propose_harmonic_outreach_initiative(self, 
+                                                initiative_data: Dict[str, Any],
+                                                economic_state: EconomicOptimization) -> AIDecision:
+        """
+        Proponer una iniciativa de alcance armónico basada en análisis de IA.
+        
+        Args:
+            initiative_data: Datos de la iniciativa
+            economic_state: Estado económico optimizado
+            
+        Returns:
+            AIDecision con recomendación y explicación
+        """
+        logger.info("🌟 Proponiendo iniciativa de alcance armónico...")
+        
+        decision_id = f"outreach-{int(time.time())}-{hash(str(initiative_data)) % 10000}"
+        
+        # Analizar iniciativa
+        initiative_type = initiative_data.get("initiative_type", "general_outreach")
+        target_audience = initiative_data.get("target_audience", "general")
+        proposed_actions = initiative_data.get("proposed_actions", [])
+        expected_impact = initiative_data.get("expected_impact", {})
+        
+        # Evaluar impacto basado en estado económico
+        if economic_state.coherence_stability_index > 0.85:
+            confidence = 0.95
+            impact = "highly_positive"
+        elif economic_state.coherence_stability_index > 0.75:
+            confidence = 0.85
+            impact = "positive"
+        else:
+            confidence = 0.7
+            impact = "moderate"
+        
+        # Generar descripción y explicación
+        description = f"Harmonic outreach initiative: {initiative_type} targeting {target_audience}"
+        explanation = f"Based on current coherence stability index of {economic_state.coherence_stability_index:.4f}, " \
+                     f"this outreach initiative is likely to have a {impact} impact on network expansion and community engagement."
+        
+        # Plan de implementación específico para iniciativas de alcance
+        implementation_plan = [
+            "Validate initiative alignment with network values",
+            "Engage target audience through appropriate channels",
+            "Monitor community response and feedback",
+            "Adjust outreach strategy based on results",
+            "Report outcomes to governance system"
+        ]
+        
+        decision = AIDecision(
+            decision_id=decision_id,
+            timestamp=time.time(),
+            decision_type="harmonic_outreach",
+            description=description,
+            confidence=confidence,
+            impact_assessment=impact,
+            explanation=explanation,
+            implementation_plan=implementation_plan
+        )
+        
+        # Registrar decisión
+        self.decision_log.append(decision)
+        
+        logger.info(f"🌟 Iniciativa de alcance armónica propuesta: {decision_id}")
+        return decision
+
+    async def evaluate_network_expansion_opportunities(self,
+                                                     current_state: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Evaluar oportunidades de expansión de red para iniciativas de alcance armónico.
+        
+        Args:
+            current_state: Estado actual del sistema
+            
+        Returns:
+            Lista de oportunidades de expansión
+        """
+        logger.info("🌐 Evaluando oportunidades de expansión de red...")
+        
+        opportunities = []
+        
+        # Evaluar potencial de crecimiento comunitario
+        current_validators = len(current_state.get("validators", []))
+        current_coherence = current_state.get("average_coherence", 0.8)
+        
+        # Oportunidad 1: Expansión de validadores
+        if current_coherence > 0.8 and current_validators < 50:
+            opportunities.append({
+                "type": "validator_expansion",
+                "description": "Expand validator network to increase decentralization",
+                "priority": "high",
+                "estimated_impact": "Increase network security and decentralization",
+                "required_resources": ["technical_expertise", "infrastructure"],
+                "timeline": "2-4 weeks"
+            })
+        
+        # Oportunidad 2: Integración con otras economías coherentes
+        opportunities.append({
+            "type": "cross_chain_integration",
+            "description": "Integrate with other coherent economic systems",
+            "priority": "medium",
+            "estimated_impact": "Expand reach and create cross-system value",
+            "required_resources": ["development_time", "partnership_coordination"],
+            "timeline": "1-3 months"
+        })
+        
+        # Oportunidad 3: Programas educativos
+        opportunities.append({
+            "type": "educational_outreach",
+            "description": "Develop educational programs about harmonic economics",
+            "priority": "high",
+            "estimated_impact": "Increase understanding and adoption",
+            "required_resources": ["content_creation", "community_management"],
+            "timeline": "4-8 weeks"
+        })
+        
+        logger.info(f"🌐 Identificadas {len(opportunities)} oportunidades de expansión")
+        return opportunities
+
+    async def generate_harmonic_outreach_proposal(self,
+                                                opportunity: Dict[str, Any],
+                                                system_state: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Generar una propuesta completa de alcance armónico para presentar al sistema de gobernanza.
+        
+        Args:
+            opportunity: Oportunidad identificada
+            system_state: Estado actual del sistema
+            
+        Returns:
+            Dict con propuesta completa
+        """
+        logger.info("📝 Generando propuesta de alcance armónico...")
+        
+        proposal = {
+            "proposal_id": f"outreach-{int(time.time())}-{hash(str(opportunity)) % 10000}",
+            "title": f"Harmonic Outreach: {opportunity['description']}",
+            "description": opportunity["description"],
+            "type": "harmonic_outreach",
+            "proposer": "OpenAGI_Module",
+            "timestamp": time.time(),
+            "target_audience": "community",
+            "proposed_actions": [
+                f"Implement {opportunity['type']} initiative",
+                "Monitor and evaluate results",
+                "Report outcomes to governance"
+            ],
+            "expected_outcomes": [
+                opportunity["estimated_impact"],
+                "Enhanced network coherence and community engagement"
+            ],
+            "required_resources": opportunity["required_resources"],
+            "timeline": opportunity["timeline"],
+            "success_metrics": [
+                "Community engagement metrics",
+                "Network expansion indicators",
+                "Coherence stability maintenance"
+            ],
+            "risk_assessment": {
+                "low_risk": "Initiative aligns with network values",
+                "mitigation": "Continuous monitoring and feedback loops"
+            }
+        }
+        
+        logger.info(f"📝 Propuesta de alcance generada: {proposal['proposal_id']}")
+        return proposal
 
 # Función de demostración
 async def demo_quantum_coherence_ai():

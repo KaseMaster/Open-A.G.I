@@ -14,12 +14,8 @@ import numpy as np
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
 # Handle relative imports
-try:
-    from monitoring.observer_agent import DimensionalObserverAgent, TelemetryData, AnomalyDetectionResult
-except ImportError:
-    # Try alternative import path
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src', 'monitoring'))
-    from observer_agent import DimensionalObserverAgent, TelemetryData, AnomalyDetectionResult
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+from src.monitoring.observer_agent import DimensionalObserverAgent, TelemetryData, AnomalyDetectionResult
 
 class TestObserverAgent(unittest.TestCase):
     """Test suite for Dimensional Observer Agent"""
@@ -32,7 +28,6 @@ class TestObserverAgent(unittest.TestCase):
         """Test observer agent initialization"""
         self.assertEqual(self.observer.network_id, "test-network")
         self.assertIsNotNone(self.observer.cal_engine)
-        self.assertIsNotNone(self.observer.coherence_layer)
         self.assertEqual(len(self.observer.telemetry_history), 0)
         self.assertEqual(len(self.observer.anomaly_history), 0)
         

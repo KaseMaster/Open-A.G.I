@@ -26,45 +26,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 # Import required classes
 from dataclasses import dataclass
 
-# Try to import from core, fallback to mock if not available
-try:
-    from core.cal_engine import CALEngine
-    from models.coherence_attunement_layer import CoherenceAttunementLayer
-except ImportError:
-    # Create mock classes for testing
-    class CALEngine:
-        def __init__(self, network_id="test"):
-            self.network_id = network_id
-            self.omega_history = []
-            
-        def compute_omega_state(self, token_data, sentiment_data, semantic_data, attention_data):
-            # Mock implementation
-            class MockOmegaState:
-                def __init__(self, token_rate, sentiment_energy, semantic_shift, meta_attention_spectrum, coherence_score):
-                    self.token_rate = token_rate
-                    self.sentiment_energy = sentiment_energy
-                    self.semantic_shift = semantic_shift
-                    self.meta_attention_spectrum = meta_attention_spectrum
-                    self.coherence_score = coherence_score
-                    self.modulator = 1.0
-                    self.time_delay = 0.0
-                    self.integrated_feedback = 0.0
-                    self.timestamp = time.time()
-                
-            return MockOmegaState(
-                token_rate=token_data.get("rate", 0.0),
-                sentiment_energy=sentiment_data.get("energy", 0.0),
-                semantic_shift=semantic_data.get("shift", 0.0),
-                meta_attention_spectrum=attention_data,
-                coherence_score=0.5
-            )
-            
-        def get_coherence_health_indicator(self):
-            return "green"
-
-    class CoherenceAttunementLayer:
-        def __init__(self, network_id="test"):
-            self.network_id = network_id
+# Import the correct CALEngine implementation
+from models.coherence_attunement_layer import CoherenceAttunementLayer as CALEngine
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -107,7 +70,7 @@ class DimensionalObserverAgent:
         
         # Initialize monitoring components
         self.cal_engine = CALEngine(network_id)
-        self.coherence_layer = CoherenceAttunementLayer(network_id)
+        # self.coherence_layer = CoherenceAttunementLayer(network_id)
         
         # Telemetry storage
         self.telemetry_history: List[TelemetryData] = []
@@ -201,7 +164,7 @@ class DimensionalObserverAgent:
             "coherence_score": latest_omega.coherence_score,
             "modulator": latest_omega.modulator,
             "time_delay": latest_omega.time_delay,
-            "integrated_feedback": latest_omega.integrated_feedback
+            "integrated_feedback": 0.0  # Not available in real OmegaState
         }
         
         # Get network health indicator
@@ -213,7 +176,7 @@ class DimensionalObserverAgent:
             psi_score=latest_omega.coherence_score,
             modulator=latest_omega.modulator,
             time_delay=latest_omega.time_delay,
-            integrated_feedback=latest_omega.integrated_feedback,
+            integrated_feedback=0.0,  # Not available in real OmegaState
             network_health=health_indicator
         )
         
