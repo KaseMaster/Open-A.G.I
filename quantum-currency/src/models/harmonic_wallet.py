@@ -6,21 +6,14 @@ Implements wallet with harmonic-validated keypair generation
 
 import sys
 import os
-import json
-import time
-import hashlib
-import hmac
-import secrets
-from typing import List, Dict, Optional, Tuple
-from dataclasses import dataclass, asdict
-import numpy as np
-
-# Add parent directory to path to import modules
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'openagi'))
 
 # Import our existing modules
-from openagi.harmonic_validation import compute_spectrum, compute_coherence_score, HarmonicSnapshot
-from openagi.hardware_security import HardwareSecurityModule, ValidatorKey
+from core.harmonic_validation import compute_spectrum, compute_coherence_score, HarmonicSnapshot
+# Use absolute import for hardware_security
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Open-A.G.I', 'openagi'))
+from hardware_security import HardwareSecurityModule, ValidatorKey
 
 @dataclass
 class WalletKey:
@@ -36,6 +29,18 @@ class WalletKey:
     validation_timestamp: Optional[float] = None
 
 @dataclass
+class StakingRecord:
+    """Represents a staking record"""
+    stake_id: str
+    address: str
+    token_type: str
+    amount: float
+    start_time: float
+    end_time: float
+    reward_rate: float
+    status: str = "active"  # active, completed, cancelled
+
+@dataclass
 class WalletAccount:
     """Represents a wallet account"""
     address: str
@@ -47,6 +52,7 @@ class WalletAccount:
     chr_score: float = 0.0  # Reputation score
     created_at: float = 0.0
     last_activity: float = 0.0
+    staked_amounts: Dict[str, float] = field(default_factory=dict)  # token_type -> amount staked
 
 @dataclass
 class Transaction:
@@ -73,12 +79,17 @@ class HarmonicWallet:
         self.accounts: Dict[str, WalletAccount] = {}
         self.keys: Dict[str, WalletKey] = {}
         self.transactions: List[Transaction] = []
+        self.staking_records: List[StakingRecord] = []  # Add staking records
         self.hsm = HardwareSecurityModule(f"hsm-{self.wallet_id}")
+        self.entropy_monitor = None  # Will be set by the API
         self.wallet_config = {
             "default_key_type": "Ed25519",
             "min_coherence_score": 0.1,  # Lowered for demo purposes
             "transaction_fee": 0.001,
-            "max_pending_transactions": 100
+            "max_pending_transactions": 100,
+            "staking_reward_rate": 0.05,  # 5% annual reward rate
+            "min_staking_amount": 10.0,
+            "staking_lock_period": 86400  # 24 hours in seconds
         }
     
     def generate_harmonic_keypair(self, account_name: str = "default", 
@@ -396,6 +407,155 @@ class HarmonicWallet:
             "key_count": len(self.keys)
         }
     
+    def stake_tokens(self, address: str, token_type: str, amount: float) -> Optional[str]:
+        """
+        Stake tokens for rewards
+        
+        Args:
+            address: Account address
+            token_type: Type of token to stake
+            amount: Amount to stake
+            
+        Returns:
+            Stake ID if successful, None otherwise
+        """
+        # Validate account
+        if address not in self.accounts:
+            print("Account not found")
+            return None
+        
+        # Validate amount
+        if amount < self.wallet_config["min_staking_amount"]:
+            print(f"Amount below minimum staking amount: {self.wallet_config['min_staking_amount']}")
+            return None
+        
+        account = self.accounts[address]
+        
+        # Check if account has sufficient balance
+        balance = self.get_balance(address, token_type)
+        if balance < amount:
+            print(f"Insufficient {token_type} balance: {balance} < {amount}")
+            return None
+        
+        # Create stake ID
+        stake_id = hashlib.sha256(f"{address}{token_type}{amount}{time.time()}".encode()).hexdigest()[:32]
+        
+        # Create staking record
+        staking_record = StakingRecord(
+            stake_id=stake_id,
+            address=address,
+            token_type=token_type.upper(),
+            amount=amount,
+            start_time=time.time(),
+            end_time=time.time() + self.wallet_config["staking_lock_period"],
+            reward_rate=self.wallet_config["staking_reward_rate"]
+        )
+        
+        self.staking_records.append(staking_record)
+        
+        # Update account staked amounts
+        if token_type.upper() not in account.staked_amounts:
+            account.staked_amounts[token_type.upper()] = 0.0
+        account.staked_amounts[token_type.upper()] += amount
+        
+        # Deduct staked amount from available balance
+        balance_attr = f"{token_type.lower()}_balance"
+        if hasattr(account, balance_attr):
+            current_balance = getattr(account, balance_attr)
+            setattr(account, balance_attr, current_balance - amount)
+        
+        # Update last activity
+        account.last_activity = time.time()
+        
+        return stake_id
+    
+    def unstake_tokens(self, stake_id: str) -> bool:
+        """
+        Unstake tokens (after lock period)
+        
+        Args:
+            stake_id: Stake ID
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        # Find staking record
+        staking_record = None
+        for record in self.staking_records:
+            if record.stake_id == stake_id:
+                staking_record = record
+                break
+        
+        if not staking_record:
+            print("Staking record not found")
+            return False
+        
+        # Check if lock period has expired
+        if time.time() < staking_record.end_time:
+            print("Staking lock period not expired")
+            return False
+        
+        # Update staking record status
+        staking_record.status = "completed"
+        
+        # Add rewards
+        reward_amount = staking_record.amount * staking_record.reward_rate * \
+                       (staking_record.end_time - staking_record.start_time) / (365 * 86400)
+        
+        # Return staked amount + rewards to account
+        account = self.accounts[staking_record.address]
+        balance_attr = f"{staking_record.token_type.lower()}_balance"
+        if hasattr(account, balance_attr):
+            current_balance = getattr(account, balance_attr)
+            setattr(account, balance_attr, current_balance + staking_record.amount + reward_amount)
+        
+        # Update account staked amounts
+        if staking_record.token_type in account.staked_amounts:
+            account.staked_amounts[staking_record.token_type] -= staking_record.amount
+            if account.staked_amounts[staking_record.token_type] <= 0:
+                del account.staked_amounts[staking_record.token_type]
+        
+        # Update last activity
+        account.last_activity = time.time()
+        
+        return True
+    
+    def get_staking_records(self, address: str) -> List[StakingRecord]:
+        """
+        Get staking records for an account
+        
+        Args:
+            address: Account address
+            
+        Returns:
+            List of staking records
+        """
+        return [record for record in self.staking_records if record.address == address]
+    
+    def calculate_pending_rewards(self, address: str) -> Dict[str, float]:
+        """
+        Calculate pending rewards for staking
+        
+        Args:
+            address: Account address
+            
+        Returns:
+            Dictionary of token_type -> pending rewards
+        """
+        pending_rewards = {}
+        
+        for record in self.staking_records:
+            if record.address == address and record.status == "active":
+                # Calculate rewards based on time staked
+                time_staked = time.time() - record.start_time
+                reward_amount = record.amount * record.reward_rate * time_staked / (365 * 86400)
+                
+                if record.token_type not in pending_rewards:
+                    pending_rewards[record.token_type] = 0.0
+                pending_rewards[record.token_type] += reward_amount
+        
+        return pending_rewards
+    
     def backup_wallet(self, backup_path: str) -> bool:
         """
         Backup wallet data (public keys and account info only)
@@ -453,6 +613,10 @@ class HarmonicWallet:
             # Restore accounts
             accounts_data = backup_data.get("accounts", {})
             for addr, account_dict in accounts_data.items():
+                # Handle the staked_amounts field properly
+                staked_amounts = account_dict.get("staked_amounts", {})
+                account_dict["staked_amounts"] = staked_amounts
+                
                 account = WalletAccount(**account_dict)
                 self.accounts[addr] = account
             
@@ -481,6 +645,61 @@ class HarmonicWallet:
         except Exception as e:
             print(f"Failed to restore wallet: {e}")
             return False
+    
+    def set_entropy_monitor(self, entropy_monitor):
+        """Set the entropy monitor for this wallet"""
+        self.entropy_monitor = entropy_monitor
+    
+    def rebalance_flow_dynamically(self) -> Dict[str, Any]:
+        """
+        Rebalance flow dynamically based on entropy metrics
+        
+        Returns:
+            Dictionary with rebalancing results
+        """
+        if not self.entropy_monitor:
+            return {"status": "error", "message": "Entropy monitor not available"}
+        
+        # Calculate current flow metrics
+        total_balance = 0.0
+        account_count = len(self.accounts)
+        
+        for account in self.accounts.values():
+            total_balance += (account.flx_balance + account.chr_balance + 
+                            account.psy_balance + account.atr_balance + 
+                            account.res_balance)
+        
+        # If we have an entropy monitor, use it to check for imbalances
+        if hasattr(self.entropy_monitor, 'high_entropy_packets'):
+            high_entropy_count = len(self.entropy_monitor.high_entropy_packets)
+            
+            # If there are high entropy packets, trigger rebalancing
+            if high_entropy_count > 0:
+                # Simple rebalancing: distribute balances more evenly
+                avg_balance = total_balance / max(account_count, 1)
+                
+                for account in self.accounts.values():
+                    # Adjust balances toward average
+                    adjustment_factor = 0.1  # 10% adjustment
+                    
+                    for token in ["flx", "chr", "psy", "atr", "res"]:
+                        balance_attr = f"{token}_balance"
+                        if hasattr(account, balance_attr):
+                            current_balance = getattr(account, balance_attr)
+                            target_balance = avg_balance * 0.2  # Target 20% of average per token
+                            adjustment = (target_balance - current_balance) * adjustment_factor
+                            
+                            # Apply adjustment
+                            new_balance = max(0, current_balance + adjustment)
+                            setattr(account, balance_attr, new_balance)
+                
+                return {
+                    "status": "success",
+                    "message": f"Rebalanced {account_count} accounts, adjusted for {high_entropy_count} high entropy packets",
+                    "high_entropy_packets": list(self.entropy_monitor.high_entropy_packets.keys())
+                }
+        
+        return {"status": "success", "message": "No rebalancing needed"}
 
 def demo_harmonic_wallet():
     """Demonstrate harmonic wallet capabilities"""
