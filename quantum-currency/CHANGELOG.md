@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Dynamic λ(t) Self-Attunement Layer for system Coherence Density optimization
+- LambdaAttunementController with gradient ascent optimization and safety constraints
+- CoherenceDensityMeter for real-time Coherence Density proxy computation
+- Prometheus metrics export for α(t), λ(t,L), and C_hat(t) monitoring
+- Dashboard panels for attunement visualization
+- CLI tool for attunement state management and testing
+- Comprehensive unit, integration, and stress tests for attunement functionality
 - Harmonic Engine (HE) - Core Abstraction Layer replacing worker cluster with single high-performance service
 - Ω-Security Primitives with Coherence-Locked Keys (CLK) and Coherence-Based Throttling (CBT)
 - Meta-Regulator - Autonomous system tuner with Reinforcement Learning capabilities
@@ -26,8 +33,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated README with new documentation structure
 - Improved project navigation and discoverability
 - Enhanced Ω-state recursion mechanism
-- Improved modulator computation m_t(L) = exp(clamp(λ(L) · proj(I_t(L)), -K, K))
+- Improved modulator computation m_t(L) = exp(clamp(λ(t,L) · proj(I_t(L)), -K, K)) with dynamic α(t) parameter
 - Refined coherence metrics integration
+- Updated Ω_Verification_Report.md to include λ-Attunement Controller verification
 
 ### Fixed
 - Various documentation linking issues
