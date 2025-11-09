@@ -10,7 +10,7 @@ import json
 import time
 import hashlib
 from typing import List, Dict, Optional, Tuple
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 import numpy as np
 
 # Add parent directory to path to import modules
@@ -55,6 +55,11 @@ class Validator:
     uptime: float = 1.0  # 0.0 to 1.0
     is_active: bool = True
     last_rewarded: float = 0.0
+    # Governance attributes
+    psi_score: float = 0.0  # Current coherence score
+    psi_score_history: List[float] = field(default_factory=list)  # Historical coherence scores
+    eligible_for_governance: bool = False  # Whether validator can participate in governance
+    chr_balance: float = 0.0  # CHR token balance for voting power calculation
 
 @dataclass
 class LiquidityPool:
