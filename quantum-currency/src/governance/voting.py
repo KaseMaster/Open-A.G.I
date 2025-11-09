@@ -10,11 +10,17 @@ This module provides:
 4. Integration with CAL feedback for harmonic adjustments
 """
 
+import sys
+import os
 import time
 import hashlib
 import json
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
+
+# Add parent directory to path to import modules
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
 from core.validator_staking import Validator
 
 @dataclass
