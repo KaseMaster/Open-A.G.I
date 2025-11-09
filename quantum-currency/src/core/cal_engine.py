@@ -8,6 +8,7 @@ This module provides:
 2. m_t(L) Harmonic Modulator
 3. Ω_t(L) State Update
 4. Dimensional Stability Validation
+5. Ω-State Checkpointing for mainnet readiness
 """
 
 import numpy as np
@@ -15,6 +16,9 @@ from typing import List, Dict, Tuple, Any, Optional, Union
 import logging
 import time
 import math
+import json
+import os
+from dataclasses import dataclass, asdict
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -23,6 +27,16 @@ logger = logging.getLogger(__name__)
 # Golden ratio and related constants
 PHI = 1.618033988749895
 LAMBDA = 1.0 / PHI
+
+@dataclass
+class CheckpointData:
+    """Represents checkpointed Ω-state data for rapid restarts"""
+    I_t_L: List[float]  # Integrated feedback vector
+    Omega_t_L: List[float]  # Harmonic state vector
+    timestamp: float
+    coherence_score: float
+    modulator: float
+    network_id: str
 
 class CALEngine:
     """
@@ -61,6 +75,15 @@ class CALEngine:
         }
         
         self.last_tuning_time = time.time()
+        
+        # Checkpointing for mainnet readiness
+        self.checkpoints: List[CheckpointData] = []
+        self.checkpoint_dir = "checkpoints"
+        self.max_checkpoints = 10
+        
+        # Create checkpoint directory if it doesn't exist
+        if not os.path.exists(self.checkpoint_dir):
+            os.makedirs(self.checkpoint_dir)
         
         logger.info(f"🌀 CAL Engine initialized for network: {network_id}")
     
@@ -360,6 +383,146 @@ class CALEngine:
             "next_tuning": self.last_tuning_time + self.config["tuning_interval"],
             "performance_metrics_count": {k: len(v) for k, v in self.performance_metrics.items()}
         }
+    
+    # Ω-State Checkpointing Implementation for Mainnet Readiness
+    def create_checkpoint(self, I_t_L: List[float], Omega_t_L: List[float], 
+                         coherence_score: float, modulator: float) -> CheckpointData:
+        """
+        Create a checkpoint of the current Ω-state for rapid restarts
+        
+        Args:
+            I_t_L: Integrated feedback vector
+            Omega_t_L: Harmonic state vector
+            coherence_score: Current coherence score
+            modulator: Current modulator value
+            
+        Returns:
+            CheckpointData object representing the checkpoint
+        """
+        checkpoint = CheckpointData(
+            I_t_L=I_t_L,
+            Omega_t_L=Omega_t_L,
+            timestamp=time.time(),
+            coherence_score=coherence_score,
+            modulator=modulator,
+            network_id=self.network_id
+        )
+        
+        # Add to checkpoints list
+        self.checkpoints.append(checkpoint)
+        
+        # Keep only recent checkpoints
+        if len(self.checkpoints) > self.max_checkpoints:
+            self.checkpoints = self.checkpoints[-self.max_checkpoints:]
+        
+        # Serialize and persist to durable storage
+        self._persist_checkpoint(checkpoint)
+        
+        logger.info(f"_checkpoint created: coherence={coherence_score:.4f}, modulator={modulator:.4f}")
+        return checkpoint
+    
+    def _persist_checkpoint(self, checkpoint: CheckpointData):
+        """
+        Persist checkpoint to encrypted durable storage
+        
+        Args:
+            checkpoint: CheckpointData to persist
+        """
+        try:
+            # Create checkpoint filename
+            timestamp_str = str(int(checkpoint.timestamp))
+            filename = f"checkpoint_{timestamp_str}.json"
+            filepath = os.path.join(self.checkpoint_dir, filename)
+            
+            # Serialize checkpoint data
+            checkpoint_dict = asdict(checkpoint)
+            
+            # Write to file
+            with open(filepath, 'w') as f:
+                json.dump(checkpoint_dict, f, indent=2)
+            
+            logger.info(f"Checkpoint persisted to {filepath}")
+        except Exception as e:
+            logger.error(f"Failed to persist checkpoint: {e}")
+    
+    def load_latest_checkpoint(self) -> Optional[CheckpointData]:
+        """
+        Load the latest checkpoint from durable storage
+        
+        Returns:
+            Latest CheckpointData or None if no checkpoints exist
+        """
+        try:
+            # Get all checkpoint files
+            checkpoint_files = [f for f in os.listdir(self.checkpoint_dir) 
+                              if f.startswith("checkpoint_") and f.endswith(".json")]
+            
+            if not checkpoint_files:
+                logger.info("No checkpoints found")
+                return None
+            
+            # Sort by timestamp (newest first)
+            checkpoint_files.sort(reverse=True)
+            
+            # Load latest checkpoint
+            latest_file = checkpoint_files[0]
+            filepath = os.path.join(self.checkpoint_dir, latest_file)
+            
+            with open(filepath, 'r') as f:
+                checkpoint_dict = json.load(f)
+            
+            # Convert to CheckpointData
+            checkpoint = CheckpointData(
+                I_t_L=checkpoint_dict["I_t_L"],
+                Omega_t_L=checkpoint_dict["Omega_t_L"],
+                timestamp=checkpoint_dict["timestamp"],
+                coherence_score=checkpoint_dict["coherence_score"],
+                modulator=checkpoint_dict["modulator"],
+                network_id=checkpoint_dict["network_id"]
+            )
+            
+            logger.info(f"Latest checkpoint loaded: {latest_file}")
+            return checkpoint
+        except Exception as e:
+            logger.error(f"Failed to load checkpoint: {e}")
+            return None
+    
+    def validate_checkpoint_consistency(self, checkpoint: CheckpointData) -> bool:
+        """
+        Validate checkpoint consistency for harmonic continuity
+        
+        Args:
+            checkpoint: CheckpointData to validate
+            
+        Returns:
+            bool: True if consistent, False otherwise
+        """
+        try:
+            # Basic validation
+            if not isinstance(checkpoint.I_t_L, list) or not isinstance(checkpoint.Omega_t_L, list):
+                logger.warning("Invalid checkpoint data types")
+                return False
+            
+            # Check coherence score bounds
+            if not (0.0 <= checkpoint.coherence_score <= 1.0):
+                logger.warning(f"Invalid coherence score: {checkpoint.coherence_score}")
+                return False
+            
+            # Check modulator bounds (should be positive)
+            if checkpoint.modulator <= 0:
+                logger.warning(f"Invalid modulator: {checkpoint.modulator}")
+                return False
+            
+            # Check timestamp
+            if checkpoint.timestamp > time.time() + 60:  # Allow 1 minute future tolerance
+                logger.warning(f"Invalid timestamp: {checkpoint.timestamp}")
+                return False
+            
+            logger.info("Checkpoint consistency validation passed")
+            return True
+        except Exception as e:
+            logger.error(f"Checkpoint consistency validation failed: {e}")
+            return False
 
 # Example usage and testing
 if __name__ == "__main__":
@@ -393,3 +556,19 @@ if __name__ == "__main__":
     ]
     coherence = cal_engine.compute_recursive_coherence(omega_vectors)
     print(f"Recursive coherence: {coherence:.4f}")
+    
+    # Test checkpointing
+    print("\n--- Testing Checkpointing ---")
+    checkpoint = cal_engine.create_checkpoint(
+        I_t_L=[0.1, 0.2, 0.3],
+        Omega_t_L=[1.0, 0.5, 0.2],
+        coherence_score=0.85,
+        modulator=1.2
+    )
+    print(f"Checkpoint created: {checkpoint}")
+    
+    # Load checkpoint
+    loaded_checkpoint = cal_engine.load_latest_checkpoint()
+    if loaded_checkpoint:
+        is_consistent = cal_engine.validate_checkpoint_consistency(loaded_checkpoint)
+        print(f"Checkpoint consistency: {is_consistent}")

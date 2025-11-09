@@ -1,0 +1,9 @@
+
+# Benchmark and test artifacts
+*.benchmarks.json
+__pycache__/
+*.pytest_cache/
+.benchmarks/
+htmlcov/
+coverage.xml
+.coverage

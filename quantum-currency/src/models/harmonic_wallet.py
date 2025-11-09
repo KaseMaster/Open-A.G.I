@@ -6,14 +6,40 @@ Implements wallet with harmonic-validated keypair generation
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'openagi'))
+import time
+import hashlib
+import numpy as np
+import json
+from typing import Dict, List, Optional, Any
+from dataclasses import dataclass, field, asdict
+
+# Add the src directory to the path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 # Import our existing modules
 from core.harmonic_validation import compute_spectrum, compute_coherence_score, HarmonicSnapshot
-# Use absolute import for hardware_security
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'Open-A.G.I', 'openagi'))
-from hardware_security import HardwareSecurityModule, ValidatorKey
+
+# Import hardware security module
+try:
+    # Try direct import first
+    from hardware_security import HardwareSecurityModule, ValidatorKey
+except ImportError:
+    # Try importing with the full path
+    hardware_security_path = os.path.join(os.getcwd(), '..', '..', 'Open-A.G.I', 'openagi', 'hardware_security.py')
+    if os.path.exists(hardware_security_path):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("hardware_security", hardware_security_path)
+        if spec is not None and spec.loader is not None:
+            hardware_security = importlib.util.module_from_spec(spec)
+            sys.modules["hardware_security"] = hardware_security
+            spec.loader.exec_module(hardware_security)
+            
+            HardwareSecurityModule = hardware_security.HardwareSecurityModule
+            ValidatorKey = hardware_security.ValidatorKey
+        else:
+            raise ImportError("Could not import hardware_security module")
+    else:
+        raise ImportError(f"Hardware security module not found at {hardware_security_path}")
 
 @dataclass
 class WalletKey:
