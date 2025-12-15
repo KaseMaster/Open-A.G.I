@@ -135,6 +135,9 @@ warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true
+exclude = [
+    "market-pulse-agi"
+]
 
 [[tool.mypy.overrides]]
 module = [
