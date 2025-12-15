@@ -18,7 +18,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 # Import harmonic validation classes for snapshot-based proofs
-from openagi.harmonic_validation import HarmonicSnapshot, HarmonicProofBundle
+from harmonic_validation import HarmonicSnapshot, HarmonicProofBundle
 
 @dataclass
 class Proposal:

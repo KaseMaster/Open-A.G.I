@@ -395,9 +395,30 @@ class DistributedHeartbeatManager:
     async def _check_and_recover_failed_nodes(self):
         """Verifica y recupera nodos fallidos"""
         for node_id, metrics in list(self.node_metrics.items()):
-            if metrics.needs_recovery():
-                if node_id not in self.recovery_in_progress:
-                    asyncio.create_task(self._recover_node(node_id))
+            if metrics.needs_recovery() and node_id not in self.recovery_in_progress:
+                asyncio.create_task(self._recover_node(node_id))
+
+    async def _recover_node(self, node_id: str):
+        """Intenta recuperar un nodo fallido"""
+        self.recovery_in_progress.add(node_id)
+        try:
+            metrics = self.node_metrics.get(node_id)
+            if not metrics:
+                return
+
+            # Determinar estrategia basada en historial
+            strategy = RecoveryStrategy.RETRY
+            if metrics.recovery_attempts > 3:
+                strategy = RecoveryStrategy.REROUTE
+            if metrics.recovery_attempts > 6:
+                strategy = RecoveryStrategy.ISOLATE
+
+            await self._execute_recovery_strategy(node_id, strategy, metrics)
+            metrics.recovery_attempts += 1
+            metrics.last_recovery_attempt = time.time()
+            
+        finally:
+            self.recovery_in_progress.discard(node_id)
 
     async def _execute_recovery_strategy(self, node_id: str, strategy: RecoveryStrategy,
                                        metrics: HeartbeatMetrics):

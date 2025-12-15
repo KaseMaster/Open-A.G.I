@@ -64,6 +64,7 @@ The Quantum Currency Implementation is a revolutionary blockchain-based currency
 - **Meta-Regulator**: Autonomous system tuner with Reinforcement Learning capabilities
 - **Cosmonic Verification System**: Full-system verification and self-stabilization protocols
 - **Ω-State Checkpointing**: Mainnet-ready checkpointing for rapid, coherent restarts
+- **Harmonic Dashboard**: Advanced web-based dashboard for system monitoring and management
 
 ## 🏗️ Architecture
 
@@ -113,6 +114,15 @@ The Quantum Currency Implementation is a revolutionary blockchain-based currency
 │     • Ω-Security Primitives (CLK, CBT)                              │
 │     • Formal Verification & Cryptographic Auditing                  │
 │     • Ω-State Checkpointing & Recovery                              │
+├─────────────────────────────────────────────────────────────────────┤
+│  🎛️ Dashboard & Monitoring                                          │
+│     • Harmonic Quantum Dashboard                                    │
+│     • Real-time System Monitoring                                   │
+│     • Wallet Management Interface                                   │
+│     • Transaction History Viewer                                    │
+│     • Coherence Visualization                                       │
+│     • Global Harmonic Field Monitoring                              │
+│     • Human Coherence Interface                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -130,6 +140,9 @@ docker-compose up -d
 
 # Access the REST API
 # http://localhost:5000
+
+# Access the Dashboard
+# http://localhost:8080
 ```
 
 ### 🐍 Manual Installation
@@ -145,7 +158,33 @@ pip install -r requirements-dev.txt
 
 # Run the system
 python src/api/main.py
+
+# Run the dashboard (in a separate terminal)
+cd ui-dashboard
+python ../simple_ui_server.py
 ```
+
+## 🎛️ Dashboard
+
+The Quantum Currency system includes an advanced web-based dashboard for monitoring and managing the system:
+
+### Features
+- **Wallet Management**: View and manage FLX and CHR token balances
+- **Token Minting**: Mint new FLX tokens with coherence validation
+- **Ledger Monitoring**: Real-time view of the quantum ledger state
+- **Coherence Testing**: Compute coherence scores between harmonic snapshots
+- **Transaction History**: View recent transactions and their coherence scores
+- **Global Coherence Monitor**: Emanation phase feature for planetary-scale coherence monitoring
+- **Coherence Bridges**: Manage connections to external systems
+- **Planetary Visualization**: Visualize global coherence patterns
+- **Human Coherence Interface**: Track user engagement and emotional resonance
+- **Ethical Governance**: Monitor and participate in ethical coherence governance
+
+### Accessing the Dashboard
+- **Local Development**: http://localhost:8080
+- **Documentation**: [Dashboard Documentation](harmonic_dashboard/README.md)
+- **Implementation Summary**: [Dashboard Implementation](harmonic_dashboard/IMPLEMENTATION_SUMMARY.md)
+- **Task Tracker**: [Dashboard Tasks](harmonic_dashboard/TASK_TRACKER.md)
 
 ## 🧪 Testing
 
@@ -175,6 +214,7 @@ python -m pytest --cov=src --cov-report=html
 - ✅ Integration scenarios: 85%+
 - ✅ Security components: 90%+
 - ✅ Checkpointing functionality: 95%+
+- ✅ Dashboard functionality: 90%+
 
 ## 📊 REST API Endpoints
 
@@ -198,148 +238,3 @@ python -m pytest --cov=src --cov-report=html
 | `/ai/autonomous` | POST | Run autonomous validator orchestration cycle |
 
 ### Harmonic Engine Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/harmonic/omega` | POST | Update Ω state vector |
-| `/harmonic/coherence` | POST | Calculate coherence score |
-| `/harmonic/entropy` | POST | Monitor entropy and trigger self-healing |
-| `/harmonic/checkpoint` | POST | Create Ω-state checkpoint |
-| `/harmonic/recover` | POST | Recover from checkpoint |
-
-## 🛠️ Development
-
-### Prerequisites
-
-- Python 3.10+ (Required for torch>=2.1.0 and numpy>=1.24.0)
-- Docker (for containerized deployment)
-- Git
-
-### Setting Up Development Environment
-
-```bash
-# Clone the repository
-git clone https://github.com/KaseMaster/Open-A.G.I.git
-cd Open-A.G.I/quantum-currency
-
-# Create virtual environment
-python -m venv quantum-currency-env
-source quantum-currency-env/bin/activate
-
-# Install development dependencies
-pip install -r requirements-dev.txt
-
-# Run pre-commit hooks installation
-pre-commit install
-```
-
-### Code Quality
-
-- Follow PEP 8 style guide
-- Use type hints for all functions
-- Write docstrings for public APIs
-- Maintain >95% test coverage
-- Run linters before committing:
-  ```bash
-  black .
-  flake8 .
-  mypy --package src
-  bandit -r src/
-  ```
-
-## 🤝 Contributing
-
-We welcome contributions from the community! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
-
-### Ways to Contribute
-
-1. **Code Contributions**: Implement new features or fix bugs
-2. **Documentation**: Improve documentation and examples
-3. **Testing**: Write tests and improve coverage
-4. **Feedback**: Report issues and suggest improvements
-5. **Community**: Help other users and spread the word
-
-## 📜 License
-
-This project is licensed under the MIT License with additional security clauses - see the [LICENSE](LICENSE) file for details.
-
-### Terms of Use
-
-- ✅ Use for academic research and ethical development
-- ✅ Commercial use with proper security implementation
-- ✅ Modification and distribution with preserved security principles
-- ❌ Use for malicious or illegal activities
-- ❌ Use for unauthorized surveillance
-- ❌ Use for information manipulation
-
-## 📚 Documentation
-
-All documentation has been organized into the following categories:
-
-### Architecture
-- **[System Architecture](docs/architecture/QUANTUM_CURRENCY_ARCHITECTURE.md)** - System architecture and design principles
-- **[API Reference](docs/architecture/QUANTUM_CURRENCY_API.md)** - Complete API documentation
-
-### Development
-- **[Developer Guide](docs/development/QUANTUM_CURRENCY_DEVELOPER.md)** - Development and contribution guidelines
-- **[Deployment Guide](docs/development/QUANTUM_CURRENCY_DEPLOYMENT.md)** - Installation and deployment instructions
-- **[Security Guide](docs/development/QUANTUM_CURRENCY_SECURITY.md)** - Security implementation details
-
-### Specifications
-- **[CAL-RΦV Fusion Specification](docs/specifications/CAL_RPHI_FUSION_SPEC.md)** - Technical specification for the core fusion mechanism
-
-### Releases
-- **[Roadmap](ROADMAP.md)** - Development roadmap and future plans
-- **[Changelog](CHANGELOG.md)** - Version history and changes
-
-### Implementation History
-- **[Implementation Summaries](docs/implementation/)** - Detailed implementation documentation
-- **[Historical Documents](docs/history/)** - Phase completion reports and historical documentation
-
-For a complete overview of all documentation, see [docs/README.md](docs/README.md).
-
-## 🗺️ Roadmap
-
-See our [ROADMAP.md](ROADMAP.md) for detailed information on planned features and releases.
-
-### Current Release: v0.9.0-beta (Production Ready)
-- ✅ Full Quantum Currency System Implementation
-- ✅ OpenAGI Integration with Quantum Coherence AI
-- ✅ Comprehensive Testing Infrastructure
-- ✅ Complete Documentation
-- ✅ Harmonic Engine (HE) Implementation
-- ✅ Ω-Security Primitives Implementation
-- ✅ Meta-Regulator Implementation
-- ✅ Cosmonic Verification System
-- ✅ Ω-State Checkpointing for Mainnet Readiness
-- ✅ Full Security Audit & Formal Verification
-- ✅ Economic Stress Simulations & Resilience Testing
-
-### Emanation Phase (Diamond) Expansion - In Progress
-- 🔄 External System Integration (Coherence Bridges)
-- 🔄 Global Harmonic Field Activation
-- 🔄 Human Coherence Interface (HCI)
-- 🔄 Governance Expansion & Ethical Oversight
-- 🔄 Performance, Energy & Entropy Management
-
-### Upcoming Releases
-- **v1.0.0** - Production-ready system (Q1 2026)
-- **v1.1.0** - External system integration (Q2 2026)
-- **v1.2.0** - Global harmonic field activation (Q3 2026)
-- **v2.0.0** - Full emanation deployment (Q4 2026)
-
-## 🙏 Acknowledgments
-
-- **OpenAGI Framework** - Foundation for AI integration
-- **Quantum Computing Research Community** - Inspiration for quantum principles
-- **Blockchain Security Researchers** - Best practices and security models
-- **Open Source Community** - Libraries and tools that make this possible
-
----
-
-**⚠️ LEGAL DISCLAIMER: This software is designed exclusively for academic research and ethical development of quantum-harmonic currency systems. Use of this code for malicious, illegal, or privacy-violating activities is strictly prohibited.**
-
----
-
-*Developed by Quantum Currency Implementation Team*
-*Version 0.9.0-beta - Production Ready Beta Release* 🪙

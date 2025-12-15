@@ -716,16 +716,8 @@ class CryptoEngine:
                 dh_public=current_dh_public  # Clave efímera actual para que el receptor pueda avanzar el ratchet
             )
 
-            # Firmar mensaje (incluyendo la clave efímera para integridad)
-            message_data = (
-                message.ciphertext + message.nonce +
-                message.sender_id.encode() + message.recipient_id.encode() +
-                message.message_number.to_bytes(4, 'big') +
-                int(timestamp).to_bytes(8, 'big') +
-                message.dh_public
-            )
-
-            message.signature = self.identity.signing_key.sign(message_data)
+            # Preparar metadatos y firma
+            self._finalize_secure_message(message, timestamp, current_dh_public)
 
             logger.debug(f"🔐 Mensaje cifrado con PFS para {recipient_id}")
             return message
@@ -733,15 +725,21 @@ class CryptoEngine:
         except Exception as e:
             logger.error(f"Error cifrando mensaje para {recipient_id}: {e}")
             return None
+
+    def _finalize_secure_message(self, message: SecureMessage, timestamp: float, dh_public: bytes):
+        """Firma el mensaje y finaliza metadatos"""
+        message_data = (
+            message.ciphertext + message.nonce +
+            message.sender_id.encode() + message.recipient_id.encode() +
+            message.message_number.to_bytes(4, 'big') +
+            int(timestamp).to_bytes(8, 'big') +
+            dh_public
+        )
+        message.signature = self.identity.signing_key.sign(message_data)
     
     def decrypt_message(self, message: SecureMessage) -> Optional[bytes]:
         """Descifrar mensaje recibido con Perfect Forward Secrecy"""
-        if message.sender_id not in self.ratchet_states:
-            logger.error(f"No hay canal seguro con {message.sender_id}")
-            return None
-
-        if message.sender_id not in self.peer_identities:
-            logger.error(f"Peer {message.sender_id} no está en el registro")
+        if not self._validate_message_source(message):
             return None
 
         try:
@@ -750,17 +748,10 @@ class CryptoEngine:
                 logger.warning(f"Mensaje de {message.sender_id} demasiado antiguo")
                 return None
 
-            # Verificar firma (incluyendo clave efímera)
+            # Verificar firma y ratchet
             peer_identity = self.peer_identities[message.sender_id]
-            message_data = (
-                message.ciphertext + message.nonce +
-                message.sender_id.encode() + message.recipient_id.encode() +
-                message.message_number.to_bytes(4, 'big') +
-                int(message.timestamp).to_bytes(8, 'big') +
-                message.dh_public
-            )
-
-            peer_identity.public_signing_key.verify(message.signature, message_data)
+            if not self._verify_message_signature(message, peer_identity):
+                return None
 
             # Obtener ratchet state
             ratchet = self.ratchet_states[message.sender_id]
@@ -798,6 +789,33 @@ class CryptoEngine:
         except Exception as e:
             logger.error(f"Error descifrando mensaje de {message.sender_id}: {e}")
             return None
+
+    def _validate_message_source(self, message: SecureMessage) -> bool:
+        """Valida origen del mensaje"""
+        if message.sender_id not in self.ratchet_states:
+            logger.error(f"No hay canal seguro con {message.sender_id}")
+            return False
+            
+        if message.sender_id not in self.peer_identities:
+            logger.error(f"Peer {message.sender_id} no está en el registro")
+            return False
+        return True
+
+    def _verify_message_signature(self, message: SecureMessage, peer_identity: PublicNodeIdentity) -> bool:
+        """Verifica la firma del mensaje"""
+        try:
+            message_data = (
+                message.ciphertext + message.nonce +
+                message.sender_id.encode() + message.recipient_id.encode() +
+                message.message_number.to_bytes(4, 'big') +
+                int(message.timestamp).to_bytes(8, 'big') +
+                message.dh_public
+            )
+            peer_identity.public_signing_key.verify(message.signature, message_data)
+            return True
+        except InvalidSignature:
+            logger.error(f"❌ Firma inválida en mensaje de {message.sender_id}")
+            return False
     
     def sign_data(self, data: bytes) -> bytes:
         """Firmar datos con clave de identidad"""

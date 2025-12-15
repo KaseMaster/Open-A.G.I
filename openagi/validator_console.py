@@ -20,7 +20,7 @@ import numpy as np
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 # Import our existing modules
-from openagi.validator_staking import ValidatorStakingSystem
+from validator_staking import ValidatorStakingSystem
 from openagi.onchain_governance import OnChainGovernanceSystem
 
 @dataclass

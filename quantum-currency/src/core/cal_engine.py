@@ -20,6 +20,31 @@ import json
 import os
 from dataclasses import dataclass, asdict
 
+# Add import for LambdaAttunementController
+# We'll import it dynamically since it's in the same directory
+import sys
+import os
+sys.path.insert(0, os.path.dirname(__file__))
+try:
+    from lambda_attunement import LambdaAttunementController, AttunementConfig
+except ImportError:
+    # If direct import fails, try importing with importlib
+    import importlib.util
+    lambda_attunement_path = os.path.join(os.path.dirname(__file__), 'lambda_attunement.py')
+    if os.path.exists(lambda_attunement_path):
+        spec = importlib.util.spec_from_file_location("lambda_attunement", lambda_attunement_path)
+        if spec is not None and spec.loader is not None:
+            lambda_attunement = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(lambda_attunement)
+            LambdaAttunementController = lambda_attunement.LambdaAttunementController
+            AttunementConfig = lambda_attunement.AttunementConfig
+        else:
+            LambdaAttunementController = None
+            AttunementConfig = None
+    else:
+        LambdaAttunementController = None
+        AttunementConfig = None
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -58,6 +83,11 @@ class CALEngine:
             "recovery_step_limit": 50  # Max steps for re-stabilization
         }
         
+        # Add T4 and T5 tracking
+        self.t4_boosts_active = 0  # Track active T4 boosts
+        self.t5_contributions = 0   # Track T5 memory contributions
+        self.t5_impact_factor = 0.1 # Factor for T5 impact on Ĉ(t)
+        
         # Configuration parameters
         self.config = {
             "lambda_decay_factor": LAMBDA,
@@ -84,6 +114,40 @@ class CALEngine:
         # Create checkpoint directory if it doesn't exist
         if not os.path.exists(self.checkpoint_dir):
             os.makedirs(self.checkpoint_dir)
+        
+        # Initialize Lambda Attunement Controller if available
+        self.lambda_attunement_controller = None
+        if LambdaAttunementController is not None:
+            try:
+                # Create default configuration for attunement controller
+                attunement_config = {
+                    "alpha_initial": 1.0,
+                    "alpha_min": 0.8,
+                    "alpha_max": 1.2,
+                    "delta_alpha_max": 0.02,
+                    "lr": 0.001,
+                    "momentum": 0.85,
+                    "epsilon": 1e-5,
+                    "settle_delay": 0.25,
+                    "gradient_averaging_window": 3,
+                    "cycle_sleep": 1.0,
+                    "safety": {
+                        "entropy_max": 0.002,
+                        "h_internal_min": 0.95,
+                        "revert_on_failure": True
+                    },
+                    "logging": {
+                        "audit_ledger_path": "/var/lib/uhes/attunement_ledger.log"
+                    }
+                }
+                
+                self.lambda_attunement_controller = LambdaAttunementController(self, attunement_config)
+                logger.info("Lambda Attunement Controller initialized successfully")
+            except Exception as e:
+                logger.error(f"Failed to initialize Lambda Attunement Controller: {e}")
+                self.lambda_attunement_controller = None
+        else:
+            logger.warning("Lambda Attunement Controller not available")
         
         logger.info(f"🌀 CAL Engine initialized for network: {network_id}")
     
@@ -165,6 +229,12 @@ class CALEngine:
         current_psi = 0.8  # Placeholder - would be computed from history
         lambda_L = self.lambda_L(L, current_psi)
         
+        # Apply T4 boost influence on λ(t) recalibration if active
+        if self.t4_boosts_active > 0:
+            # Shorten voting interval when T4 tokens are applied
+            # This is a simplified implementation - in practice this would affect the actual timing
+            lambda_L *= (1.0 + (self.t4_boosts_active * 0.05))  # Increase lambda(L) by up to 5% per active boost
+        
         # Compute modulator
         m_t = self.modulator(I_vector, lambda_L)
         
@@ -203,12 +273,14 @@ class CALEngine:
             logger.warning(f"Dimensional instability: modulator value {modulator_value} causes overflow")
             return False
     
-    def compute_recursive_coherence(self, omega_vectors: List[np.ndarray]) -> float:
+    def compute_recursive_coherence(self, omega_vectors: List[np.ndarray], 
+                                  t5_contributions: int = 0) -> float:
         """
         Compute recursive coherence score between Ω vectors
         
         Args:
             omega_vectors: List of Ω state vectors
+            t5_contributions: Number of T5 memory contributions
             
         Returns:
             float: Aggregated coherence score (0-1)
@@ -234,9 +306,15 @@ class CALEngine:
             return 0.0
         
         # Return mean similarity as coherence score
-        coherence_score = float(np.mean(similarities))
-        logger.debug(f"Recursive coherence computed: {coherence_score:.4f}")
-        return coherence_score
+        base_coherence_score = float(np.mean(similarities))
+        
+        # Include T5-memory contributions in Ĉ(t)
+        # C_hat = f(C_hat_core, Avg(lambda_node), sum(T5_impact))
+        t5_impact = t5_contributions * self.t5_impact_factor
+        enhanced_coherence = min(1.0, base_coherence_score + t5_impact)
+        
+        logger.debug(f"Recursive coherence computed: {enhanced_coherence:.4f} (base: {base_coherence_score:.4f}, T5 impact: {t5_impact:.4f})")
+        return enhanced_coherence
     
     def record_performance_metrics(self, latency: float, memory_usage: float, 
                                  throughput: float):
@@ -523,6 +601,97 @@ class CALEngine:
         except Exception as e:
             logger.error(f"Checkpoint consistency validation failed: {e}")
             return False
+    
+    # Lambda Attunement Controller Integration
+    def sample_omega_snapshot(self) -> List[List[float]]:
+        """
+        Sample current Ω-state snapshot for attunement controller
+        Returns list of node omega vectors
+        """
+        # For demo purposes, generate mock omega vectors
+        # In a real implementation, this would sample actual node states
+        import numpy as np
+        return [np.random.random(5).tolist() for _ in range(3)]
+    
+    def normalize_C(self, C: float) -> float:
+        """
+        Normalize Coherence Density value to [0,1] range
+        """
+        # Simple normalization for demo
+        return min(1.0, max(0.0, C / 10.0))
+    
+    def set_alpha_multiplier(self, alpha: float) -> None:
+        """
+        Set the alpha multiplier for dynamic λ adjustment
+        """
+        # This would modify the lambda calculation in a real implementation
+        logger.info(f"Setting alpha multiplier to {alpha}")
+        # Store alpha for use in lambda_L calculation
+        self.current_alpha = alpha
+    
+    def get_lambda(self) -> float:
+        """
+        Get current lambda value
+        """
+        # Return base lambda value, modified by alpha if set
+        base_lambda = self.config.get("lambda_decay_factor", LAMBDA)
+        alpha = getattr(self, "current_alpha", 1.0)
+        return base_lambda * alpha
+    
+    def get_entropy_rate(self) -> float:
+        """
+        Get current entropy rate for safety checks
+        """
+        # Return mock entropy rate for demo
+        import numpy as np
+        return np.random.random() * 0.001
+    
+    def get_h_internal(self) -> float:
+        """
+        Get internal coherence metric for safety checks
+        """
+        # Return mock internal coherence for demo
+        return 0.98
+    
+    def get_m_t_bounds(self) -> Tuple[float, float]:
+        """
+        Get bounds for m_t values for safety checks
+        """
+        # Return mock bounds for demo
+        return (-1.0, 1.0)
+    
+    def on_cycle_end(self) -> None:
+        """
+        Callback hook for attunement controller to run at the end of each cycle
+        """
+        if self.lambda_attunement_controller is not None:
+            try:
+                # Run one attunement update step
+                self.lambda_attunement_controller.update()
+                logger.debug("Lambda attunement update completed")
+            except Exception as e:
+                logger.error(f"Error in lambda attunement update: {e}")
+
+    def apply_t4_boost(self):
+        """
+        Apply a T4 boost effect to the CAL engine
+        """
+        self.t4_boosts_active += 1
+        logger.info(f"T4 boost applied. Active boosts: {self.t4_boosts_active}")
+
+    def remove_t4_boost(self):
+        """
+        Remove a T4 boost effect from the CAL engine
+        """
+        self.t4_boosts_active = max(0, self.t4_boosts_active - 1)
+        logger.info(f"T4 boost removed. Active boosts: {self.t4_boosts_active}")
+
+    def add_t5_contribution(self):
+        """
+        Add a T5 memory contribution to the CAL engine
+        """
+        self.t5_contributions += 1
+        logger.info(f"T5 contribution added. Total contributions: {self.t5_contributions}")
 
 # Example usage and testing
 if __name__ == "__main__":

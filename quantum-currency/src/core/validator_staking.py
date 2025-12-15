@@ -60,6 +60,99 @@ class Validator:
     psi_score_history: List[float] = field(default_factory=list)  # Historical coherence scores
     eligible_for_governance: bool = False  # Whether validator can participate in governance
     chr_balance: float = 0.0  # CHR token balance for voting power calculation
+    # Add token balances for T1-T5 tokens
+    t1_balance: float = 0.0  # Validator Stake Token
+    t1_staked: float = 0.0   # Staked T1 tokens
+    t2_balance: float = 0.0  # Reward Token
+    t3_balance: float = 0.0  # Governance Token
+    t4_balance: float = 0.0  # Attunement Boost Token
+    t5_balance: float = 0.0  # Memory Incentive Token
+    # T4 boost tracking
+    t4_boost_active: bool = False
+    t4_boost_expiration: float = 0.0
+    t4_boost_amount: float = 0.0
+    
+    def apply_t4_boost(self, amount: float, duration_hours: float = 24.0) -> bool:
+        """
+        Apply a T4 boost to temporarily increase psi score
+        
+        Args:
+            amount: Amount of T4 tokens to burn for boost
+            duration_hours: Duration of boost in hours (default: 24)
+            
+        Returns:
+            bool: True if boost applied successfully, False otherwise
+        """
+        # Check sufficient T4 balance
+        if self.t4_balance < amount:
+            print(f"Insufficient T4 balance: {self.t4_balance} < {amount}")
+            return False
+            
+        # Burn T4 tokens
+        self.t4_balance -= amount
+        
+        # Apply boost
+        self.t4_boost_active = True
+        self.t4_boost_amount = amount
+        self.t4_boost_expiration = time.time() + (duration_hours * 3600)
+        
+        print(f"T4 boost applied: {amount} T4 for {duration_hours} hours")
+        return True
+    
+    def calculate_psi_with_boost(self, base_psi: float) -> float:
+        """
+        Calculate psi score including T4 boost
+        
+        Args:
+            base_psi: Base psi score
+            
+        Returns:
+            float: Psi score with boost applied
+        """
+        # Check if boost is active and not expired
+        if self.t4_boost_active and time.time() < self.t4_boost_expiration:
+            # Apply boost: Psi_new = base_psi + 0.05 * T4_boost
+            boosted_psi = base_psi + 0.05 * self.t4_boost_amount
+            return min(1.0, boosted_psi)  # Cap at 1.0
+        else:
+            # Deactivate expired boost
+            if self.t4_boost_active and time.time() >= self.t4_boost_expiration:
+                self.t4_boost_active = False
+                self.t4_boost_amount = 0.0
+                self.t4_boost_expiration = 0.0
+            return base_psi
+    
+    def check_and_apply_slashing(self, psi_threshold: float = 0.7) -> Dict[str, float]:
+        """
+        Check psi score and apply slashing if below threshold
+        
+        Args:
+            psi_threshold: Threshold below which slashing is applied (default: 0.7)
+            
+        Returns:
+            Dict with slashing amounts for T1 and T4
+        """
+        slashing_applied = {"T1": 0.0, "T4": 0.0}
+        
+        # Check if psi score is below threshold
+        if self.psi_score < psi_threshold:
+            # Apply slashing to T1 (staked tokens)
+            if self.t1_staked > 0:
+                slash_fraction = min(0.1, (psi_threshold - self.psi_score) * 0.5)  # Max 10% slash
+                slash_amount = self.t1_staked * slash_fraction
+                self.t1_staked -= slash_amount
+                slashing_applied["T1"] = slash_amount
+                print(f"Slashed {slash_amount:.2f} T1 from validator {self.validator_id}")
+            
+            # Apply slashing to T4 tokens
+            if self.t4_balance > 0:
+                slash_fraction = min(0.2, (psi_threshold - self.psi_score) * 0.3)  # Max 20% slash
+                slash_amount = self.t4_balance * slash_fraction
+                self.t4_balance -= slash_amount
+                slashing_applied["T4"] = slash_amount
+                print(f"Slashed {slash_amount:.2f} T4 from validator {self.validator_id}")
+        
+        return slashing_applied
 
 @dataclass
 class LiquidityPool:
@@ -525,7 +618,7 @@ class ValidatorStakingSystem:
         apr = base_rate + chr_bonus
         
         return apr
-    
+
     def get_system_metrics(self) -> Dict:
         """
         Get overall system metrics

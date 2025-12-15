@@ -306,6 +306,9 @@ class QuantumCurrencyDashboard:
         print(f"  Time Delay: {current.omega_state_metrics['time_delay']:.4f}")
         print()
         
+        # Lambda Attunement Metrics (placeholder for future integration)
+        # TODO: Integrate with actual Lambda Attunement Controller when available
+        
         print("TOKEN BALANCES:")
         for token, balance in current.token_balances.items():
             print(f"  {token}: {balance:.2f}")

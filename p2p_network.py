@@ -855,10 +855,12 @@ class PeerDiscoveryService:
 class ConnectionManager:
     """Gestor de conexiones P2P"""
 
-    def __init__(self, node_id: str, port: int, crypto_engine: Optional['CryptoEngine'] = None):
+    def __init__(self, node_id: str, port: int, crypto_engine: 'CryptoEngine', 
+                 reputation_manager: Optional['PeerReputationManager'] = None):
         self.node_id = node_id
         self.port = port
-        self.crypto_engine: Optional['CryptoEngine'] = crypto_engine
+        self.crypto_engine = crypto_engine
+        self.reputation_manager = reputation_manager
         self.active_connections: Dict[str, Dict[str, Any]] = {}
         self.connection_pool: Dict[str, asyncio.Queue] = {}
         self.max_connections = 50
@@ -872,6 +874,9 @@ class ConnectionManager:
             "bytes_sent": 0,
             "bytes_received": 0
         }
+
+        if not self.crypto_engine:
+             logger.warning("⚠️ ConnectionManager inicializado SIN motor criptográfico")
 
     async def start_server(self):
         """Inicia el servidor de conexiones"""
@@ -966,6 +971,17 @@ class ConnectionManager:
                 }
                 writer.write(json.dumps(error_response).encode() + b'\n')
                 await writer.drain()
+                return
+
+            # Verificar reputación si el gestor está disponible
+            if self.reputation_manager and not self.reputation_manager.should_accept_connection(peer_id):
+                error_response = {
+                    "type": "handshake_error",
+                    "error": "reputation_too_low"
+                }
+                writer.write(json.dumps(error_response).encode() + b'\n')
+                await writer.drain()
+                logger.warning(f"🚫 Conexión rechazada de {peer_id} por baja reputación")
                 return
 
             # Crear conexión
@@ -1628,11 +1644,11 @@ class NetworkTopologyManager:
                 logger.warning(f"⚠️ Tampoco se pudo inicializar con fallback básico: {e2}")
                 self.crypto_engine = None
 
-        self.connection_manager = ConnectionManager(node_id, port, self.crypto_engine)
-        self.topology_manager = NetworkTopologyManager(node_id)
-
         # Sistema de reputación de peers
         self.reputation_manager = PeerReputationManager()
+
+        self.connection_manager = ConnectionManager(node_id, port, self.crypto_engine, self.reputation_manager)
+        self.topology_manager = NetworkTopologyManager(node_id)
 
         # Estado de la red
         self.network_active = False

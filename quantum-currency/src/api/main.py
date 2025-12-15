@@ -641,6 +641,37 @@ def vote_on_proposal():
     except Exception as e:
         return jsonify({"error": f"Voting failed: {str(e)}"}), 500
 
+@app.route("/uhes/governance/validator/register", methods=["POST"])
+def register_validator():
+    """Register a new validator in the network"""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+        
+        # Sanitize input data
+        sanitized_data = sanitize_data(data)
+        
+        # Extract parameters
+        validator_id = safe_get(sanitized_data, "validator_id", "")
+        staked_atr = safe_get(sanitized_data, "staked_atr", 0.0)
+        initial_coherence = safe_get(sanitized_data, "initial_coherence", 0.5)
+        
+        # Register validator
+        success = governance.register_validator(
+            validator_id=validator_id,
+            staked_atr=staked_atr,
+            initial_coherence=initial_coherence
+        )
+        
+        if success:
+            return jsonify({"status": "success", "message": f"Validator {validator_id} registered"})
+        else:
+            return jsonify({"status": "error", "message": "Failed to register validator"}), 400
+            
+    except Exception as e:
+        return jsonify({"error": f"Validator registration failed: {str(e)}"}), 500
+
 # Wallet API endpoints
 @app.route("/wallet/create", methods=["POST"])
 def create_wallet():
@@ -2254,6 +2285,78 @@ async def generate_harmonic_outreach_proposal():
         })
     except Exception as e:
         return jsonify({"error": f"Failed to generate proposal: {str(e)}"}), 500
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint that returns system status and coherence metrics"""
+    # In a real implementation, these values would be retrieved from the actual system
+    import time
+    import psutil
+    import os
+    
+    # Get system metrics
+    process = psutil.Process(os.getpid())
+    memory_info = process.memory_info()
+    
+    # Mock coherence metrics - in a real implementation, these would come from the CAL
+    health_data = {
+        "status": "healthy",
+        "timestamp": time.time(),
+        "lambda_t": 1.023,  # Dynamic Lambda (λ(t))
+        "c_t": 0.915,       # Coherence Density (Ĉ(t))
+        "uptime": time.time() - process.create_time(),
+        "active_connections": 5,
+        "memory_usage_mb": memory_info.rss / 1024 / 1024,
+        "cpu_usage_percent": process.cpu_percent()
+    }
+    return jsonify(health_data)
+
+@app.route('/metrics', methods=['GET'])
+def metrics():
+    """Prometheus metrics endpoint"""
+    import time
+    import psutil
+    import os
+    
+    # Get system metrics
+    process = psutil.Process(os.getpid())
+    memory_info = process.memory_info()
+    
+    # Mock coherence metrics - in a real implementation, these would come from the CAL
+    lambda_t = 1.023
+    c_t = 0.915
+    uptime = time.time() - process.create_time()
+    active_connections = 5
+    memory_usage_mb = memory_info.rss / 1024 / 1024
+    cpu_usage_percent = process.cpu_percent()
+    
+    # Format metrics in Prometheus exposition format
+    metrics_text = f"""# HELP quantum_currency_lambda_t Dynamic Lambda (λ(t)) value
+# TYPE quantum_currency_lambda_t gauge
+quantum_currency_lambda_t {lambda_t}
+
+# HELP quantum_currency_c_t Coherence Density (Ĉ(t)) value
+# TYPE quantum_currency_c_t gauge
+quantum_currency_c_t {c_t}
+
+# HELP quantum_currency_active_connections Number of active connections
+# TYPE quantum_currency_active_connections gauge
+quantum_currency_active_connections {active_connections}
+
+# HELP quantum_currency_uptime System uptime in seconds
+# TYPE quantum_currency_uptime counter
+quantum_currency_uptime {uptime}
+
+# HELP quantum_currency_memory_usage_mb Memory usage in MB
+# TYPE quantum_currency_memory_usage_mb gauge
+quantum_currency_memory_usage_mb {memory_usage_mb}
+
+# HELP quantum_currency_cpu_usage_percent CPU usage percentage
+# TYPE quantum_currency_cpu_usage_percent gauge
+quantum_currency_cpu_usage_percent {cpu_usage_percent}
+"""
+    
+    return metrics_text, 200, {'Content-Type': 'text/plain; version=0.0.4'}
 
 @app.route('/')
 def index():

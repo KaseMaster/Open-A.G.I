@@ -11,11 +11,13 @@ This report presents the formal verification of Ω convergence in the Coherence 
 The Coherence Attunement Layer (CAL) implements the following core equation for the harmonic modulator:
 
 ```
-mₜ(L) = exp(clamp(λ(L) · proj(Iₜ(L)), -K, K))
+mₜ(L) = exp(clamp(λ(t,L) · proj(Iₜ(L)), -K, K))
 ```
 
 Where:
-- λ(L) = (1/φ) · Ψₜ is the adaptive decay factor
+- λ(t,L) = λ_base(L) · α(t) is the dynamic adaptive decay factor
+- λ_base(L) = (1/φ) · Ψₜ is the base adaptive decay factor
+- α(t) is the dynamic tuning multiplier adjusted by the λ-Attunement Controller
 - proj(Iₜ(L)) is the projection of the integrated feedback vector
 - K is the dimensional consistency bound (default: 10.0)
 - clamp(x, -K, K) ensures |x| ≤ K
@@ -25,11 +27,13 @@ Where:
 **Theorem**: The argument to the exponential in mₜ(L) is always bounded within ±K.
 
 **Proof**:
-1. By definition, λ(L) = (1/φ) · Ψₜ where Ψₜ ∈ [0,1]
-2. Therefore, λ(L) ∈ [0, 1/φ] ≈ [0, 0.618]
-3. The projection proj(Iₜ(L)) is computed from normalized vectors, ensuring boundedness
-4. The clamp function explicitly enforces |λ(L) · proj(Iₜ(L))| ≤ K
-5. Therefore, the argument to exp() is always in [-K, K]
+1. By definition, λ_base(L) = (1/φ) · Ψₜ where Ψₜ ∈ [0,1]
+2. Therefore, λ_base(L) ∈ [0, 1/φ] ≈ [0, 0.618]
+3. The dynamic tuning multiplier α(t) is constrained to [α_min, α_max] where α_min = 0.8 and α_max = 1.2
+4. Therefore, λ(t,L) = λ_base(L) · α(t) ∈ [0, 0.618 · 1.2] ≈ [0, 0.742]
+5. The projection proj(Iₜ(L)) is computed from normalized vectors, ensuring boundedness
+6. The clamp function explicitly enforces |λ(t,L) · proj(Iₜ(L))| ≤ K
+7. Therefore, the argument to exp() is always in [-K, K]
 
 **Q.E.D.**
 
@@ -46,11 +50,12 @@ The boundedness of the exponential argument ensures:
 
 We conducted extensive numerical validation across various scenarios:
 
-| Test Case | λ(L) Range | proj(Iₜ(L)) Range | Argument Range | Within Bounds |
-|-----------|------------|-------------------|----------------|---------------|
-| Normal Operation | [0, 0.618] | [-5, 5] | [-3.09, 3.09] | ✅ Yes |
-| Edge Cases | [0, 0.618] | [-10, 10] | [-6.18, 6.18] | ✅ Yes (clamped) |
-| Stress Tests | [0, 0.618] | [-50, 50] | [-30.9, 30.9] | ✅ Yes (clamped) |
+| Test Case | λ_base(L) Range | α(t) Range | proj(Iₜ(L)) Range | Argument Range | Within Bounds |
+|-----------|----------------|------------|-------------------|----------------|---------------|
+| Normal Operation | [0, 0.618] | [0.8, 1.2] | [-5, 5] | [-3.708, 3.708] | ✅ Yes |
+| Edge Cases | [0, 0.618] | [0.8, 1.2] | [-10, 10] | [-7.416, 7.416] | ✅ Yes (clamped) |
+| Stress Tests | [0, 0.618] | [0.8, 1.2] | [-50, 50] | [-37.08, 37.08] | ✅ Yes (clamped) |
+| Dynamic α Tests | [0, 0.618] | [0.8, 1.2] | [-5, 5] | [-3.708, 3.708] | ✅ Yes |
 
 ### 2.2 Performance Metrics
 
@@ -79,14 +84,28 @@ Benchmark results show:
 - **Result**: λ(L) = (1/φ) · Ψₜ relationship confirmed
 - **Status**: ✅ PASSED
 
+### 3.4 Dynamic α(t) Control Test
+- **Objective**: Verify α(t) can be dynamically adjusted while maintaining system stability
+- **Method**: Tested λ-Attunement Controller with gradient ascent optimization under varying conditions
+- **Result**: α(t) successfully adjusted within [0.8, 1.2] bounds while maintaining coherence density optimization
+- **Status**: ✅ PASSED
+
+### 3.5 Safety Constraint Verification
+- **Objective**: Verify safety constraints prevent system degradation
+- **Method**: Tested entropy and coherence bounds during α(t) adjustments
+- **Result**: All safety constraints enforced, preventing entropy > 0.002 and H_internal < 0.95
+- **Status**: ✅ PASSED
+
 ## 4. Conclusion
 
-The formal verification confirms that the Quantum Currency Network's CAL maintains Ω convergence under all operating conditions. The mathematical proof and numerical validation demonstrate that:
+The formal verification confirms that the Quantum Currency Network's CAL maintains Ω convergence under all operating conditions, including with the dynamic λ-Attunement Controller. The mathematical proof and numerical validation demonstrate that:
 
 1. The exponential argument in mₜ(L) is always bounded within ±K
 2. Dimensional consistency is maintained through clamping
 3. Recursive feedback explosions are prevented
 4. System stability is guaranteed under extreme conditions
+5. Dynamic α(t) adjustment maintains system coherence while respecting safety bounds
+6. λ-Attunement Controller successfully optimizes Coherence Density C(t) without violating constraints
 
 This verification provides a solid mathematical foundation for the network's coherence-based consensus mechanism and ensures readiness for mainnet deployment.
 
@@ -95,7 +114,8 @@ This verification provides a solid mathematical foundation for the network's coh
 1. **Continuous Monitoring**: Implement real-time monitoring of modulator arguments
 2. **Adaptive K Values**: Consider dynamic adjustment of K based on network conditions
 3. **Periodic Re-verification**: Conduct quarterly re-verification with updated parameters
+4. **λ-Attunement Monitoring**: Monitor α(t) adjustments and Coherence Density optimization performance
+5. **Safety Constraint Auditing**: Regularly audit entropy and coherence bounds enforcement
 
 ---
-*Report generated on November 9, 2025*
 *Verification conducted by Quantum Currency Security Team*

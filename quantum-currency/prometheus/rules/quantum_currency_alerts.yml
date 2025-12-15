@@ -1,0 +1,47 @@
+groups:
+- name: quantum_currency_alerts
+  rules:
+  - alert: CoherenceDensityCritical
+    expr: quantum_currency_c_t < 0.85
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Quantum Currency Coherence Density (C_hat) is critically low."
+      description: "Triggering Attunement Agent for system reboot/recalibration."
+
+  - alert: LambdaDriftWarning
+    expr: quantum_currency_lambda_t > 1.2 or quantum_currency_lambda_t < 0.8
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Dynamic Lambda (λ(t)) is drifting out of safe bounds."
+      description: "System may require soft recalibration via CLI tool."
+
+  - alert: HighCPUUsage
+    expr: rate(process_cpu_seconds_total[5m]) > 0.8
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High CPU usage detected"
+      description: "Quantum Currency service is using more than 80% CPU"
+
+  - alert: HighMemoryUsage
+    expr: process_resident_memory_bytes / 1024 / 1024 > 500
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High memory usage detected"
+      description: "Quantum Currency service is using more than 500MB memory"
+
+  - alert: ServiceDown
+    expr: up{job="quantum-currency"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Quantum Currency service is down"
+      description: "Quantum Currency service is not responding to health checks"

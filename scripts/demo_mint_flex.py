@@ -6,11 +6,15 @@ Demonstrates minting FLX tokens based on harmonic coherence validation
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+# Add the quantum-currency directory to the path
+quantum_currency_path = os.path.join(os.path.dirname(__file__), '..', 'quantum-currency')
+sys.path.insert(0, quantum_currency_path)
+sys.path.insert(0, os.path.join(quantum_currency_path, 'src'))
 
 import numpy as np
-from openagi.harmonic_validation import make_snapshot, compute_coherence_score
-from openagi.token_rules import validate_harmonic_tx, apply_token_effects
+from core.harmonic_validation import make_snapshot, compute_coherence_score
+from core.token_rules import validate_harmonic_tx, apply_token_effects
 
 
 def synth(freq, phase, t):

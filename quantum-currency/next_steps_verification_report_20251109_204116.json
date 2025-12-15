@@ -1,0 +1,15 @@
+{
+  "report_timestamp": "2025-11-09T20:41:16.503874Z",
+  "component": "HMN Next Steps Verification",
+  "results": [
+    [
+      "Integration Tests",
+      false
+    ]
+  ],
+  "summary": {
+    "passed": 0,
+    "total": 1,
+    "success_rate": 0.0
+  }
+}

@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HMN Coherence Attunement Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@100..900&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0c0c16;
+            /* Subtle dark nebula effect */
+            background-image: radial-gradient(circle at 15% 15%, rgba(20, 20, 40, 0.5) 0%, transparent 40%),
+                              radial-gradient(circle at 85% 85%, rgba(10, 30, 50, 0.4) 0%, transparent 50%);
+            color: #E2E8F0;
+        }
+
+        /* Pulsing Glow Animation for Active States */
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 1; box-shadow: 0 0 5px currentColor, 0 0 10px currentColor; }
+            50% { opacity: 0.8; box-shadow: 0 0 8px currentColor, 0 0 15px currentColor; }
+        }
+
+        /* Base Crystalline/Glass Panel */
+        .crystal-panel {
+            background-color: rgba(17, 24, 39, 0.7); /* Deep Slate translucent */
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            border: 1px solid rgba(45, 212, 191, 0.2); /* Soft teal border */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3), 0 0 20px rgba(45, 212, 191, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .crystal-header {
+            font-family: 'Space Mono', monospace;
+            border-bottom: 2px solid;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 5px currentColor;
+        }
+
+        /* Luminous Button Style */
+        .btn-luminous {
+            background-color: #1E3A8A; /* Dark Blue */
+            color: #DBEAFE;
+            border: none;
+            border-radius: 0.6rem;
+            padding: 0.6rem 1.2rem;
+            font-weight: 600;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+            transition: all 0.2s;
+        }
+        .btn-luminous:hover {
+            background-color: #3750a8;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.8);
+        }
+
+        /* Status Light Colors */
+        .light-red { color: #F87171; box-shadow: 0 0 8px #F87171; }
+        .light-green { color: #34D399; box-shadow: 0 0 8px #34D399; animation: pulse-glow 2s infinite ease-in-out; }
+        .light-yellow { color: #FBBF24; box-shadow: 0 0 8px #FBBF24; animation: pulse-glow 1.5s infinite ease-in-out; }
+        .light-cyan { color: #22D3EE; box-shadow: 0 0 8px #22D3EE; animation: pulse-glow 2s infinite ease-in-out; }
+
+        /* Coherence Visualization */
+        .coherence-track {
+            height: 1.5rem;
+            background-color: #1f2937; /* Dark base */
+            border-radius: 9999px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #374151;
+        }
+        .coherence-fill {
+            width: var(--coherence-width, 0%);
+            transition: width 0.7s ease-out;
+            /* Fractal Gradient: Teal -> Cyan -> Purple */
+            background: linear-gradient(90deg, #14B8A6, #06B6D4, #8B5CF6);
+            height: 100%;
+            box-shadow: 0 0 15px rgba(45, 212, 191, 0.6);
+        }
+        .threshold-line {
+            position: absolute;
+            height: 100%;
+            width: 2px;
+            background-color: #FBBF24;
+            left: 75%; /* Based on 0.750 threshold */
+            box-shadow: 0 0 10px #FBBF24;
+        }
+        
+    </style>
+    <script>
+        // Global State Simulation
+        let apiStatus = 'Stopped';
+        let systemStatus = 'Ready';
+        let autoBalance = 'Disabled';
+        let currentCoherence = 0.000;
+        const coherenceThreshold = 0.750;
+        
+        // UHES Data
+        const uhesStatus = {
+            calEngine: 'Inactive', memoryLayers: '0/0/0', entropyIssues: 0, autoTuning: 'Disabled',
+            globalCoherence: 0.000, systemicEquilibrium: 0.000, connectedNodes: 0, caf: 0.000, lastUpdated: 'Never'
+        };
+
+        // Utility Functions
+        const updateStatus = (id, value, lightClass = 'light-red') => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.textContent = value;
+                const lightEl = document.getElementById(id + 'Light');
+                if (lightEl) {
+                    lightEl.className = lightClass;
+                }
+            }
+        };
+
+        const updateCoherence = (newCoherence) => {
+            currentCoherence = Math.min(1.0, Math.max(0.0, newCoherence));
+            const width = (currentCoherence * 100).toFixed(2);
+            
+            document.getElementById('coherenceValue').textContent = currentCoherence.toFixed(3);
+            document.getElementById('coherenceFill').style.setProperty('--coherence-width', `${width}%`);
+
+            uhesStatus.globalCoherence = currentCoherence;
+            
+            // Check threshold for system status light
+            const statusLightClass = currentCoherence >= coherenceThreshold ? 'light-green' : (currentCoherence > 0.3 ? 'light-yellow' : 'light-red');
+            updateStatus('systemStatus', systemStatus, statusLightClass);
+            
+            renderGlobalDashboard();
+        };
+
+        const logResult = (message, color = 'text-gray-300') => {
+            const resultsDiv = document.getElementById('transactionResults');
+            const historyDiv = document.getElementById('transactionHistory');
+            const logEntry = `<p class="${color} font-mono text-xs mb-1">[${new Date().toLocaleTimeString()}] ${message}</p>`;
+
+            // Update Transaction Panel Result
+            resultsDiv.innerHTML = logEntry;
+            
+            // Update History Panel
+            historyDiv.innerHTML = logEntry + historyDiv.innerHTML;
+        };
+
+        const handleApiToggle = () => {
+            const btn = document.getElementById('apiToggleBtn');
+            
+            if (apiStatus === 'Stopped' || apiStatus === 'Ready') {
+                apiStatus = 'Running';
+                systemStatus = 'Operational';
+                btn.textContent = 'Stop REST API';
+                updateStatus('apiStatus', apiStatus, 'light-green');
+                updateStatus('systemStatus', systemStatus, 'light-green');
+                logResult('REST API started. System Operational.', 'text-emerald-400');
+            } else {
+                apiStatus = 'Stopped';
+                systemStatus = 'Ready';
+                btn.textContent = 'Start REST API';
+                updateStatus('apiStatus', apiStatus, 'light-red');
+                updateStatus('systemStatus', systemStatus, 'light-red');
+                logResult('REST API stopped. System Ready.', 'text-red-400');
+            }
+        };
+
+        const runDemo = () => {
+            if (apiStatus !== 'Running') {
+                handleApiToggle();
+            }
+
+            // Update UHES Status for Demo
+            uhesStatus.calEngine = 'Active';
+            uhesStatus.memoryLayers = '3/3/3';
+            uhesStatus.autoTuning = 'Enabled';
+            
+            updateStatus('calEngineStatus', uhesStatus.calEngine, 'light-green');
+            updateStatus('memoryLayersStatus', uhesStatus.memoryLayers, 'light-green');
+            updateStatus('autoTuningStatus', uhesStatus.autoTuning, 'light-cyan');
+
+            // Simulate Coherence increase
+            let step = 0;
+            const interval = setInterval(() => {
+                const increase = (Math.random() * 0.1) + 0.05;
+                const newCoherence = currentCoherence + increase;
+                
+                if (newCoherence >= 0.9) {
+                    clearInterval(interval);
+                    updateCoherence(0.935);
+                    uhesStatus.connectedNodes = 5;
+                    uhesStatus.systemicEquilibrium = 0.950;
+                    uhesStatus.caf = 0.980;
+                    uhesStatus.lastUpdated = new Date().toLocaleTimeString();
+                    renderGlobalDashboard();
+                    logResult('Demo finished: Coherence stabilized above threshold (0.935).', 'text-emerald-400');
+                    return;
+                }
+
+                updateCoherence(newCoherence);
+                logResult(`Coherence Attunement: ${newCoherence.toFixed(3)}`, 'text-cyan-400');
+                step++;
+            }, 500);
+        };
+        
+        const renderGlobalDashboard = () => {
+            document.getElementById('globalCoherenceValue').textContent = uhesStatus.globalCoherence.toFixed(3);
+            document.getElementById('systemicEquilibriumValue').textContent = uhesStatus.systemicEquilibrium.toFixed(3);
+            document.getElementById('connectedNodesValue').textContent = uhesStatus.connectedNodes;
+            document.getElementById('cafValue').textContent = uhesStatus.caf.toFixed(3);
+            document.getElementById('lastUpdatedValue').textContent = uhesStatus.lastUpdated;
+            // Also update Ledger Balances (simulated)
+            document.getElementById('flxBalances').innerHTML = `
+                <p class="font-mono text-sm flex justify-between">SYSTEM_A: <span class="text-yellow-300">1000.00 FLX</span></p>
+                <p class="font-mono text-sm flex justify-between">USER_ALPHA: <span class="text-yellow-300">500.50 FLX</span></p>
+            `;
+            document.getElementById('chrReputation').innerHTML = `
+                <p class="font-mono text-sm flex justify-between">SYSTEM_A: <span class="text-purple-300">0.95 CHR</span></p>
+                <p class="font-mono text-sm flex justify-between">USER_ALPHA: <span class="text-purple-300">0.88 CHR</span></p>
+            `;
+        };
+
+        window.onload = () => {
+            document.getElementById('coherenceThreshold').textContent = coherenceThreshold.toFixed(3);
+            updateCoherence(currentCoherence); 
+            renderGlobalDashboard();
+            
+            document.getElementById('apiToggleBtn').onclick = handleApiToggle;
+            document.getElementById('runDemoBtn').onclick = runDemo;
+            // Other button handlers would go here for a full implementation
+        };
+
+    </script>
+</head>
+<body class="p-4 md:p-8 min-h-screen">
+
+    <header class="mb-8 text-center">
+        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-cyan-400 shadow-lg shadow-cyan-500/10 p-2 rounded-lg font-mono">
+            HMN: COHERENCE ATTUNEMENT LAYER
+        </h1>
+        <p class="text-gray-400 text-lg mt-2 tracking-wider">Unified Harmonic Economic System Management Console</p>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        
+        <!-- === LEFT COLUMN: CONTROLS & STATUS === -->
+        <aside class="lg:col-span-1 space-y-6">
+            
+            <!-- 1. System Controls & Status (Combined) -->
+            <div class="crystal-panel p-5 shadow-xl shadow-indigo-500/10">
+                <h2 class="text-xl crystal-header text-indigo-400 border-indigo-600/50">System Nexus</h2>
+                <div class="space-y-3 mb-6">
+                    <button id="apiToggleBtn" class="btn-luminous w-full shadow-cyan-500/50">Start REST API</button>
+                    <button id="runDemoBtn" class="btn-luminous w-full bg-emerald-700 hover:bg-emerald-600 shadow-emerald-500/50">Run Demo (Attune System)</button>
+                    <button class="btn-luminous w-full bg-gray-600 hover:bg-gray-500 shadow-gray-500/50">Enable Auto-Balance</button>
+                </div>
+                
+                <div class="text-sm space-y-2 font-mono pt-4 border-t border-gray-700">
+                    <p class="flex justify-between items-center text-gray-300">
+                        <span id="apiStatusLight" class="w-2.5 h-2.5 rounded-full light-red mr-2"></span>API Status: <span id="apiStatus" class="font-bold text-red-400">Stopped</span>
+                    </p>
+                    <p class="flex justify-between items-center text-gray-300">
+                        <span id="systemStatusLight" class="w-2.5 h-2.5 rounded-full light-red mr-2"></span>System Status: <span id="systemStatus" class="font-bold text-red-400">Ready</span>
+                    </p>
+                    <p class="flex justify-between items-center text-gray-300">
+                        <span class="w-2.5 h-2.5 rounded-full light-red mr-2"></span>Auto-Balance: <span class="font-bold text-red-400">Disabled</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- 2. Coherence Monitor -->
+            <div class="crystal-panel p-5 shadow-xl shadow-cyan-500/10">
+                <h2 class="text-xl crystal-header text-cyan-400 border-cyan-600/50">Coherence Flow</h2>
+                <div class="space-y-3">
+                    <p class="text-sm flex justify-between items-center">
+                        <span class="text-gray-400">Current Coherence:</span>
+                        <span id="coherenceValue" class="text-4xl font-extrabold text-cyan-400 font-mono">0.000</span>
+                    </p>
+                    <div class="coherence-track">
+                        <div class="threshold-line"></div>
+                        <div id="coherenceFill" class="coherence-fill" style="--coherence-width: 0%;"></div>
+                    </div>
+                    <p class="text-xs text-gray-400 flex justify-between">
+                        <span>Threshold: <span id="coherenceThreshold" class="font-mono text-yellow-400">0.750</span></span>
+                        <span class="text-purple-400">Optimal Harmonic Alignment</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- 3. UHES System Status -->
+            <div class="crystal-panel p-5 shadow-xl shadow-emerald-500/10">
+                <h2 class="text-xl crystal-header text-emerald-400 border-emerald-600/50">CAL Engine State</h2>
+                <div class="text-sm space-y-3 font-mono mb-4">
+                    <p class="flex justify-between items-center text-gray-300">
+                        <span id="calEngineStatusLight" class="w-2.5 h-2.5 rounded-full light-red mr-2"></span>CAL Engine: <span id="calEngineStatus" class="font-bold">Inactive</span>
+                    </p>
+                    <p class="flex justify-between items-center text-gray-300">
+                        <span id="memoryLayersStatusLight" class="w-2.5 h-2.5 rounded-full light-red mr-2"></span>Memory Layers: <span id="memoryLayersStatus" class="font-bold">0/0/0</span>
+                    </p>
+                    <p class="flex justify-between items-center text-gray-300">
+                        <span class="w-2.5 h-2.5 rounded-full light-yellow mr-2"></span>Entropy Issues: <span id="entropyIssues" class="font-bold text-yellow-400">0</span>
+                    </p>
+                    <p class="flex justify-between items-center text-gray-300">
+                        <span id="autoTuningStatusLight" class="w-2.5 h-2.5 rounded-full light-red mr-2"></span>Auto-Tuning: <span id="autoTuning" class="font-bold">Disabled</span>
+                    </p>
+                </div>
+                <div class="flex space-x-2 pt-4 border-t border-gray-700">
+                    <button class="btn-luminous w-1/2 bg-gray-600 hover:bg-gray-500 text-sm">Refresh Status</button>
+                    <button class="btn-luminous w-1/2 bg-indigo-700 hover:bg-indigo-600 text-sm">Trigger AI Tuning</button>
+                </div>
+            </div>
+            
+            <!-- 4. UHES Educational Overlays (Condensed) -->
+            <div class="crystal-panel p-5 shadow-xl shadow-cyan-500/10">
+                <details>
+                    <summary class="text-xl crystal-header text-cyan-400 border-cyan-600/50 cursor-pointer list-none flex justify-between items-center">
+                        <span class="font-bold">UHES Economic System <span class="text-xs text-gray-400">(Details)</span></span>
+                    </summary>
+                    <div class="mt-4 text-sm space-y-3">
+                        <p class="text-yellow-300 font-bold">FLX (Φlux):</p>
+                        <p class="text-purple-300 font-bold">CHR (Coheron):</p>
+                        <p class="text-pink-400 font-bold">PSY (ΨSync):</p>
+                        <p class="text-red-400 font-bold">ATR (Attractor):</p>
+                        <p class="text-emerald-400 font-bold">RES (Resonance):</p>
+                    </div>
+                </details>
+            </div>
+            
+        </aside>
+
+        <!-- === MAIN CONTENT AREA === -->
+        <main class="lg:col-span-3 space-y-6">
+
+            <!-- Global Resonance Dashboard -->
+            <div class="crystal-panel p-6 shadow-xl shadow-emerald-500/10">
+                <h2 class="text-xl crystal-header text-emerald-400 border-emerald-600/50">Global Resonance Dashboard</h2>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+                    <div><p class="text-xs text-gray-400">Global Coherence</p><p id="globalCoherenceValue" class="text-3xl font-bold text-cyan-400 font-mono">0.000</p></div>
+                    <div><p class="text-xs text-gray-400">Systemic Equilibrium</p><p id="systemicEquilibriumValue" class="text-3xl font-bold text-emerald-400 font-mono">0.000</p></div>
+                    <div><p class="text-xs text-gray-400">Connected Nodes</p><p id="connectedNodesValue" class="text-3xl font-bold text-purple-400 font-mono">0</p></div>
+                    <div><p class="text-xs text-gray-400">Entropy Hotspots</p><p class="text-3xl font-bold text-red-500 font-mono">0</p></div>
+                    <div><p class="text-xs text-gray-400">CAF Score</p><p id="cafValue" class="text-3xl font-bold text-yellow-400 font-mono">0.000</p></div>
+                </div>
+
+                <div class="mt-5">
+                    <p class="text-sm font-bold text-cyan-400 mb-2 border-t pt-2 border-gray-700">Global Coherence Map</p>
+                    <div class="bg-gray-800/80 h-32 rounded-lg flex items-center justify-center border border-cyan-600/50">
+                        <p class="text-gray-500 italic font-mono">Fractal Visualization of Harmonic Flow</p>
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-between items-center text-sm text-gray-400">
+                    <button class="btn-luminous bg-teal-700 hover:bg-teal-600 text-sm">Refresh Dashboard</button>
+                    <button class="btn-luminous bg-indigo-700 hover:bg-indigo-600 text-sm">Distribute Stabilizing Feedback</button>
+                    <p>Last Update: <span id="lastUpdatedValue" class="font-mono">Never</span></p>
+                </div>
+            </div>
+
+            <!-- Transaction, Memory, Governance Row -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <!-- 5. Transaction Panel -->
+                <div class="crystal-panel p-5 shadow-xl shadow-yellow-500/10">
+                    <h2 class="text-lg crystal-header text-yellow-400 border-yellow-600/50">Flux Transaction</h2>
+                    <div class="space-y-2 text-sm">
+                        <input type="text" placeholder="Sender ID" class="w-full p-2 bg-gray-700/50 rounded-lg border border-gray-600 placeholder-gray-500 font-mono">
+                        <input type="text" placeholder="Receiver ID" class="w-full p-2 bg-gray-700/50 rounded-lg border border-gray-600 placeholder-gray-500 font-mono">
+                        <input type="number" placeholder="Amount (FLX)" class="w-full p-2 bg-gray-700/50 rounded-lg border border-gray-600 placeholder-gray-500 font-mono">
+                        <input type="number" step="0.01" placeholder="Sender CHR" class="w-full p-2 bg-gray-700/50 rounded-lg border border-gray-600 placeholder-gray-500 font-mono">
+                    </div>
+                    <button class="btn-luminous w-full mt-4 bg-yellow-600 hover:bg-yellow-500 text-sm">Mint FLX Tokens</button>
+                    <div class="mt-3 pt-2 border-t border-gray-600/50">
+                        <h3 class="text-xs font-bold text-gray-400 mb-1">Last Result:</h3>
+                        <div id="transactionResults" class="h-5 overflow-hidden text-xs font-mono">No transactions yet</div>
+                    </div>
+                </div>
+
+                <!-- 6. Quantum Memory Operations -->
+                <div class="crystal-panel p-5 shadow-xl shadow-purple-500/10">
+                    <h2 class="text-lg crystal-header text-purple-400 border-purple-600/50">Quantum Memory</h2>
+                    <div class="space-y-2 text-sm">
+                        <textarea placeholder="Ω Vector (data)" class="w-full p-2 bg-gray-700/50 rounded-lg border border-gray-600 placeholder-gray-500 font-mono h-12"></textarea>
+                        <input type="number" step="0.01" min="0" max="1" placeholder="Ψ Score (0-1)" class="w-full p-2 bg-gray-700/50 rounded-lg border border-gray-600 placeholder-gray-500 font-mono">
+                        <div class="flex justify-between text-gray-400 pt-1">
+                            <label><input type="radio" name="scaleLevel" value="Lμ" checked> Lμ</label>
+                            <label><input type="radio" name="scaleLevel" value="Lφ"> Lφ</label>
+                            <label><input type="radio" name="scaleLevel" value="LΦ"> LΦ</label>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 mt-3">
+                        <button class="btn-luminous w-1/2 bg-purple-600 hover:bg-purple-500 text-xs">Create Packet</button>
+                        <button class="btn-luminous w-1/2 bg-indigo-600 hover:bg-indigo-500 text-xs">Run Wave Query</button>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-gray-600/50">
+                        <h3 class="text-xs font-bold text-gray-400 mb-1">Query Results:</h3>
+                        <div class="h-5 overflow-hidden text-xs font-mono">No operations yet</div>
+                    </div>
+                </div>
+                
+                <!-- 7. AI Governance -->
+                <div class="crystal-panel p-5 shadow-xl shadow-pink-500/10">
+                    <h2 class="text-lg crystal-header text-pink-400 border-pink-600/50">AI Governance</h2>
+                    <h3 class="text-sm font-bold text-pink-300 mb-2">Create Proposal</h3>
+                    <div class="space-y-2 text-sm">
+                        <input type="text" placeholder="Proposer ID" class="w-full p-2 bg-gray-700/50 rounded-lg border border-gray-600 placeholder-gray-500 font-mono">
+                        <input type="text" placeholder="Proposal Title" class="w-full p-2 bg-gray-700/50 rounded-lg border border-gray-600 placeholder-gray-500 font-mono">
+                    </div>
+                    <button class="btn-luminous w-full mt-3 bg-pink-600 hover:bg-pink-500 text-sm">Create Proposal</button>
+
+                    <h3 class="text-sm font-bold text-pink-300 mt-4 mb-2 pt-3 border-t border-gray-600/50">Vote</h3>
+                    <div class="space-y-2 text-sm">
+                        <input type="text" placeholder="Proposal ID" class="w-full p-2 bg-gray-700/50 rounded-lg border border-gray-600 placeholder-gray-500 font-mono">
+                        <input type="number" step="0.01" min="-1" max="1" placeholder="Vote Weight (-1 to 1)" class="w-full p-2 bg-gray-700/50 rounded-lg border border-gray-600 placeholder-gray-500 font-mono">
+                    </div>
+                    <button class="btn-luminous w-full mt-3 bg-pink-600 hover:bg-pink-500 text-sm">Submit Vote</button>
+                </div>
+            </div>
+
+            <!-- Wallet, History, and Biometric Row -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                <!-- 8. Harmonic Wallet & Ledger -->
+                <div class="crystal-panel p-5 md:col-span-1 shadow-xl shadow-teal-500/10">
+                    <h2 class="text-lg crystal-header text-teal-400 border-teal-600/50">Harmonic Wallet / Ledger</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-yellow-300 mb-1">FLX Balances</h3>
+                            <div id="flxBalances" class="space-y-1 text-gray-300 text-xs">No balances yet</div>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-bold text-purple-300 mb-1">CHR Reputation</h3>
+                            <div id="chrReputation" class="space-y-1 text-gray-300 text-xs">No reputation scores yet</div>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-gray-600/50">
+                        <h3 class="text-sm font-bold text-cyan-400 mb-2">Wallet Management</h3>
+                        <div class="flex space-x-2">
+                            <button class="btn-luminous w-1/3 text-xs">Create</button>
+                            <button class="btn-luminous w-1/3 text-xs">Generate Key</button>
+                            <button class="btn-luminous w-1/3 text-xs">Refresh</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 9. Human Feedback Integration -->
+                <div class="crystal-panel p-5 md:col-span-2 shadow-xl shadow-cyan-500/10">
+                    <h2 class="text-lg crystal-header text-cyan-400 border-cyan-600/50">Biometric & Feedback Stream</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        
+                        <!-- Biometric Sensors -->
+                        <div class="border-r border-gray-700 pr-4">
+                            <h3 class="text-sm font-bold text-red-300 mb-2">Sensor Connections</h3>
+                            <div class="space-y-2 text-sm font-mono">
+                                <p class="flex justify-between items-center">HRV: <span class="text-red-400">Disconnected</span></p>
+                                <p class="flex justify-between items-center">GSR: <span class="text-red-400">Disconnected</span></p>
+                                <p class="flex justify-between items-center">EEG: <span class="text-red-400">Disconnected</span></p>
+                                <div class="grid grid-cols-3 pt-2 text-center text-xs">
+                                    <div><p class="text-xs text-gray-400">E-Coherence</p><p class="text-md text-emerald-400">0.000</p></div>
+                                    <div><p class="text-xs text-gray-400">Stress $\delta$</p><p class="text-md text-red-400">0.000</p></div>
+                                    <div><p class="text-xs text-gray-400">Focus $\alpha$</p><p class="text-md text-cyan-400">0.000</p></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Feedback and History -->
+                        <div>
+                            <h3 class="text-sm font-bold text-yellow-300 mb-2">Provide Coherence Feedback</h3>
+                            <textarea placeholder="Feedback Message" class="w-full p-2 bg-gray-700/50 rounded-lg border border-gray-600 placeholder-gray-500 font-mono h-12 text-sm"></textarea>
+                            <div class="flex space-x-2 mt-2">
+                                <select class="w-1/2 p-2 bg-gray-700/50 rounded-lg border border-gray-600 text-xs">
+                                    <option>Coherence Adjustment</option>
+                                    <option>Entropy Reduction</option>
+                                </select>
+                                <input type="number" min="0" max="10" placeholder="Rating (0-10)" class="w-1/4 p-2 bg-gray-700/50 rounded-lg border border-gray-600 text-xs">
+                                <button class="btn-luminous w-1/4 bg-cyan-600 hover:bg-cyan-500 text-xs">Submit</button>
+                            </div>
+                            <h3 class="text-sm font-bold text-gray-400 mt-4 mb-1 border-t pt-2 border-gray-700">Action/Transaction History</h3>
+                            <div id="transactionHistory" class="text-xs font-mono h-16 overflow-y-auto border border-gray-700 p-2 rounded-lg bg-gray-900/50">No transactions yet</div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+</body>
+</html>

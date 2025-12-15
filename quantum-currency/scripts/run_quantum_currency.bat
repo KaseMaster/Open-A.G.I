@@ -55,14 +55,16 @@ echo 12. Execute Self-Reflection Protocol
 echo 13. Run Production Reflection & Coherence Calibration
 echo 14. Run Lambda Attunement Tool
 echo 15. Run Wallet Creation Demo
-echo 16. Exit
+echo 16. Run Real-Time Token Orchestration
+echo 17. Exit
 echo.
 echo Current COHERENCE_CYCLE_INDEX: n (auto-incrementing)
 echo.
 
-choice /c 1234567890ABCD /m "Enter your choice"
+choice /c 1234567890ABCDE /m "Enter your choice"
 
-if errorlevel 16 goto exit
+if errorlevel 17 goto exit
+if errorlevel 16 goto token_orchestration
 if errorlevel 15 goto wallet_demo
 if errorlevel 14 goto lambda_attunement
 if errorlevel 13 goto production_reflection
@@ -250,6 +252,17 @@ echo Running Wallet Creation Demo...
 echo.
 cd /d "D:\AI AGENT CODERV1\QUANTUM CURRENCY\Open-A.G.I\quantum-currency"
 python scripts/demo_wallet_creation.py
+echo.
+echo Press any key to continue...
+pause >nul
+goto menu
+
+:token_orchestration
+echo.
+echo Running Real-Time Token Orchestration...
+echo.
+cd /d "D:\AI AGENT CODERV1\QUANTUM CURRENCY\Open-A.G.I\quantum-currency"
+python src/orchestration/realtime_token_orchestrator.py
 echo.
 echo Press any key to continue...
 pause >nul

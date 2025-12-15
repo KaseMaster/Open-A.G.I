@@ -25,7 +25,7 @@ try:
     from hardware_security import HardwareSecurityModule, ValidatorKey
 except ImportError:
     # Try importing with the full path
-    hardware_security_path = os.path.join(os.getcwd(), '..', '..', 'Open-A.G.I', 'openagi', 'hardware_security.py')
+    hardware_security_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'openagi', 'hardware_security.py')
     if os.path.exists(hardware_security_path):
         import importlib.util
         spec = importlib.util.spec_from_file_location("hardware_security", hardware_security_path)

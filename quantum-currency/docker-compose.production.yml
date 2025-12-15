@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  # Quantum Currency API Service
+  quantum-currency-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    container_name: quantum-currency-api
+    ports:
+      - "5000:5000"
+    volumes:
+      - quantum-data:/data
+      - ./logs:/app/logs
+    environment:
+      - QC_ENV=Production
+      - QC_LAMBDA_BOUNDS=0.8,1.2
+    networks:
+      - quantum-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: quantum-currency-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./logs:/var/log/nginx
+    depends_on:
+      - quantum-currency-api
+    networks:
+      - quantum-network
+    restart: unless-stopped
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: quantum-currency-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/rules:/etc/prometheus/rules
+      - prometheus-data:/prometheus
+    networks:
+      - quantum-network
+    restart: unless-stopped
+
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: quantum-currency-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    networks:
+      - quantum-network
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+  # Alertmanager for notifications
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: quantum-currency-alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager-data:/etc/alertmanager
+    networks:
+      - quantum-network
+    restart: unless-stopped
+
+networks:
+  quantum-network:
+    driver: bridge
+
+volumes:
+  quantum-data:
+  prometheus-data:
+  grafana-data:
+  alertmanager-data:
