@@ -1,4 +1,4 @@
-name: Quantum Currency CI
+name: Open AGI CI/CD
 
 on:
   push:
