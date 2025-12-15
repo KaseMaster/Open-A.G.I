@@ -24,7 +24,7 @@ import json
 import socket
 import logging
 import base64
-from typing import Dict, List, Set, Any, Optional, Tuple
+from typing import Dict, List, Set, Any, Optional, Tuple, Callable
 from dataclasses import dataclass, asdict
 from enum import Enum
 from collections import defaultdict, deque
@@ -484,7 +484,7 @@ class AegisServiceListenerExt(ServiceListener):
 class PeerDiscoveryService:
     """Servicio de descubrimiento de peers"""
 
-    def __init__(self, node_id: str, node_type: NodeType, port: int):
+    def __init__(self, node_id: str, node_type: NodeType, port: int, crypto_engine: Optional['CryptoEngine'] = None):
         self.node_id = node_id
         self.node_type = node_type
         self.port = port
@@ -497,6 +497,7 @@ class PeerDiscoveryService:
         self.service_type = "_aegis._tcp.local."
         self.discovery_interval = 30  # segundos
         self.peer_timeout = 300  # 5 minutos
+        self.crypto_engine = crypto_engine
 
     async def start_discovery(self):
         """Inicia el servicio de descubrimiento"""
@@ -545,6 +546,20 @@ class PeerDiscoveryService:
                 'capabilities': json.dumps(['consensus', 'storage', 'compute']).encode('utf-8'),
                 'version': '1.0.0'.encode('utf-8')
             }
+
+            # Firmar anuncio si hay motor criptográfico
+            if self.crypto_engine and hasattr(self.crypto_engine, 'sign_data'):
+                try:
+                    # Incluir clave pública
+                    pub = self.crypto_engine.identity.export_public_identity()
+                    properties['public_key'] = base64.b64encode(pub['signing_key']) # Solo clave de firma
+                    
+                    # Firmar node_id + timestamp (timestamp no disponible en estático, solo node_id)
+                    sig_payload = self.node_id.encode('utf-8')
+                    signature = self.crypto_engine.sign_data(sig_payload)
+                    properties['sig'] = base64.b64encode(signature)
+                except Exception as e:
+                    logger.warning(f"⚠️ No se pudo firmar anuncio mDNS: {e}")
 
             # Crear ServiceInfo
             self.service_info = ServiceInfo(
@@ -624,17 +639,54 @@ class PeerDiscoveryService:
             ip_address = socket.inet_ntoa(service_info.addresses[0])
             port = service_info.port
 
+            # Validar firma si estÃ¡ presente
+            verified = False
+            sig_b64 = properties.get(b'sig')
+            pub_key_b64 = properties.get(b'public_key')
+            
+            if self.crypto_engine and sig_b64:
+                try:
+                    signature = base64.b64decode(sig_b64)
+                    
+                    # Si conocemos al peer, usar su clave conocida
+                    known_pub = None
+                    if peer_id in getattr(self.crypto_engine, 'peer_identities', {}):
+                        known_pub = self.crypto_engine.peer_identities[peer_id].public_signing_key
+                    elif pub_key_b64:
+                        # Usar clave anunciada
+                        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+                        pub_bytes = base64.b64decode(pub_key_b64)
+                        known_pub = Ed25519PublicKey.from_public_bytes(pub_bytes)
+                    
+                    if known_pub:
+                        # Verificar firma de node_id
+                        known_pub.verify(signature, peer_id.encode('utf-8'))
+                        verified = True
+                        logger.debug(f"✅ Firma mDNS verificada para {peer_id}")
+                    else:
+                        logger.warning(f"⚠️ No se puede verificar firma de {peer_id}: Clave pública no disponible")
+                except Exception as e:
+                    logger.warning(f"🚫 Firma mDNS inválida para {peer_id}: {e}")
+                    return # RECHAZAR PEER INVÁLIDO
+
+            if not verified and self.crypto_engine:
+                 # Si tenemos crypto pero el peer no tiene firma válida, es sospechoso
+                 # El reporte exige validación. Si falla validación (excepción arriba) retornamos.
+                 # Si no hay firma, warn.
+                 if not sig_b64:
+                     logger.warning(f"⚠️ Peer {peer_id} sin firma mDNS - aceptando con precaución")
+            
             # Crear información del peer
             peer_info = PeerInfo(
                 peer_id=peer_id,
                 node_type=NodeType(node_type_str) if node_type_str else NodeType.FULL,
                 ip_address=ip_address,
                 port=port,
-                public_key="",  # Se obtendrá durante handshake
+                public_key=pub_key_b64.decode('utf-8') if pub_key_b64 else "",  # Se obtendrá durante handshake
                 capabilities=json.loads(properties.get('capabilities', b'[]').decode('utf-8')),
                 last_seen=time.time(),
                 connection_status=ConnectionStatus.DISCONNECTED,
-                reputation_score=1.0,
+                reputation_score=1.0 if verified else 0.5, # Penalizar no verificados
                 latency=0.0,
                 bandwidth=0,
                 supported_protocols=[NetworkProtocol.TCP, NetworkProtocol.WEBSOCKET]
@@ -642,7 +694,7 @@ class PeerDiscoveryService:
 
             # Agregar peer descubierto
             self.discovered_peers[peer_id] = peer_info
-            logger.info(f"🔍 Peer descubierto: {peer_id} ({ip_address}:{port})")
+            logger.info(f"🔍 Peer descubierto: {peer_id} ({ip_address}:{port}) {'[Verificado]' if verified else ''}")
 
         except Exception as e:
             logger.error(f"❌ Error procesando servicio descubierto: {e}")
@@ -877,7 +929,8 @@ class ConnectionManager:
         }
 
         if not self.crypto_engine:
-             logger.warning("⚠️ ConnectionManager inicializado SIN motor criptográfico")
+             logger.error("❌ ConnectionManager requiere motor criptográfico - ABORTANDO INIT")
+             raise ValueError("crypto_engine is mandatory for secure P2P")
 
     async def start_server(self):
         """Inicia el servidor de conexiones"""
@@ -1233,13 +1286,16 @@ class ConnectionManager:
             connection = self.active_connections[peer_id]
             writer = connection["writer"]
 
-            # Si hay canal seguro, cifrar mensaje; de lo contrario, firmar mensaje en claro si es posible
+            # ENFORCE ENCRYPTION: Fail closed if no secure channel
+            if not self.crypto_engine:
+                 raise RuntimeError("Cannot send message: No crypto_engine configured")
+
             if self.crypto_engine and hasattr(self.crypto_engine, 'ratchet_states') and peer_id in getattr(self.crypto_engine, 'ratchet_states', {}):
                 try:
                     plaintext = json.dumps(message, sort_keys=True).encode()
                     secure_msg = self.crypto_engine.encrypt_message(plaintext, peer_id)
                     if not secure_msg:
-                        raise Exception("encrypt_failed")
+                        raise RuntimeError(f"Encryption failed for peer {peer_id}")
                     blob = secure_msg.serialize()
                     wrapped = {
                         "type": "secure",
@@ -1247,30 +1303,16 @@ class ConnectionManager:
                         "recipient_id": peer_id,
                         "payload": base64.b64encode(blob).decode(),
                         "timestamp": time.time(),
+                        "nonce": os.urandom(16).hex()
                     }
                     message_data = json.dumps(wrapped).encode() + b'\n'
-                except Exception:
-                    # Fallback a mensaje en claro firmado
-                    canonical = json.dumps(message, sort_keys=True).encode()
-                    signature_b64 = ""
-                    try:
-                        signature = self.crypto_engine.sign_data(canonical)
-                        signature_b64 = base64.b64encode(signature).decode()
-                    except Exception:
-                        signature_b64 = ""
-                    message_to_send = {**message, "signature": signature_b64}
-                    message_data = json.dumps(message_to_send).encode() + b'\n'
+                except Exception as e:
+                    logger.error(f"❌ Error cifrando mensaje para {peer_id}: {e}")
+                    raise RuntimeError(f"Secure message encryption failed: {e}")
             else:
-                canonical = json.dumps(message, sort_keys=True).encode()
-                signature_b64 = ""
-                if self.crypto_engine:
-                    try:
-                        signature = self.crypto_engine.sign_data(canonical)
-                        signature_b64 = base64.b64encode(signature).decode()
-                    except Exception:
-                        signature_b64 = ""
-                message_to_send = {**message, "signature": signature_b64}
-                message_data = json.dumps(message_to_send).encode() + b'\n'
+                 # REJECT PLAINTEXT FALLBACK
+                 logger.error(f"❌ Intento de envío inseguro a {peer_id} rechazado")
+                 raise RuntimeError(f"Insecure channel rejected for peer {peer_id}")
 
             writer.write(message_data)
             await writer.drain()
@@ -1609,10 +1651,7 @@ class NetworkTopologyManager:
         self.port = port
         self.ids = ids
 
-        # Componentes principales
-        self.discovery_service = PeerDiscoveryService(node_id, node_type, port)
-
-        # Inicializar motor criptográfico con configuración robusta
+        # Inicializar motor criptográfico con configuración robusta PRIMERO
         self.crypto_engine: Optional['CryptoEngine'] = None
         try:
             from crypto_framework import CryptoEngine, CryptoConfig, SecurityLevel
@@ -1644,6 +1683,9 @@ class NetworkTopologyManager:
             except Exception as e2:
                 logger.warning(f"⚠️ Tampoco se pudo inicializar con fallback básico: {e2}")
                 self.crypto_engine = None
+
+        # Inicializar componente de descubrimiento (ahora con crypto)
+        self.discovery_service = PeerDiscoveryService(node_id, node_type, port, self.crypto_engine)
 
         # Sistema de reputación de peers
         self.reputation_manager = PeerReputationManager()

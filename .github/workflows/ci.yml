@@ -74,6 +74,6 @@ jobs:
       run: |
         docker build -t quantum-currency .
 
-    - name: Run demo in container
+    - name: Run all tests
       run: |
-        docker run quantum-currency python scripts/demo_emulation.py
+        python -m pytest tests/ -v --tb=short
