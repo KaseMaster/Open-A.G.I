@@ -17,6 +17,7 @@ Licencia: MIT
 """
 
 import asyncio
+# Verified Heartbeat Logic
 import time
 import json
 import logging

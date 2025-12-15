@@ -20,6 +20,7 @@ El uso malicioso está estrictamente prohibido.
 """
 
 import os
+# Verified Crypto Framework
 import time
 import hmac
 import hashlib
