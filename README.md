@@ -1,483 +1,352 @@
-# 🪙 Quantum Currency Implementation Beta
+# 🤖 Open-A.G.I - IA Distribuida y Colaborativa / Collaborative Distributed AI
 
-**Advanced Quantum-Harmonic Currency System with OpenAGI Integration**
+## ⚠️ AVISO LEGAL Y ÉTICO / LEGAL AND ETHICAL NOTICE
 
-[![GitHub stars](https://img.shields.io/github/stars/KaseMaster/Open-A.G.I?style=for-the-badge&logo=github)](https://github.com/KaseMaster/Open-A.G.I/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/KaseMaster/Open-A.G.I?style=for-the-badge&logo=github)](https://github.com/KaseMaster/Open-A.G.I/fork)
-[![GitHub issues](https://img.shields.io/github/issues/KaseMaster/Open-A.G.I?style=for-the-badge&logo=github)](https://github.com/KaseMaster/Open-A.G.I/issues)
-[![GitHub pull requests](https://img.shields.io/github/issues-pr/KaseMaster/Open-A.G.I?style=for-the-badge&logo=github)](https://github.com/KaseMaster/Open-A.G.I/pulls)
+**Este proyecto está diseñado exclusivamente para investigación académica y desarrollo ético de sistemas de inteligencia artificial distribuida. El uso de este código para actividades maliciosas, ilegales o que violen la privacidad está estrictamente prohibido.**
 
-[![Version](https://img.shields.io/badge/version-0.9.0--beta-blue.svg?style=for-the-badge)](https://github.com/KaseMaster/Open-A.G.I/releases/tag/v0.9.0-beta)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg?style=for-the-badge&logo=python)](https://www.python.org/downloads/)
+**This project is designed exclusively for academic research and ethical development of distributed artificial intelligence systems. The use of this code for malicious, illegal, or privacy-violating activities is strictly prohibited.**
 
-[![CI/CD Pipeline](https://github.com/KaseMaster/Open-A.G.I/actions/workflows/quantum-currency-beta.yml/badge.svg)](https://github.com/KaseMaster/Open-A.G.I/actions/workflows/quantum-currency-beta.yml)
-[![Code Coverage](https://img.shields.io/codecov/c/github/KaseMaster/Open-A.G.I?style=for-the-badge&logo=codecov)](https://codecov.io/gh/KaseMaster/Open-A.G.I)
-[![Code Quality](https://img.shields.io/badge/code%20quality-A+-brightgreen?style=for-the-badge)](https://github.com/KaseMaster/Open-A.G.I)
+### 🛡️ Principios de Seguridad AEGIS / AEGIS Security Principles
 
-[![Docker Image](https://img.shields.io/docker/pulls/kasemaster/quantum-currency?style=for-the-badge&logo=docker)](https://hub.docker.com/r/kasemaster/quantum-currency)
-[![Kubernetes](https://img.shields.io/badge/kubernetes-ready-blue?style=for-the-badge&logo=kubernetes)](https://kubernetes.io/)
-
-## 🚀 Latest Updates & Next Steps
-
-### 🎯 Phase 5: Security, Stability & Mainnet Preparation - COMPLETED
-
-**✅ Key Accomplishments:**
-- **Full Security Audit** - Formal Verification of Ω Convergence and Cryptographic Modules for Ω-Vector Privacy
-- **Economic Stress Simulations** - Ψ-Resilience Testing and Token Interaction Coherence
-- **Mainnet Deployment Pipeline** - Ω-State Checkpointing Implementation for Rapid, Coherent Restarts
-- **Integration & Verification Flow** - Comprehensive CI/CD Pipeline with All Verification Steps
-- **Enhanced Dashboard UI** - Fully interactive HMN Coherence Attunement Dashboard with real-time visualization
-
-**🔗 See detailed reports:**
-- [Ω Convergence Verification Report](reports/Ω_Verification_Report.md)
-- [Ω Privacy Audit](reports/Ω_Privacy_Audit.md)
-- [Ψ Resilience Report](reports/Ψ_Resilience_Report.md)
-- [Token Coherence Stability](reports/Token_Coherence_Stability.md)
-- [Mainnet Checkpointing Guide](reports/Mainnet_Checkpointing_Guide.md)
-
-### 🔜 Phase 6: Emanation Deployment - IN PROGRESS
-
-**🔄 Current Focus:**
-- External System Integration (Coherence Bridges)
-- Global Harmonic Field Activation
-- Human Coherence Interface (HCI)
-- Governance Expansion & Ethical Oversight
-- **Enhanced Dashboard Features** - Real-time charts, improved UX, and comprehensive system monitoring
-
-**📝 [View Full Roadmap](ROADMAP.md) | [View Changelog](CHANGELOG.md)**
-
-## 📋 Overview
-
-The Quantum Currency Implementation is a revolutionary blockchain-based currency system that leverages quantum-harmonic validation for consensus and incorporates advanced AI capabilities through OpenAGI integration. This implementation features a multi-token economy, quantum-secured transactions, and autonomous validator orchestration.
-
-### 🔑 Key Features
-
-- **Recursive Φ-Resonance Validation (RΦV)**: Novel consensus mechanism based on quantum harmonic principles
-- **Multi-Token Economy**: Five distinct tokens (FLX, CHR, PSY, ATR, RES) with unique utility functions
-- **Quantum Coherence AI**: Advanced AI system for predictive analytics and autonomous orchestration
-- **Hardware Security Integration**: HSM-based key management with quantum-resistant cryptography
-- **Validator Staking System**: Comprehensive staking, delegation, and liquidity incentives
-- **Harmonic Wallet**: Quantum-secured wallet with harmonic-validated keypair generation
-- **Privacy-Preserving Transactions**: Homomorphic encryption for confidential transactions
-- **Compliance Framework**: Built-in regulatory reporting and compliance mechanisms
-- **Harmonic Engine (HE)**: Core abstraction layer replacing worker cluster with high-performance service
-- **Ω-Security Primitives**: Intrinsic security based on coherence with CLK and CBT
-- **Meta-Regulator**: Autonomous system tuner with Reinforcement Learning capabilities
-- **Cosmonic Verification System**: Full-system verification and self-stabilization protocols
-- **Ω-State Checkpointing**: Mainnet-ready checkpointing for rapid, coherent restarts
-- **Enhanced HMN Dashboard**: Interactive web interface with real-time monitoring and control
-
-## 🎨 Enhanced HMN Coherence Attunement Dashboard
-
-### 🖥️ Dashboard Features
-
-The newly enhanced HMN (Harmonic Mesh Network) Dashboard provides a comprehensive interface for monitoring and controlling the Quantum Currency system:
-
-#### Core System Controls
-- **System Nexus Panel**: Start/Stop REST API, Run Demo, Enable/Disable Auto-Balance
-- **Real-time Status Monitoring**: API Status, System Status, Auto-Balance indicators with visual feedback
-- **Interactive Controls**: All system functions accessible through intuitive UI elements
-
-#### Coherence Monitoring
-- **Dynamic Coherence Visualization**: Real-time coherence tracking with threshold alerts
-- **Live Coherence Charts**: Interactive charts showing coherence score trends over time
-- **Global Coherence Map**: Visual representation of network coherence distribution
-- **1-5 Second Refresh Rates**: Critical metrics update in real-time for responsive monitoring
-
-#### UHES System Status
-- **CAL Engine State**: Real-time monitoring of Coherence Attunement Layer status
-- **Memory Layer Statistics**: Dynamic counters for micro, phase, and macro memory layers
-- **Entropy Issue Tracking**: Automated detection and visualization of entropy anomalies
-- **Auto-Tuning Controls**: Manual trigger for AI-driven coherence optimization
-
-#### Global Resonance Dashboard
-- **Comprehensive Metrics**: Global Coherence, Systemic Equilibrium, CAF Score, Connected Nodes
-- **Entropy Hotspot Detection**: Real-time identification of network entropy issues
-- **Stabilizing Feedback Distribution**: One-click distribution of stabilizing feedback to connected nodes
-- **Fractal Visualization**: Crystal-inspired visual representations of harmonic flow
-
-#### Transaction & Token Management
-- **Flux Transaction Panel**: Mint FLX tokens with real-time CHR reputation adjustments
-- **Multi-Token Support**: Full integration of all 5 tokens (FLX, CHR, PSY, ATR, RES)
-- **Transaction History**: Complete ledger of all token transactions with timestamps
-- **Balance Monitoring**: Real-time display of account balances and reputation scores
-
-#### Quantum Memory Operations
-- **Ω Vector Input**: Create quantum packets with custom Ω vector data
-- **Ψ Score Management**: Set and monitor psychological synchronization metrics
-- **Wave Propagation Queries**: Run advanced queries through the coherent database
-- **Memory Layer Visualization**: Real-time display of quantum memory operations
-
-#### AI Governance System
-- **Proposal Creation**: Create governance proposals with JSON target specifications
-- **Voting Interface**: Submit weighted votes based on Ψ scores and network contribution
-- **Proposal Tracking**: Monitor proposal status and voting progress in real-time
-- **Ethical Coherence Governance**: Built-in ethical oversight for all governance decisions
-
-#### Harmonic Wallet
-- **Wallet Creation**: Generate new harmonic wallets with quantum-secured keypairs
-- **Multi-Token Balances**: Display balances for all 5 token types
-- **Transaction History**: Complete record of all wallet transactions
-- **Resonance Tracking**: Real-time monitoring of wallet coherence metrics
-
-#### Biometric & Energetic Integration
-- **Sensor Connection Management**: Connect HRV, GSR, and EEG biometric sensors
-- **Energetic State Analysis**: Real-time analysis of emotional coherence, stress levels, and focus indices
-- **Human Feedback System**: Collect and process human coherence feedback
-- **Dynamic UI Updates**: Interface responds instantly to biometric input changes
-
-#### Performance & Responsiveness
-- **<2s UI Latency**: Optimized interface for responsive interactions
-- **Continuous Monitoring**: Background processes ensure consistent data refresh
-- **Error Handling**: Graceful degradation for disconnected sensors or network issues
-- **System Health Monitoring**: Comprehensive uptime and performance metrics
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                 🪙 QUANTUM CURRENCY SYSTEM                           │
-├─────────────────────────────────────────────────────────────────────┤
-│  🧠 Core Components                                                  │
-│     • Harmonic Validation Engine (RΦV)                              │
-│     • Multi-Token Economy (FLX, CHR, PSY, ATR, RES)                  │
-│     • Validator Staking & Delegation System                         │
-│     • Quantum Coherence AI Integration                              │
-│     • Hardware Security Module (HSM) Integration                    │
-│     • Harmonic Engine (HE) - Core Abstraction Layer                 │
-│     • Ω-Security Primitives                                         │
-│     • Meta-Regulator - Autonomous Tuner                             │
-│     • Ω-State Checkpointing System                                 │
-│     • HMN Coherence Attunement Dashboard                           │
-├─────────────────────────────────────────────────────────────────────┤
-│  🔄 Consensus & Validation                                           │
-│     • Recursive Φ-Resonance Validation (RΦV)                        │
-│     • Coherence Score Computation                                   │
-│     • Snapshot Generation & Validation                              │
-│     • Transaction Validation Rules                                  │
-│     • Cosmonic Verification & Self-Stabilization                    │
-│     • Ω-State Checkpointing & Recovery                              │
-├─────────────────────────────────────────────────────────────────────┤
-│  💰 Token Economy                                                    │
-│     • FLX (Flexibility Token) - Network utility                     │
-│     • CHR (Coherence Token) - Reputation & governance               │
-│     • PSY (Psychological Token) - Behavioral incentives             │
-│     • ATR (Attention Token) - Attention economy                     │
-│     • RES (Resonance Token) - Network health & stability            │
-├─────────────────────────────────────────────────────────────────────┤
-│  🤖 AI Integration (OpenAGI)                                         │
-│     • Quantum Coherence AI System                                   │
-│     • Autonomous Validator Orchestration                            │
-│     • Adaptive Economic Optimization                                │
-│     • Federated Learning Coordination                               │
-│     • Governance Decision Support                                   │
-│     • Meta-Regulator Reinforcement Learning                         │
-├─────────────────────────────────────────────────────────────────────┤
-│  🔐 Security & Compliance                                            │
-│     • Hardware Security Module (HSM) Integration                    │
-│     • Quantum Random Number Generation                              │
-│     • Homomorphic Encryption for Privacy                            │
-│     • Compliance Framework & Reporting                              │
-│     • Ω-Security Primitives (CLK, CBT)                              │
-│     • Formal Verification & Cryptographic Auditing                  │
-│     • Ω-State Checkpointing & Recovery                              │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-## 📦 Installation
-
-### 🐳 Docker Installation (Recommended)
-
-```bash
-# Clone the repository
-git clone https://github.com/KaseMaster/Open-A.G.I.git
-cd Open-A.G.I/quantum-currency
-
-# Build and run the quantum currency system
-docker-compose up -d
-
-# Access the REST API and Dashboard
-# http://localhost:5000
-```
-
-### 🐍 Manual Installation
-
-```bash
-# Create virtual environment
-python -m venv quantum-currency-env
-source quantum-currency-env/bin/activate  # On Windows: quantum-currency-env\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-
-# Run the system
-python src/api/main.py
-```
-
-## 🧪 Testing
-
-### Running Tests
-
-```bash
-# Run all tests
-python -m pytest tests/
-
-# Run core tests
-python -m pytest tests/core/
-
-# Run API tests
-python -m pytest tests/api/
-
-# Run integration tests
-python -m pytest tests/integration/
-
-# Run with coverage
-python -m pytest --cov=src --cov-report=html
-```
-
-### Test Coverage
-
-- ✅ Core validation logic: 95%+
-- ✅ API endpoints: 90%+
-- ✅ Integration scenarios: 85%+
-- ✅ Security components: 90%+
-- ✅ Checkpointing functionality: 95%+
-- ✅ Dashboard functionality: 85%+
-
-## 📊 REST API Endpoints
-
-### Core Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/snapshot` | POST | Generate a signed harmonic snapshot |
-| `/coherence` | POST | Calculate coherence score between snapshots |
-| `/mint` | POST | Validate and mint FLX tokens |
-| `/ledger` | GET | Get current ledger state |
-| `/transactions` | GET | Get transaction history |
-| `/snapshots` | GET | Get snapshot history |
-| `/health` | GET | Get system health status |
-| `/metrics` | GET | Get Prometheus metrics |
-
-### AI Integration Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/ai/health` | GET | Get health status of Quantum Coherence AI |
-| `/ai/predict` | POST | Get AI-driven coherence predictions |
-| `/ai/autonomous` | POST | Run autonomous validator orchestration cycle |
-
-### Harmonic Engine Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/harmonic/omega` | POST | Update Ω state vector |
-| `/harmonic/coherence` | POST | Calculate coherence score |
-| `/harmonic/entropy` | POST | Monitor entropy and trigger self-healing |
-| `/harmonic/checkpoint` | POST | Create Ω-state checkpoint |
-| `/harmonic/recover` | POST | Recover from checkpoint |
-
-### Wallet Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/wallet/create` | POST | Create a new harmonic wallet |
-| `/wallet/<wallet_id>/generate_keypair` | POST | Generate a new keypair for a wallet |
-| `/wallet/<wallet_id>/accounts` | GET | Get all accounts in a wallet |
-| `/wallet/<wallet_id>/balance/<address>/<token_type>` | GET | Get token balance for an account |
-| `/wallet/<wallet_id>/transaction` | POST | Create a new transaction |
-| `/wallet/<wallet_id>/transactions/<address>` | GET | Get transaction history for an account |
-| `/wallet/<wallet_id>/resonance` | GET | Get real-time resonance data for a wallet |
-| `/wallet/<wallet_id>/stake` | POST | Stake tokens for rewards |
-| `/wallet/<wallet_id>/unstake/<stake_id>` | POST | Unstake tokens |
-| `/wallet/<wallet_id>/staking_records/<address>` | GET | Get staking records for an account |
-| `/wallet/<wallet_id>/rebalance` | POST | Rebalance wallet flow dynamically |
-
-### UHES (Unified Harmonic Economic System) Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/uhes/status` | GET | Get UHES system status |
-| `/uhes/create_packet` | POST | Create a new Quantum Packet |
-| `/uhes/wave_query` | POST | Perform wave propagation query |
-| `/uhes/monitor_entropy` | POST | Monitor entropy and trigger self-healing |
-| `/uhes/governance/proposal` | POST | Create a new governance proposal |
-| `/uhes/governance/vote` | POST | Vote on a governance proposal |
-| `/uhes/governance/validator/register` | POST | Register a new validator |
-
-### Global Harmonic Synchronizer Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/global-synchronizer/metrics` | GET | Get global coherence metrics |
-| `/global-synchronizer/map` | GET | Get global coherence map |
-| `/global-synchronizer/analytics` | GET | Get systemic equilibrium analytics |
-| `/global-synchronizer/caf` | GET | Calculate Coherence Amplification Factor |
-| `/global-synchronizer/distribute-feedback` | POST | Distribute stabilizing feedback |
-| `/global-synchronizer/patterns` | GET | Identify disharmony patterns |
-
-## 🛠️ Development
-
-### Prerequisites
-
-- Python 3.10+ (Required for torch>=2.1.0 and numpy>=1.24.0)
-- Docker (for containerized deployment)
-- Git
-- Node.js (for dashboard development)
-
-### Setting Up Development Environment
-
-```bash
-# Clone the repository
-git clone https://github.com/KaseMaster/Open-A.G.I.git
-cd Open-A.G.I/quantum-currency
-
-# Create virtual environment
-python -m venv quantum-currency-env
-source quantum-currency-env/bin/activate
-
-# Install development dependencies
-pip install -r requirements-dev.txt
-
-# Run pre-commit hooks installation
-pre-commit install
-```
-
-### Dashboard Development
-
-```bash
-# Navigate to dashboard directory
-cd ui-dashboard
-
-# The dashboard is a static HTML/CSS/JS application
-# served by the Flask API server
-
-# To develop locally, you can use any static file server
-# For example, with Python:
-python -m http.server 8080
-```
-
-### Code Quality
-
-- Follow PEP 8 style guide
-- Use type hints for all functions
-- Write docstrings for public APIs
-- Maintain >95% test coverage
-- Run linters before committing:
-  ```bash
-  black .
-  flake8 .
-  mypy --package src
-  bandit -r src/
-  ```
-
-## 🤝 Contributing
-
-We welcome contributions from the community! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
-
-### Ways to Contribute
-
-1. **Code Contributions**: Implement new features or fix bugs
-2. **Documentation**: Improve documentation and examples
-3. **Testing**: Write tests and improve coverage
-4. **Feedback**: Report issues and suggest improvements
-5. **Community**: Help other users and spread the word
-6. **Dashboard Enhancement**: Improve the HMN Coherence Attunement Dashboard
-
-## 📜 License
-
-This project is licensed under the MIT License with additional security clauses - see the [LICENSE](LICENSE) file for details.
-
-### Terms of Use
-
-- ✅ Use for academic research and ethical development
-- ✅ Commercial use with proper security implementation
-- ✅ Modification and distribution with preserved security principles
-- ❌ Use for malicious or illegal activities
-- ❌ Use for unauthorized surveillance
-- ❌ Use for information manipulation
-
-## 📚 Documentation
-
-All documentation has been organized into the following categories:
-
-### Architecture
-- **[System Architecture](docs/architecture/QUANTUM_CURRENCY_ARCHITECTURE.md)** - System architecture and design principles
-- **[API Reference](docs/architecture/QUANTUM_CURRENCY_API.md)** - Complete API documentation
-
-### Development
-- **[Developer Guide](docs/development/QUANTUM_CURRENCY_DEVELOPER.md)** - Development and contribution guidelines
-- **[Deployment Guide](docs/development/QUANTUM_CURRENCY_DEPLOYMENT.md)** - Installation and deployment instructions
-- **[Security Guide](docs/development/QUANTUM_CURRENCY_SECURITY.md)** - Security implementation details
-
-### Specifications
-- **[CAL-RΦV Fusion Specification](docs/specifications/CAL_RPHI_FUSION_SPEC.md)** - Technical specification for the core fusion mechanism
-
-### Reports
-- **[Ω Convergence Verification Report](reports/Ω_Verification_Report.md)** - Formal verification of Ω convergence properties
-- **[Ω Privacy Audit](reports/Ω_Privacy_Audit.md)** - Audit of privacy mechanisms for Ω-vector data
-- **[Ψ Resilience Report](reports/Ψ_Resilience_Report.md)** - Resilience testing of Ψ-based governance
-- **[Token Coherence Stability](reports/Token_Coherence_Stability.md)** - Stability analysis of multi-token economy
-- **[Mainnet Checkpointing Guide](reports/Mainnet_Checkpointing_Guide.md)** - Guide to Ω-state checkpointing for mainnet
-- **[Quantum Coherence Economy Integration](reports/Quantum_Coherence_Economy_Integration.md)** - Integration of quantum coherence principles with economic mechanisms
-- **[Predictive Coherence Model Guide](reports/Predictive_Coherence_Model_Guide.md)** - Guide to predictive models for coherence optimization
-- **[Governance Coherence Guide](reports/Governance_Coherence_Guide.md)** - Guide to coherence-based governance mechanisms
-
-### Releases
-- **[Roadmap](ROADMAP.md)** - Development roadmap and future plans
-- **[Changelog](CHANGELOG.md)** - Version history and changes
-
-### Implementation History
-- **[Implementation Summaries](docs/implementation/)** - Detailed implementation documentation
-- **[Historical Documents](docs/history/)** - Phase completion reports and historical documentation
-
-For a complete overview of all documentation, see [docs/README.md](docs/README.md).
-
-## 🗺️ Roadmap
-
-See our [ROADMAP.md](ROADMAP.md) for detailed information on planned features and releases.
-
-### Current Release: v0.9.0-beta (Production Ready)
-- ✅ Full Quantum Currency System Implementation
-- ✅ OpenAGI Integration with Quantum Coherence AI
-- ✅ Comprehensive Testing Infrastructure
-- ✅ Complete Documentation
-- ✅ Harmonic Engine (HE) Implementation
-- ✅ Ω-Security Primitives Implementation
-- ✅ Meta-Regulator Implementation
-- ✅ Cosmonic Verification System
-- ✅ Ω-State Checkpointing for Mainnet Readiness
-- ✅ Full Security Audit & Formal Verification
-- ✅ Economic Stress Simulations & Resilience Testing
-- ✅ Enhanced HMN Dashboard with Real-time Visualization
-
-### Emanation Phase (Diamond) Expansion - In Progress
-- 🔄 External System Integration (Coherence Bridges)
-- 🔄 Global Harmonic Field Activation
-- 🔄 Human Coherence Interface (HCI)
-- 🔄 Governance Expansion & Ethical Oversight
-- 🔄 Performance, Energy & Entropy Management
-- 🔄 Advanced Dashboard Features & Analytics
-
-### Upcoming Releases
-- **v1.0.0** - Production-ready system 
-- **v1.1.0** - External system integration 
-- **v1.2.0** - Global harmonic field activation 
-- **v2.0.0** - Full emanation deployment 
-
-### Future Enhancements
-- **Quantum Bridge Integration**: Cross-chain communication protocols
-- **Advanced AI Governance**: Machine learning-based governance optimization
-- **Biometric Integration Expansion**: Additional sensor types and analysis methods
-- **Mobile Dashboard**: Native mobile applications for system monitoring
-- **Decentralized Identity**: Self-sovereign identity integration
-- **Quantum Internet Protocol**: Integration with quantum communication networks
+- **Transparencia / Transparency**: Todo el código es auditable y documentado / All code is auditable and documented
+- **Privacidad / Privacy**: Protección de datos mediante cifrado de extremo a extremo / Data protection through end-to-end encryption
+- **Consenso / Consensus**: Decisiones distribuidas sin puntos únicos de fallo / Distributed decisions without single points of failure
+- **Responsabilidad / Responsibility**: Trazabilidad de todas las acciones en la red / Traceability of all actions in the network
+- **Zero-Trust Architecture**: Validación continua de todas las comunicaciones y identidades
+- **Perfect Forward Secrecy**: Protección contra compromisos históricos de claves
+- **Intrusion Detection**: Monitoreo en tiempo real de amenazas y anomalías
+- **Automated Security**: Gestión automática de claves, actualizaciones y mitigación de riesgos
+- **Compliance-Ready**: SOC 2 preparado con controles de seguridad enterprise-grade
 
 ---
-**⚠️ LEGAL DISCLAIMER: This software is designed exclusively for human evolution, earth's harmony, collective coherence, divine wealth, academic research and ethical development of quantum-harmonic currency systems. Use of this code for malicious, illegal, or privacy-violating activities is strictly prohibited.**
+
+## 🏗️ Arquitectura del Sistema / System Architecture
+
+### Componentes Principales / Main Components
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   TOR Gateway   │◄──►│  P2P Network    │◄──►│  Knowledge Base │
+│                 │    │   Manager       │    │   Distributed   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         ▲                       ▲                       ▲
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Crypto Engine   │    │ Resource Pool   │    │ Consensus Core  │
+│                 │    │   Manager       │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### Características de Seguridad / Security Features
+
+- **🔐 Cifrado de Extremo a Extremo / End-to-End Encryption**: ChaCha20-Poly1305 + Double Ratchet
+- **🌐 Comunicaciones Anónimas / Anonymous Communications**: Integración completa con red TOR / Full TOR network integration
+- **🤝 Consenso Bizantino / Byzantine Consensus**: Tolerancia a fallos con PBFT + Proof of Computation
+- **🔑 Identidades Criptográficas / Cryptographic Identities**: Ed25519 para firmas digitales
+- **🛡️ Resistencia a Ataques / Attack Resistance**: Protección contra Sybil, Eclipse y envenenamiento
 
 ---
-*Developed by Quantum Currency Implementation Team- THE RESONANCE*
-*Version 0.9.0-beta - Production Ready Beta Release* 🪙
+
+## 🚀 Instalación y Configuración / Installation and Setup
+
+### Prerrequisitos / Prerequisites
+
+- **Python 3.8+**
+- **Docker** (para despliegue contenerizado / for containerized deployment)
+- **Git**
+- **Sistema UNIX-like** (Linux, macOS) o **Windows Subsystem for Linux (WSL)**
+
+### Instalación Rápida / Quick Installation
+
+```bash
+# Clonar el repositorio / Clone the repository
+git clone https://github.com/KaseMaster/Open-A.G.I.git
+cd Open-A.G.I
+
+# Ejecutar health check / Run health check
+bash scripts/health-check.sh
+
+# Desplegar con seguridad completa / Deploy with full security
+bash scripts/deploy.sh production
+
+# Verificar despliegue / Verify deployment
+docker-compose ps
+
+# Acceder a servicios / Access services
+# Dashboard principal: https://localhost:8080
+# Métricas de seguridad: https://localhost:8080/metrics
+# Health checks: https://localhost:8080/health
+```
+
+### Instalación Manual para Desarrollo / Manual Installation for Development
+
+```bash
+# Entorno virtual / Virtual environment
+python -m venv aegis-env
+source aegis-env/bin/activate  # En Windows: aegis-env\Scripts\activate
+
+# Instalar con dependencias de seguridad / Install with security dependencies
+pip install -e .[security,dev]
+
+# Ejecutar demo completo / Run complete demo
+python demo_aegis_complete.py
+```
+
+---
+
+## 🔒 Características de Seguridad Implementadas / Implemented Security Features
+
+### 1. 🔐 Perfect Forward Secrecy (PFS)
+
+```python
+from crypto_framework import initialize_crypto
+
+# Inicializar con PFS completo / Initialize with full PFS
+crypto = initialize_crypto({
+    'security_level': 'HIGH',
+    'node_id': 'secure_node'
+})
+
+# Cada mensaje usa claves efímeras diferentes / Each message uses different ephemeral keys
+encrypted_msg = crypto.encrypt_message(b"secreto", "peer_id")
+# Resultado: Mensaje cifrado con clave única y efímera / Result: Message encrypted with unique ephemeral key
+```
+
+**Beneficios / Benefits:**
+- ✅ Compromiso de claves pasadas no afecta mensajes futuros / Past key compromises don't affect future messages
+- ✅ Protección contra ataques de memoria / Protection against memory attacks
+- ✅ Cumple estándares enterprise de seguridad / Meets enterprise security standards
+
+### 2. 🛡️ Sistema de Detección de Intrusiones / Intrusion Detection System
+
+```python
+from intrusion_detection import IntrusionDetectionSystem
+
+ids = IntrusionDetectionSystem()
+
+# Monitorear mensajes automáticamente / Automatically monitor messages
+await ids.monitor_message({
+    'type': 'data',
+    'sender_id': 'peer_123',
+    'payload': 'mensaje sospechoso'
+}, 'peer_123')
+
+# Verificar alertas activas / Check active alerts
+alerts = ids.get_active_alerts()
+print(f"Alertas de seguridad: {len(alerts)}")
+```
+
+**Detección de 8 tipos de ataques / Detection of 8 attack types:**
+- Flooding, Spoofing, Replay, MITM, Anomalous Behavior
+- Invalid Signatures, Consensus Attacks, Identity Fraud
+
+### 3. 🔄 Gestión Automática de Claves / Automatic Key Management
+
+```python
+from crypto_framework import SecureKeyManager
+
+key_manager = crypto.key_manager
+
+# Iniciar rotación automática / Start automatic rotation
+await key_manager.start_key_rotation("peer_id")
+
+# Ver estadísticas / View statistics
+stats = key_manager.get_key_stats("peer_id")
+print(f"Claves activas: {stats['has_active_key']}")
+print(f"Historial: {stats['keys_in_history']} claves")
+```
+
+**Características / Features:**
+- ✅ Rotación automática cada hora / Automatic rotation every hour
+- ✅ Modo emergencia para compromisos detectados / Emergency mode for detected compromises
+- ✅ Limpieza automática de claves expiradas / Automatic cleanup of expired keys
+
+---
+
+## 🧪 Testing y Validación de Seguridad / Security Testing and Validation
+
+### Suite Completa de Tests / Complete Test Suite
+
+```bash
+# Tests unitarios / Unit tests
+pytest tests/ -v --cov=aegis --cov-report=html
+
+# Tests de seguridad específicos / Specific security tests
+pytest tests/test_crypto_security.py -v
+pytest tests/test_intrusion_detection.py -v
+pytest tests/test_key_rotation.py -v
+
+# Tests de integración end-to-end / End-to-end integration tests
+pytest tests/test_integration_complete.py -v
+
+# Demo completa del sistema / Complete system demo
+python demo_aegis_complete.py
+```
+
+### Tests de Resistencia a Ataques / Attack Resilience Tests
+
+```bash
+# Simular ataques para validar defensas / Simulate attacks to validate defenses
+python tests/simulate_attacks.py --attack flooding --duration 60
+python tests/simulate_attacks.py --attack spoofing --peers 10
+python tests/simulate_attacks.py --attack replay --messages 100
+```
+
+---
+
+## 🔗 Integración con Quantum Financial System / Integration with Quantum Financial System
+
+Open-A.G.I se integra con el **Quantum Financial System (QFS)** desarrollado por RealDaniG, proporcionando capacidades avanzadas de IA para sistemas financieros cuánticos.
+
+Open-A.G.I integrates with the **Quantum Financial System (QFS)** developed by RealDaniG, providing advanced AI capabilities for quantum financial systems.
+
+### Características de la Integración / Integration Features
+
+- **🧠 Análisis Predictivo Avanzado / Advanced Predictive Analytics**: Modelos de machine learning para predicción de mercados financieros
+- **🛡️ Seguridad Cuántica / Quantum Security**: Integración con protocolos de criptografía cuántica post-cuántica
+- **⚡ Procesamiento Distribuido / Distributed Processing**: Computación paralela para análisis financiero en tiempo real
+- **🔄 Aprendizaje Federado / Federated Learning**: Entrenamiento colaborativo sin compartir datos sensibles
+- **📊 Visualización en Tiempo Real / Real-time Visualization**: Dashboards interactivos para monitoreo financiero
+
+### Repositorio del QFS / QFS Repository
+
+Para más información sobre el Quantum Financial System, visita: https://github.com/RealDaniG/QFS/
+
+For more information about the Quantum Financial System, visit: https://github.com/RealDaniG/QFS/
+
+---
+
+## 📋 Compliance y Certificaciones / Compliance and Certifications
+
+### SOC 2 Type II Ready
+
+**✅ Controles implementados / Implemented Controls:**
+- ✅ Access Control (AC): Autenticación criptográfica, autorización basada en roles
+- ✅ Security (SC): Cifrado PFS, gestión de claves, protección de datos
+- ✅ Availability (A): Health checks, failover automático, monitoring continuo
+- ✅ Confidentiality (C): Zero-knowledge architecture, PFS, forward secrecy
+- ✅ Privacy (P): Anonimato TOR, no logging de datos sensibles
+
+### GDPR Compliance
+
+**✅ Características implementadas / Implemented Features:**
+- ✅ Data minimization: Solo datos necesarios procesados
+- ✅ Purpose limitation: Uso explícito de datos definido
+- ✅ Storage limitation: Datos retenidos solo tiempo necesario
+- ✅ Integrity & confidentiality: Cifrado de extremo a extremo
+- ✅ Accountability: Trazabilidad completa de acciones
+
+---
+
+## 🐳 Servicios y Arquitectura / Services and Architecture
+
+### Servicios Docker Compose / Docker Compose Services
+
+| Servicio / Service | Puerto / Port | Descripción / Description | Seguridad / Security |
+|----------|--------|-------------|-----------|
+| **aegis-node** | 8080 | Nodo principal AEGIS / Main AEGIS node | 🔐 PFS + IDS |
+| **web-dashboard** | 8051 | Dashboard web seguro / Secure web dashboard | 🔒 TLS + Auth |
+| **tor-gateway** | 9050/9051 | Gateway TOR / TOR gateway | 🛡️ Anonimato / Anonymity |
+| **redis-secure** | 6379 | Cache encriptado / Encrypted cache | 🔐 AES-256 |
+| **monitoring** | 9090 | Prometheus metrics | 📊 Observabilidad / Observability |
+| **security-scan** | - | Escáner de seguridad / Security scanner | 🔍 Automated |
+
+### Comandos Útiles / Useful Commands
+
+```bash
+# Ver estado de seguridad / Check security status
+docker-compose exec aegis-node python -c "from intrusion_detection import IntrusionDetectionSystem; ids = IntrusionDetectionSystem(); print(ids.get_system_status())"
+
+# Ver métricas de claves / Check key metrics
+docker-compose exec aegis-node python -c "from crypto_framework import initialize_crypto; c = initialize_crypto({}); print(c.key_manager.get_key_stats('demo_peer'))"
+
+# Ejecutar security scan / Run security scan
+docker-compose -f docker-compose.ci.yml run --rm security-scan
+
+# Health check completo / Complete health check
+bash scripts/health-check.sh
+
+# Rollback de emergencia / Emergency rollback
+bash scripts/rollback.sh production
+```
+
+---
+
+## 📚 Documentación Técnica / Technical Documentation
+
+- **[🏗️ Arquitectura Detallada / Detailed Architecture](docs/ARCHITECTURE_GUIDE.md)** - Diseño técnico completo / Complete technical design
+- **[🔒 Manual de Seguridad / Security Manual](docs/SECURITY_GUIDE.md)** - Guía de hardening / Hardening guide
+- **[📖 API Reference](docs/ARCHITECTURE_GUIDE.md#módulos-del-sistema)** - Documentación de APIs / API documentation
+- **[🔧 Troubleshooting](DEPLOYMENT_GUIDE.md#-troubleshooting)** - Solución de problemas / Problem solving
+- **[🚀 Guía de Deployment / Deployment Guide](DEPLOYMENT_GUIDE.md)** - Instalación avanzada / Advanced installation
+
+### Scripts de Automatización / Automation Scripts
+
+- **`scripts/health-check.sh`** - Verificación completa del sistema / Complete system verification
+- **`scripts/deploy.sh`** - Deployment automatizado seguro / Automated secure deployment
+- **`scripts/rollback.sh`** - Recuperación de desastres / Disaster recovery
+- **`demo_aegis_complete.py`** - Demostración completa del sistema / Complete system demonstration
+
+---
+
+## 🤝 Contribuciones / Contributions
+
+### Código de Conducta / Code of Conduct
+
+- **Uso Ético / Ethical Use**: Solo para investigación y desarrollo legítimo
+- **Transparencia**: Documentar todos los cambios de seguridad
+- **Responsabilidad**: Reportar vulnerabilidades de forma responsable
+- **Colaboración**: Respetar la diversidad y inclusión
+
+### Proceso de Contribución / Contribution Process
+
+1. **Fork** del repositorio
+2. **Crear** rama para la característica (`git checkout -b feature/nueva-caracteristica`)
+3. **Implementar** con tests de seguridad
+4. **Documentar** cambios y consideraciones de seguridad
+5. **Enviar** Pull Request con descripción detallada
+
+### Reporte de Vulnerabilidades / Vulnerability Reporting
+
+**NO** reportar vulnerabilidades públicamente. Usar:
+- Email: security@openagi.org
+- PGP Key: [Clave PGP para comunicación segura]
+
+---
+
+## 📄 Licencia / License
+
+Este proyecto está licenciado bajo la **Licencia MIT con Cláusulas de Uso Ético**.
+
+This project is licensed under the **MIT License with Ethical Use Clauses**.
+
+### Restricciones Adicionales / Additional Restrictions
+
+- **Prohibido** el uso para actividades ilegales
+- **Prohibido** el uso para vigilancia no autorizada
+- **Prohibido** el uso para manipulación de información
+- **Requerido** el cumplimiento de leyes locales de privacidad
+
+---
+
+## 🙏 Reconocimientos / Acknowledgments
+
+- **TOR Project** por la infraestructura de anonimato
+- **Cryptography.io** por las primitivas criptográficas
+- **Comunidad de Seguridad** por las mejores prácticas
+- **Investigadores en IA Distribuida** por los fundamentos teóricos
+
+---
+
+**⚠️ RECORDATORIO FINAL: Este software es una herramienta de investigación. El usuario es completamente responsable de su uso ético y legal. Los desarrolladores no se hacen responsables del mal uso de este código.**
+
+**⚠️ FINAL REMINDER: This software is a research tool. The user is completely responsible for its ethical and legal use. Developers are not responsible for misuse of this code.**
+
+---
+
+*Desarrollado por AEGIS - Analista Experto en Gestión de Información y Seguridad*
+*Versión 3.1.4 - Enterprise Multimodal AI Platform* 🚀
+
+*Developed by AEGIS - Expert Analyst in Information and Security Management*
+*Version 3.1.4 - Enterprise Multimodal AI Platform* 🚀
