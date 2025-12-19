@@ -310,7 +310,7 @@ bash scripts/rollback.sh production
 ### Reporte de Vulnerabilidades / Vulnerability Reporting
 
 **NO** reportar vulnerabilidades públicamente. Usar:
-- Email: security@openagi.org
+- Email: security@proyecto-ia-distribuida.org
 - PGP Key: [Clave PGP para comunicación segura]
 
 ---
