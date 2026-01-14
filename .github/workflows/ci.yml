@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if (Test-Path -Path "requirements-test.txt") { pip install -r requirements.txt
+          if (Test-Path "requirements-test.txt") { pip install -r requirements-test.txt } else { if (Test-Path "requirements.txt") { pip install -r requirements.txt } }
           pip install pytest flake8 bandit pip-audit cryptography click
 
       - name: Lint (flake8)
@@ -233,8 +233,8 @@ jobs:
           echo "Signing tags:"
           echo "${{ steps.meta.outputs.tags }}"
           while IFS= read -r tag; do
-            echo "Signing ghcr.io/${{ github.repository }}:${tag}"
-          cosign sign --yes ghcr.io/${{ github.repository }}:${tag}
+            echo "Signing ghcr.io/${{ github.repository }}:"
+          cosign sign --yes ghcr.io/${{ github.repository }}:
           done <<< "${{ steps.meta.outputs.tags }}"
 
   verify-and-release-assets:
@@ -276,8 +276,8 @@ jobs:
           echo "Verifying signed tags:"
           echo "${{ steps.meta.outputs.tags }}"
           while IFS= read -r tag; do
-            echo "Verifying ghcr.io/${{ github.repository }}:${tag}"
-            cosign verify ghcr.io/${{ github.repository }}:${tag} || exit 1
+            echo "Verifying ghcr.io/${{ github.repository }}:"
+            cosign verify ghcr.io/${{ github.repository }}: || exit 1
           done <<< "${{ steps.meta.outputs.tags }}"
 
       - name: Download SBOM artifact

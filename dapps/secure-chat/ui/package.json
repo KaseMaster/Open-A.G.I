@@ -2,6 +2,7 @@
   "name": "ui",
   "private": true,
   "version": "0.0.0",
+  "author": "José María Gómez García <kasemaster@protonmail.com>",
   "type": "module",
   "scripts": {
     "dev": "vite",
