@@ -23,7 +23,6 @@ tqdm>=4.66.0
 
 # Security scanning
 bandit>=1.7.5
-safety>=2.3.0
 
 # Code quality
 flake8>=6.0.0

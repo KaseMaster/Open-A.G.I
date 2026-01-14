@@ -50,19 +50,9 @@ rich>=13.7.0
 tqdm>=4.66.0
 python-dotenv>=1.0.0
 
-# Testing y Desarrollo
-pytest>=7.4.0
-pytest-asyncio>=0.21.0
-pytest-cov>=4.1.0
-black>=23.11.0
-flake8>=6.1.0
-mypy>=1.7.0
-
 # Opcional: Aceleración GPU
 # torch-audio>=2.1.0
 # torch-vision>=0.16.0
 
 # Opcional: Visualización
 plotly>=5.17.0
-
-torch>=2.9.0

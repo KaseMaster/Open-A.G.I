@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ethers } from 'ethers';
-import { create } from 'ipfs-http-client';
 import nacl from 'tweetnacl';
 import './App.css';
 import StatusBar from './components/StatusBar';
@@ -89,7 +88,26 @@ const AEGIS_ABI = [
 
 // IPFS client setup (use Vite proxy to avoid CORS in dev)
 const ipfsBaseUrl = (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173') + '/ipfs-api';
-const ipfsClient = create({ url: ipfsBaseUrl });
+
+async function ipfsAddJson(data) {
+  const body = new FormData();
+  body.append('file', new Blob([JSON.stringify(data)], { type: 'application/json' }), 'data.json');
+
+  const response = await fetch(`${ipfsBaseUrl}/api/v0/add?pin=true`, { method: 'POST', body });
+  if (!response.ok) throw new Error(`IPFS add failed: ${response.status}`);
+
+  const text = await response.text();
+  const lines = text.trim().split('\n');
+  const last = JSON.parse(lines[lines.length - 1]);
+  return last.Hash || last.Cid || last.cid || last.path;
+}
+
+async function ipfsCatJson(hash) {
+  const response = await fetch(`${ipfsBaseUrl}/api/v0/cat?arg=${encodeURIComponent(hash)}`, { method: 'POST' });
+  if (!response.ok) throw new Error(`IPFS cat failed: ${response.status}`);
+  const text = await response.text();
+  return JSON.parse(text);
+}
 
 // Encryption utilities
 function encryptMessage(message, recipientPublicKey, senderSecretKey) {
@@ -128,8 +146,7 @@ function decryptMessage(encryptedMessage, senderPublicKey, recipientSecretKey) {
 // IPFS utilities
 async function uploadToIPFS(data) {
   try {
-    const result = await ipfsClient.add(JSON.stringify(data));
-    return result.path;
+    return await ipfsAddJson(data);
   } catch (error) {
     console.error('IPFS upload error:', error);
     throw error;
@@ -138,11 +155,7 @@ async function uploadToIPFS(data) {
 
 async function fetchFromIPFS(hash) {
   try {
-    let data = '';
-    for await (const chunk of ipfsClient.cat(hash)) {
-      data += new TextDecoder().decode(chunk);
-    }
-    return JSON.parse(data);
+    return await ipfsCatJson(hash);
   } catch (error) {
     console.error('IPFS fetch error:', error);
     return null;

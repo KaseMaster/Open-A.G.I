@@ -26,6 +26,9 @@ sbom.spdx.json
 build/
 dist/
 
+# Node
+node_modules/
+
 # OS files
 .DS_Store
 Thumbs.db
@@ -54,6 +57,8 @@ bandit.json
 gitleaks.json
 sbom.spdx.json
 ci_run_*.log
+reports/pip-audit-*.json
+reports/npm-audit-*.json
 
 # Local lint logs
 flake8*.txt
