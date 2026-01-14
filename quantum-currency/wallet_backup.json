@@ -1,0 +1,83 @@
+{
+  "wallet_name": "My Quantum Wallet",
+  "wallet_id": "wallet-1762690445-d474edaf",
+  "accounts": {
+    "wallet-1762690445-d474edaf-account-1": {
+      "address": "wallet-1762690445-d474edaf-account-1",
+      "chr_balance": 500.0,
+      "flx_balance": 899.9,
+      "psy_balance": 0.0,
+      "atr_balance": 0.0,
+      "res_balance": 0.0,
+      "chr_score": 0.21968149236531462,
+      "created_at": 1762690445.1586068,
+      "last_activity": 1762690445.169971,
+      "staked_amounts": {}
+    },
+    "wallet-1762690445-d474edaf-account-2": {
+      "address": "wallet-1762690445-d474edaf-account-2",
+      "chr_balance": 0.0,
+      "flx_balance": 100.0,
+      "psy_balance": 0.0,
+      "atr_balance": 0.0,
+      "res_balance": 0.0,
+      "chr_score": 0.22706686664925632,
+      "created_at": 1762690445.1629114,
+      "last_activity": 1762690445.1699715,
+      "staked_amounts": {}
+    },
+    "wallet-1762690445-d474edaf-account-3": {
+      "address": "wallet-1762690445-d474edaf-account-3",
+      "chr_balance": 0.0,
+      "flx_balance": 0.0,
+      "psy_balance": 0.0,
+      "atr_balance": 0.0,
+      "res_balance": 0.0,
+      "chr_score": 0.21748527578325952,
+      "created_at": 1762690445.1672506,
+      "last_activity": 1762690445.1672509,
+      "staked_amounts": {}
+    }
+  },
+  "keys": {
+    "wallet-1762690445-d474edaf-account-1": {
+      "wallet_id": "wallet-1762690445-d474edaf-account-1",
+      "public_key": "5e9c500914040eea4c36806ab29c8edcfe7d4d42d0c4716e46b68fb75ae3b326",
+      "created_at": 1762690445.1586044,
+      "key_type": "Ed25519",
+      "coherence_score": 0.21968149236531462,
+      "validation_timestamp": 1762690445.1586046
+    },
+    "wallet-1762690445-d474edaf-account-2": {
+      "wallet_id": "wallet-1762690445-d474edaf-account-2",
+      "public_key": "3797b8d6d303f75b98884e2dc4a58df124748102e64775da6c8925086a280be6",
+      "created_at": 1762690445.1629086,
+      "key_type": "Ed25519",
+      "coherence_score": 0.22706686664925632,
+      "validation_timestamp": 1762690445.1629093
+    },
+    "wallet-1762690445-d474edaf-account-3": {
+      "wallet_id": "wallet-1762690445-d474edaf-account-3",
+      "public_key": "d8013839a0600c9e6bc373676e7ca042cffa1fdeefba59839190082a7fde2601",
+      "created_at": 1762690445.1672485,
+      "key_type": "Ed25519",
+      "coherence_score": 0.21748527578325952,
+      "validation_timestamp": 1762690445.1672485
+    }
+  },
+  "transactions": [
+    {
+      "tx_id": "4499fb8acbee176db2738f3b63980876",
+      "sender": "wallet-1762690445-d474edaf-account-1",
+      "receiver": "wallet-1762690445-d474edaf-account-2",
+      "token_type": "FLX",
+      "amount": 100.0,
+      "timestamp": 1762690445.16996,
+      "signature": "14279f00cf0ed95239648f0d21db69c1fc8d174da6a3bde92a0fdf2a073e5e84",
+      "fee": 0.1,
+      "memo": "Test transaction",
+      "status": "pending"
+    }
+  ],
+  "backup_timestamp": 1762690445.1715612
+}

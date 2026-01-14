@@ -64,3 +64,5 @@ mypy>=1.7.0
 
 # Opcional: Visualización
 plotly>=5.17.0
+
+torch>=2.9.0

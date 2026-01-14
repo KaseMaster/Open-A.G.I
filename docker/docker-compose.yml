@@ -1,0 +1,43 @@
+version: "3.8"
+services:
+  validator1:
+    build:
+      context: ..
+      dockerfile: docker/validator.Dockerfile
+    container_name: validator1
+    environment:
+      - VALIDATOR_ID=1
+    ports:
+      - "8001:8000"
+
+  validator2:
+    build:
+      context: ..
+      dockerfile: docker/validator.Dockerfile
+    container_name: validator2
+    environment:
+      - VALIDATOR_ID=2
+    ports:
+      - "8002:8000"
+
+  validator3:
+    build:
+      context: ..
+      dockerfile: docker/validator.Dockerfile
+    container_name: validator3
+    environment:
+      - VALIDATOR_ID=3
+    ports:
+      - "8003:8000"
+
+  client:
+    build:
+      context: ..
+      dockerfile: docker/client.Dockerfile
+    container_name: client
+    depends_on:
+      - validator1
+      - validator2
+      - validator3
+    ports:
+      - "9000:9000"

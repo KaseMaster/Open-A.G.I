@@ -1,0 +1,20 @@
+{
+  "node_id": "hmn-node-003",
+  "network_config": {
+    "shard_count": 10,
+    "replication_factor": 3,
+    "validator_count": 5,
+    "network_peers": [],
+    "metrics_port": 8020,
+    "service_ports": {
+      "metrics": 8020,
+      "ledger": 8021,
+      "cal_engine": 8022,
+      "mining": 8023,
+      "memory_mesh": 8024,
+      "consensus": 8025
+    }
+  },
+  "data_directory": "./hmn-data/hmn-node-003",
+  "log_level": "INFO"
+}

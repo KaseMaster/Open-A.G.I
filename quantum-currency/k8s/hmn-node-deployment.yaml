@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hmn-node
+  labels:
+    app: hmn-node
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hmn-node
+  template:
+    metadata:
+      labels:
+        app: hmn-node
+    spec:
+      containers:
+      - name: hmn-node
+        image: quantum-currency/hmn-node:latest
+        ports:
+        - containerPort: 8000
+          name: metrics
+        - containerPort: 8001
+          name: ledger
+        - containerPort: 8002
+          name: cal-engine
+        - containerPort: 8003
+          name: mining
+        - containerPort: 8004
+          name: memory-mesh
+        - containerPort: 8005
+          name: consensus
+        env:
+        - name: NODE_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: PYTHONPATH
+          value: "/app/src"
+        volumeMounts:
+        - name: data-volume
+          mountPath: /app/data
+        - name: logs-volume
+          mountPath: /var/log/quantum
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: data-volume
+        emptyDir: {}
+      - name: logs-volume
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hmn-node-service
+spec:
+  selector:
+    app: hmn-node
+  ports:
+  - name: metrics
+    port: 8000
+    targetPort: 8000
+  - name: ledger
+    port: 8001
+    targetPort: 8001
+  - name: cal-engine
+    port: 8002
+    targetPort: 8002
+  - name: mining
+    port: 8003
+    targetPort: 8003
+  - name: memory-mesh
+    port: 8004
+    targetPort: 8004
+  - name: consensus
+    port: 8005
+    targetPort: 8005
+  type: ClusterIP
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hmn-node-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hmn-node
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70

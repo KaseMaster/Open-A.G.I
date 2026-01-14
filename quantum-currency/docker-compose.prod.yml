@@ -1,0 +1,440 @@
+version: '3.8'
+
+services:
+  # Redis with persistence and security
+  redis:
+    image: redis:7-alpine
+    container_name: quantum-currency-redis-prod
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data_prod:/data
+      - ./config/redis.conf:/etc/redis/redis.conf:ro
+    command: ["redis-server", "/etc/redis/redis.conf"]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
+    read_only: true
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 60s
+      timeout: 30s
+      retries: 5
+
+  # PostgreSQL database with backup
+  database:
+    image: postgres:15-alpine
+    container_name: quantum-currency-postgres-prod
+    environment:
+      POSTGRES_DB: quantum_currency_prod
+      POSTGRES_USER: quantum_user
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets:
+      - postgres_password
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+      - ./config/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./backups:/backups
+    ports:
+      - "127.0.0.1:5432:5432"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quantum_user -d quantum_currency_prod"]
+      interval: 60s
+      timeout: 30s
+      retries: 5
+
+  # Quantum Currency Core Node - Production
+  quantum-node:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: quantum-currency-node-prod
+    depends_on:
+      redis:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:443:443"   # API REST HTTPS
+      - "127.0.0.1:8443:8443"   # Dashboard HTTPS
+      - "127.0.0.1:5002:5002"   # P2P network
+    volumes:
+      - ./config:/app/config:ro
+      - ./keys:/app/keys:ro
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./backups:/app/backups
+    environment:
+      - QUANTUM_CONFIG=/app/config/production_config.json
+      - QUANTUM_LOG_LEVEL=WARNING
+      - QUANTUM_DASHBOARD_PORT=8443
+      - QUANTUM_ENVIRONMENT=production
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://quantum_user@database:5432/quantum_currency_prod
+      - PROMETHEUS_MULTIPROC_DIR=/tmp
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+        reservations:
+          cpus: '2.0'
+          memory: 4G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "https://localhost:443/health"]
+      interval: 60s
+      timeout: 30s
+      retries: 5
+      start_period: 300s
+
+  # Harmonic Dashboard with SSL
+  harmonic-dashboard:
+    build:
+      context: ../harmonic_dashboard
+      dockerfile: Dockerfile.prod
+    container_name: harmonic-dashboard-prod
+    depends_on:
+      quantum-node:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8444:8444"   # Dashboard web HTTPS
+    volumes:
+      - ../harmonic_dashboard:/app:ro
+      - ./certs:/app/certs:ro
+    environment:
+      - API_BASE=https://quantum-node:443
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET_FILE=/run/secrets/jwt_secret
+      - SSL_ENABLED=true
+    secrets:
+      - jwt_secret
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Prometheus for metrics
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: quantum-currency-prometheus-prod
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./config/prometheus.prod.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data_prod:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=90d'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # Grafana for dashboards
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: quantum-currency-grafana-prod
+    depends_on:
+      - prometheus
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - grafana_data_prod:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD_FILE=/run/secrets/grafana_password
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-worldmap-panel
+    secrets:
+      - grafana_password
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Nginx with SSL termination
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: quantum-currency-nginx-prod
+    depends_on:
+      quantum-node:
+        condition: service_healthy
+      harmonic-dashboard:
+        condition: service_started
+      grafana:
+        condition: service_started
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./config/nginx/ssl:/etc/nginx/ssl:ro
+      - ./certs:/etc/nginx/certs:ro
+      - ./logs/nginx:/var/log/nginx
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  # Fluentd for log aggregation
+  fluentd:
+    image: fluent/fluentd:v1.16-debian-1
+    container_name: quantum-currency-fluentd-prod
+    depends_on:
+      - quantum-node
+      - harmonic-dashboard
+    volumes:
+      - ./config/fluentd.prod.conf:/fluentd/etc/fluent.conf:ro
+      - ./logs:/var/log/quantum
+      - ./logs/fluentd:/fluentd/log
+    ports:
+      - "127.0.0.1:24224:24224"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # Watchdog with advanced monitoring
+  watchdog:
+    build:
+      context: .
+      dockerfile: Dockerfile.watchdog
+    container_name: quantum-currency-watchdog-prod
+    depends_on:
+      - redis
+      - quantum-node
+      - prometheus
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./scripts/watchdog.prod.sh:/watchdog.sh:ro
+      - ./logs/watchdog:/var/log/watchdog
+    environment:
+      - DOCKER_API_VERSION=1.43
+      - WATCHDOG_INTERVAL=30
+      - ALERT_WEBHOOK_URL=https://api.pagerduty.com/v2/enqueue
+    command: ["sh", "/watchdog.sh"]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
+  # Backup service
+  backup:
+    build:
+      context: .
+      dockerfile: Dockerfile.backup
+    container_name: quantum-currency-backup-prod
+    depends_on:
+      - database
+      - quantum-node
+    volumes:
+      - ./backups:/backups
+      - ./data:/data:ro
+      - ./config/backup.conf:/app/backup.conf:ro
+    environment:
+      - BACKUP_INTERVAL_HOURS=24
+      - RETENTION_DAYS=30
+      - S3_BUCKET=quantum-currency-backups-prod
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # Coherence Bridge Services - Production
+  ledgerlink-bridge:
+    image: alpine:latest
+    container_name: quantum-currency-ledgerlink-prod
+    command: sh -c "while true; do sleep 3600; done"
+    environment:
+      - BRIDGE_MODE=production
+      - TARGET_NETWORK=ledgerlink_mainnet
+      - COHERENCE_THRESHOLD=0.97
+      - SECURITY_LEVEL=high
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  flowbridge-bridge:
+    image: alpine:latest
+    container_name: quantum-currency-flowbridge-prod
+    command: sh -c "while true; do sleep 3600; done"
+    environment:
+      - BRIDGE_MODE=production
+      - TARGET_NETWORK=flowbridge_mainnet
+      - COHERENCE_THRESHOLD=0.97
+      - SECURITY_LEVEL=high
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  resonet-bridge:
+    image: alpine:latest
+    container_name: quantum-currency-resonet-prod
+    command: sh -c "while true; do sleep 3600; done"
+    environment:
+      - BRIDGE_MODE=production
+      - TARGET_NETWORK=resonet_mainnet
+      - COHERENCE_THRESHOLD=0.97
+      - SECURITY_LEVEL=high
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  # Global Coherence Field Service
+  gcf-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.gcf
+    container_name: quantum-currency-gcf-prod
+    depends_on:
+      quantum-node:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8888:8888"
+    volumes:
+      - ./config:/app/config:ro
+      - ./logs:/app/logs
+    environment:
+      - GCF_CONFIG=/app/config/gcf_config.json
+      - QUANTUM_NODE_URL=https://quantum-node:443
+      - COHERENCE_THRESHOLD=0.98
+      - ENTROPY_LIMIT=0.002
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  grafana_password:
+    file: ./secrets/grafana_password.txt
+  jwt_secret:
+    file: ./secrets/jwt_secret.txt
+
+volumes:
+  redis_data_prod:
+    driver: local
+  postgres_data_prod:
+    driver: local
+  prometheus_data_prod:
+    driver: local
+  grafana_data_prod:
+    driver: local

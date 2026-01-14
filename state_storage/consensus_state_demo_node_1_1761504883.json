@@ -1,0 +1,45 @@
+{
+  "checkpoint_id": "consensus_state_demo_node_1_1761504883",
+  "node_id": "demo_node_1",
+  "timestamp": 1761504883.469131,
+  "sequence_number": 1,
+  "metadata": {
+    "state_type": "consensus_state",
+    "compression_enabled": false,
+    "node_version": "1.0.0"
+  },
+  "chunks": {
+    "consensus_state_1_392cd0f6ff5faa1e": {
+      "chunk_id": "consensus_state_1_392cd0f6ff5faa1e",
+      "state_type": "consensus_state",
+      "node_id": "demo_node_1",
+      "sequence_number": 1,
+      "data": {
+        "view_number": 5,
+        "sequence_number": 42,
+        "leader_node": "node_leader",
+        "active_nodes": [
+          "node_1",
+          "node_2",
+          "node_3",
+          "node_4"
+        ],
+        "last_commit_timestamp": 1761504883.4691205,
+        "pending_changes": [
+          {
+            "type": "knowledge_update",
+            "id": "change_123"
+          },
+          {
+            "type": "reputation_update",
+            "id": "change_124"
+          }
+        ]
+      },
+      "checksum": "23d04284f5e7e672e3e31a8a0c37996eff296463ed8d1187dbf94b40e3896b67",
+      "timestamp": 1761504883.4692073,
+      "compressed": false,
+      "size_bytes": 296
+    }
+  }
+}

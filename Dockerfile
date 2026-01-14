@@ -1,26 +1,24 @@
-# Dockerfile para AEGIS Framework - IA Distribuida y Colaborativa
-# Programador Principal: Jose Gómez alias KaseMaster
-# Contacto: kasemaster@aegis-framework.com
-# Versión: 2.0.0
-# Licencia: MIT
+# Dockerfile for Quantum Currency System
+FROM python:3.9-slim
 
-FROM python:3.13-slim
-
+# Set working directory
 WORKDIR /app
 
-# Instalar dependencias
-COPY requirements.txt /app/
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir gunicorn
+# Copy requirements first to leverage Docker cache
+COPY requirements.txt requirements-test.txt ./
 
-# Copiar el proyecto
-COPY . /app
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements-test.txt
 
-# Variables y puerto por defecto para el dashboard
-ENV AEGIS_DASHBOARD_PORT=8080 \
-    AEGIS_LOG_LEVEL=INFO
+# Copy project files
+COPY . .
+
+# Create openagi directory if it doesn't exist
+RUN mkdir -p openagi
+
+# Expose port (if needed for web services)
 EXPOSE 8080
 
-# Comando por defecto: diagnóstico sin ejecutar servicios pesados
-CMD ["python", "main.py", "--dry-run"]
+# Default command
+CMD ["python", "scripts/demo_emulation.py"]

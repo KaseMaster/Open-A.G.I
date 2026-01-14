@@ -58,6 +58,13 @@ class MetricType(Enum):
     MODEL_ACCURACY = "model_accuracy"
     FAULT_TOLERANCE = "fault_tolerance"
     SECURITY_EVENTS = "security_events"
+    CONSENSUS_ROUNDS = "consensus_rounds"
+    ENCRYPTION_OPERATIONS = "encryption_operations"
+    PEER_CONNECTIONS_SECURE = "peer_connections_secure"
+    STATE_CHECKPOINTS = "state_checkpoints"
+    IDENTITY_VERIFICATIONS = "identity_verifications"
+    QUANTUM_OPERATIONS = "quantum_operations"
+    BLOCKCHAIN_TRANSACTIONS = "blockchain_transactions"
 
 class AlertLevel(Enum):
     """Niveles de alerta"""
@@ -337,6 +344,100 @@ class MetricsCollector:
                 timestamp=current_time
             )
             self.metrics_queue.put(accuracy_metric)
+
+            # NUEVAS MÉTRICAS DE INTEGRACIÓN
+
+            # Rondas de consenso híbrido completadas
+            consensus_rounds = np.random.poisson(2)  # Promedio 2 rondas por intervalo
+            consensus_rounds_metric = Metric(
+                metric_id=f"consensus_rounds_{current_time}",
+                metric_type=MetricType.CONSENSUS_ROUNDS,
+                node_id=self.node_id,
+                value=float(consensus_rounds),
+                unit="rounds",
+                timestamp=current_time,
+                metadata={"interval": "5_seconds"}
+            )
+            self.metrics_queue.put(consensus_rounds_metric)
+
+            # Operaciones de cifrado realizadas
+            encryption_ops = np.random.poisson(10)  # Promedio 10 operaciones por intervalo
+            encryption_metric = Metric(
+                metric_id=f"encryption_ops_{current_time}",
+                metric_type=MetricType.ENCRYPTION_OPERATIONS,
+                node_id=self.node_id,
+                value=float(encryption_ops),
+                unit="operations",
+                timestamp=current_time,
+                metadata={"algorithm": "ChaCha20-Poly1305"}
+            )
+            self.metrics_queue.put(encryption_metric)
+
+            # Conexiones P2P seguras activas
+            secure_connections = np.random.randint(3, 8)  # Entre 3 y 7 conexiones
+            secure_conn_metric = Metric(
+                metric_id=f"secure_connections_{current_time}",
+                metric_type=MetricType.PEER_CONNECTIONS_SECURE,
+                node_id=self.node_id,
+                value=float(secure_connections),
+                unit="connections",
+                timestamp=current_time,
+                metadata={"protocol": "Double_Ratchet"}
+            )
+            self.metrics_queue.put(secure_conn_metric)
+
+            # Checkpoints de estado creados
+            checkpoints_created = np.random.poisson(0.5)  # Promedio 0.5 checkpoints por intervalo
+            checkpoints_metric = Metric(
+                metric_id=f"checkpoints_{current_time}",
+                metric_type=MetricType.STATE_CHECKPOINTS,
+                node_id=self.node_id,
+                value=float(checkpoints_created),
+                unit="checkpoints",
+                timestamp=current_time,
+                metadata={"type": "consensus_state"}
+            )
+            self.metrics_queue.put(checkpoints_metric)
+
+            # Verificaciones de identidad
+            identity_verifications = np.random.poisson(3)  # Promedio 3 verificaciones por intervalo
+            identity_metric = Metric(
+                metric_id=f"identity_verifications_{current_time}",
+                metric_type=MetricType.IDENTITY_VERIFICATIONS,
+                node_id=self.node_id,
+                value=float(identity_verifications),
+                unit="verifications",
+                timestamp=current_time,
+                metadata={"algorithm": "Ed25519"}
+            )
+            self.metrics_queue.put(identity_metric)
+
+            # Operaciones cuánticas (si disponibles)
+            quantum_ops = np.random.poisson(0.2)  # Operaciones cuánticas menos frecuentes
+            if quantum_ops > 0:
+                quantum_metric = Metric(
+                    metric_id=f"quantum_ops_{current_time}",
+                    metric_type=MetricType.QUANTUM_OPERATIONS,
+                    node_id=self.node_id,
+                    value=float(quantum_ops),
+                    unit="operations",
+                    timestamp=current_time,
+                    metadata={"algorithms": ["Grover", "Shor"]}
+                )
+                self.metrics_queue.put(quantum_metric)
+
+            # Transacciones blockchain
+            blockchain_txs = np.random.poisson(1)  # Promedio 1 transacción por intervalo
+            blockchain_metric = Metric(
+                metric_id=f"blockchain_txs_{current_time}",
+                metric_type=MetricType.BLOCKCHAIN_TRANSACTIONS,
+                node_id=self.node_id,
+                value=float(blockchain_txs),
+                unit="transactions",
+                timestamp=current_time,
+                metadata={"network": "AEGIS_Chain"}
+            )
+            self.metrics_queue.put(blockchain_metric)
             
         except Exception as e:
             logger.error(f"❌ Error recolectando métricas de aplicación: {e}")

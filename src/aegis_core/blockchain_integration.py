@@ -93,6 +93,25 @@ class Transaction:
 
 
 @dataclass
+class HarmonicSnapshot:
+    """Snapshot de datos armónicos para validación cuántica"""
+    node_id: str
+    timestamp: float
+    spectrum_hash: str
+    CS: float  # Coherence Score
+    phi_params: Dict[str, float]
+    signature: str
+
+
+@dataclass
+class HarmonicProofBundle:
+    """Bundle de pruebas armónicas para validación de bloques"""
+    snapshots: List[HarmonicSnapshot]
+    aggregated_CS: float
+    aggregator_signature: str
+
+
+@dataclass
 class Block:
     """Bloque en la blockchain"""
     block_id: str
@@ -108,6 +127,7 @@ class Block:
     block_hash: str
     status: BlockStatus
     confirmations: int
+    harmonic_proof: Optional[HarmonicProofBundle] = None
 
 
 @dataclass

@@ -1,0 +1,26 @@
+{
+  "visualization_type": "curvature_field",
+  "data_points": 2500,
+  "min_curvature": -1.0582480896711028e-62,
+  "max_curvature": 1.6032738909483533e-62,
+  "mean_curvature": 1.2341011069635838e-63,
+  "timestamp": "2025-11-09T15:30:00Z",
+  "units": "[L]\u207b\u00b2",
+  "sample_coordinates": [
+    {
+      "x": -5.0,
+      "y": -5.0,
+      "curvature": 1.5794898895830501e-66
+    },
+    {
+      "x": 5.0,
+      "y": 5.0,
+      "curvature": 1.8352175084295362e-68
+    },
+    {
+      "x": 0.1020408163265305,
+      "y": 0.1020408163265305,
+      "curvature": 4.360070284776911e-63
+    }
+  ]
+}

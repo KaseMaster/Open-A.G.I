@@ -1,0 +1,50 @@
+# HMN Node Dockerfile
+FROM python:3.9-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy source code
+COPY src/ src/
+COPY run_full_verification.py .
+
+# Create necessary directories
+RUN mkdir -p /var/log/quantum /var/lib/quantum /app/data
+
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash quantum && \
+    chown -R quantum:quantum /app /var/log/quantum /var/lib/quantum /app/data
+
+# Switch to non-root user
+USER quantum
+
+# Expose ports for all services
+EXPOSE 8000 8001 8002 8003 8004 8005
+
+# Set environment variables
+ENV NODE_CONFIG=/app/node_config.json
+ENV DATA_DIR=/app/data
+ENV LOG_DIR=/var/log/quantum
+ENV PYTHONPATH=/app/src
+
+# Copy default configuration
+COPY src/network/hmn/node_config.json.default /app/node_config.json.default
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/metrics || exit 1
+
+# Command to run the HMN Node
+CMD ["python", "-m", "src.network.hmn.deploy_node", "start", "--config", "/app/node_config.json"]

@@ -1,0 +1,13 @@
+{
+  "shard_count": 5,
+  "tee_enabled": true,
+  "prediction_cycles": 10,
+  "observation_period_days": 7,
+  "g_crit_threshold": 1.5,
+  "coherence_threshold": 0.98,
+  "delta_lambda_threshold": 0.005,
+  "false_positive_rate_threshold": 0.02,
+  "required_qra_coherence": 0.95,
+  "active_qra_percentage": 0.95,
+  "gravity_well_anomaly_threshold": 0
+}

@@ -1,0 +1,80 @@
+[
+  {
+    "node_id": "node_001",
+    "g_vector_magnitude": 0.5,
+    "coherence": 0.98,
+    "rsi": 0.92,
+    "delta_h": 0.001,
+    "lambda1": 0.5,
+    "lambda2": 0.3,
+    "caf_emission": 0.1,
+    "I_eff": 0.005,
+    "delta_lambda": 0.001,
+    "timestamp": 1609459200
+  },
+  {
+    "node_id": "node_001",
+    "g_vector_magnitude": 0.7,
+    "coherence": 0.97,
+    "rsi": 0.91,
+    "delta_h": 0.002,
+    "lambda1": 0.5,
+    "lambda2": 0.3,
+    "caf_emission": 0.12,
+    "I_eff": 0.004,
+    "delta_lambda": 0.001,
+    "timestamp": 1609459500
+  },
+  {
+    "node_id": "node_001",
+    "g_vector_magnitude": 0.9,
+    "coherence": 0.96,
+    "rsi": 0.93,
+    "delta_h": 0.001,
+    "lambda1": 0.5,
+    "lambda2": 0.3,
+    "caf_emission": 0.15,
+    "I_eff": 0.003,
+    "delta_lambda": 0.0008,
+    "timestamp": 1609459800
+  },
+  {
+    "node_id": "node_002",
+    "g_vector_magnitude": 0.4,
+    "coherence": 0.96,
+    "rsi": 0.94,
+    "delta_h": 0.0005,
+    "lambda1": 0.4,
+    "lambda2": 0.4,
+    "caf_emission": 0.08,
+    "I_eff": 0.006,
+    "delta_lambda": 0.0015,
+    "timestamp": 1609459200
+  },
+  {
+    "node_id": "node_002",
+    "g_vector_magnitude": 0.6,
+    "coherence": 0.95,
+    "rsi": 0.92,
+    "delta_h": 0.001,
+    "lambda1": 0.4,
+    "lambda2": 0.4,
+    "caf_emission": 0.1,
+    "I_eff": 0.005,
+    "delta_lambda": 0.0012,
+    "timestamp": 1609459500
+  },
+  {
+    "node_id": "node_003",
+    "g_vector_magnitude": 0.3,
+    "coherence": 0.97,
+    "rsi": 0.95,
+    "delta_h": 0.0002,
+    "lambda1": 0.6,
+    "lambda2": 0.2,
+    "caf_emission": 0.05,
+    "I_eff": 0.007,
+    "delta_lambda": 0.002,
+    "timestamp": 1609459200
+  }
+]

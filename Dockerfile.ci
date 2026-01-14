@@ -1,0 +1,116 @@
+# ===== DOCKERFILE PARA CI/CD =====
+FROM python:3.13-slim as base
+
+# Metadata
+LABEL maintainer="KaseMaster <kasemaster@aegis-framework.com>"
+LABEL description="AEGIS Framework - Distributed AI Security"
+LABEL version="2.1.0"
+
+# Environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONHASHSEED=random \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_CREATE=false \
+    POETRY_CACHE_DIR='/tmp/poetry_cache'
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    build-essential \
+    libffi-dev \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Poetry
+RUN pip install poetry==1.8.3
+
+# Set work directory
+WORKDIR /app
+
+# ===== DEPENDENCIES LAYER =====
+FROM base as dependencies
+
+# Copy dependency files
+COPY pyproject.toml poetry.lock ./
+
+# Install dependencies only (for better caching)
+RUN poetry install --no-root --only=main
+
+# ===== DEVELOPMENT LAYER =====
+FROM dependencies as development
+
+# Install dev dependencies
+RUN poetry install --no-root
+
+# Copy source code
+COPY . .
+
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash aegis && \
+    chown -R aegis:aegis /app
+USER aegis
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import aegis; print('AEGIS OK')" || exit 1
+
+# Default command
+CMD ["python", "-m", "aegis"]
+
+# ===== PRODUCTION LAYER =====
+FROM base as production
+
+# Copy dependencies from dependencies layer
+COPY --from=dependencies /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=dependencies /usr/local/bin /usr/local/bin
+
+# Copy source code
+COPY . .
+
+# Create non-root user
+RUN useradd --create-home --shell /bin/bash aegis && \
+    chown -R aegis:aegis /app
+USER aegis
+
+# Expose ports
+EXPOSE 8080 8081 8082
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=15s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Default command
+CMD ["python", "-m", "aegis", "start", "--config", "production"]
+
+# ===== TESTING LAYER =====
+FROM development as testing
+
+# Install test dependencies
+RUN poetry install --no-root
+
+# Copy test files
+COPY tests/ ./tests/
+
+# Run tests by default
+CMD ["poetry", "run", "pytest", "tests/", "-v", "--cov=aegis", "--cov-report=xml"]
+
+# ===== SECURITY SCANNING LAYER =====
+FROM testing as security
+
+# Install security tools
+RUN pip install \
+    bandit \
+    safety \
+    pip-audit \
+    semgrep
+
+# Copy security configs
+COPY .bandit ./
+COPY .semgrep.yml ./
+
+# Run security scans
+CMD ["sh", "-c", "bandit -r . && safety check && semgrep --config .semgrep.yml"]

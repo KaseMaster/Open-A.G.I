@@ -1,0 +1,2 @@
+# AFIP (Absolute Field Integrity Protocol) Requirements
+numpy>=1.21.0

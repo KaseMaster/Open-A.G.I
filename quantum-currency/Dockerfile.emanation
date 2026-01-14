@@ -1,0 +1,41 @@
+# Dockerfile for Quantum Currency Emanation Monitor
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+COPY requirements-dev.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements-dev.txt
+
+# Copy application code
+COPY src/ src/
+COPY emanation_deploy.py .
+COPY run_staging_verification.py .
+COPY staging_verification.json .
+
+# Create data directory
+RUN mkdir -p /mnt/data
+
+# Create non-root user
+RUN useradd --create-home --shell /bin/bash quantum
+USER quantum
+
+# Expose ports
+EXPOSE 8080 8081
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python3 -c "import os; exit(0) if os.path.exists('emanation_deploy.py') else exit(1)"
+
+# Default command
+CMD ["python3", "emanation_deploy.py", "--cycles", "0", "--interval", "60", "--report-dir", "/mnt/data"]

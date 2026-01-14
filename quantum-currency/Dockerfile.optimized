@@ -1,0 +1,28 @@
+# Quantum Currency Dockerfile - Optimized Version
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Create a .dockerignore file to optimize the build
+# Copy .dockerignore first to optimize caching
+COPY .dockerignore ./
+
+# Copy only the requirements files we need
+COPY requirements.txt requirements-dev.txt ./
+
+# Install only essential dependencies
+RUN pip install --no-cache-dir \
+    numpy>=1.21.0 \
+    scipy>=1.7.0 \
+    flask>=2.0.0 \
+    python-dotenv>=1.0.0
+
+# Copy only the source code we need
+COPY src/ src/
+
+# Expose port
+EXPOSE 5000
+
+# Run the application
+CMD ["python", "src/api/main.py"]

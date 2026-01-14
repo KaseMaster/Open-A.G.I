@@ -1,0 +1,123 @@
+version: '3.8'
+
+services:
+  # ===== BASE DE DATOS PARA TESTS =====
+  test-db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: aegis_test
+      POSTGRES_USER: aegis
+      POSTGRES_PASSWORD: test_password_123
+    ports:
+      - "5433:5432"
+    volumes:
+      - test_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aegis -d aegis_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===== REDIS PARA TESTS =====
+  test-redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - test_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # ===== AEGIS NODE PARA TESTS =====
+  aegis-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.ci
+      target: testing
+    environment:
+      - AEGIS_ENV=test
+      - DATABASE_URL=postgresql://aegis:test_password_123@test-db:5432/aegis_test
+      - REDIS_URL=redis://test-redis:6379
+      - NODE_ID=test_node
+      - LOG_LEVEL=DEBUG
+    depends_on:
+      test-db:
+        condition: service_healthy
+      test-redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./tests:/app/tests:ro
+      - ./coverage:/app/coverage
+    healthcheck:
+      test: ["CMD", "python", "-c", "import aegis; print('OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: ["poetry", "run", "pytest", "tests/", "-v", "--cov=aegis", "--cov-report=xml", "--cov-report=html"]
+
+  # ===== SECURITY SCANNER =====
+  security-scan:
+    build:
+      context: .
+      dockerfile: Dockerfile.ci
+      target: security
+    volumes:
+      - ./security_reports:/app/security_reports
+    command: ["sh", "-c", "bandit -r . -f json -o security_reports/bandit.json && safety check --json > security_reports/safety.json"]
+
+  # ===== LOAD TESTING =====
+  load-test:
+    image: locustio/locust:latest
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./tests/load_test.py:/mnt/locust/load_test.py
+    command: ["-f", "/mnt/locust/load_test.py", "--host=http://aegis-test:8080"]
+    depends_on:
+      - aegis-test
+    profiles:
+      - load-testing
+
+  # ===== MONITORING =====
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    profiles:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    profiles:
+      - monitoring
+
+volumes:
+  test_db_data:
+  test_redis_data:
+  prometheus_data:
+  grafana_data:
