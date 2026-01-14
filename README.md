@@ -10,7 +10,7 @@
 </p>
 
 **Programador Principal:** Jose Gómez alias KaseMaster  
-**Contacto:** kasemaster@aegis-framework.com  
+**Contacto:** kasemaster@protonmail.com  
 **Versión:** 2.1.0  
 **Licencia:** MIT  
 
