@@ -9,8 +9,8 @@
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="License" />
 </p>
 
-**Desarrollador:** José María Gómez García  
-**Email:** kasemaster@protonmail.com  
+**Desarrollador Principal:** José María Gómez García (alias KaseMaster)  
+**Contacto:** kasemaster@protonmail.com  
 **Versión:** 2.1.0  
 **Licencia:** MIT  
 
