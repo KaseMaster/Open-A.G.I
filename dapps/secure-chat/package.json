@@ -29,7 +29,7 @@
     "dotenv": "^17.2.3",
     "hardhat": "^2.26.3",
     "hardhat-gas-reporter": "^2.3.0",
-    "solidity-coverage": "^0.8.16",
+    "solidity-coverage": "^0.8.17",
     "ts-node": "^10.9.2",
     "typechain": "^8.3.2",
     "typescript": "^5.9.3"
