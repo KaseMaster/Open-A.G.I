@@ -156,7 +156,7 @@ jobs:
         python -m pytest --cov=src --cov-report=xml --cov-report=html
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@e3c560433a6cc60aec8812599b7844a7b4fa0d71 # v3
+      uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v3
       with:
         file: ./quantum-currency/coverage.xml
         flags: unittests
