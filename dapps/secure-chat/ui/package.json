@@ -16,7 +16,7 @@
     "ethers": "^6.11.0",
     "process": "^0.11.10",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "^19.2.3",
     "stream-browserify": "^3.0.0",
     "tweetnacl": "^1.0.3",
     "util": "^0.12.5"
@@ -24,7 +24,7 @@
   "devDependencies": {
     "@eslint/js": "^9.36.0",
     "@types/react": "^18.2.80",
-    "@types/react-dom": "^18.2.25",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.2",
     "eslint": "^9.36.0",
     "eslint-plugin-react-hooks": "^5.2.0",
