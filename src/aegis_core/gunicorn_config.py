@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Configuración avanzada de Gunicorn para AEGIS Framework
+Configuración avanzada de Gunicorn para AEGIS Open AGI
 Optimizada para producción con seguridad y rendimiento mejorados
 """
 

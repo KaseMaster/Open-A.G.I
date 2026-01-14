@@ -1,3 +1,6 @@
+AEGIS Open AGI
+Desarrollador: José María Gómez García (kasemaster@protonmail.com)
+
 # Contributing to Quantum Currency Implementation
 
 Thank you for your interest in contributing to the Quantum Currency Implementation! We welcome contributions from the community to help improve and expand this innovative quantum-harmonic currency system.

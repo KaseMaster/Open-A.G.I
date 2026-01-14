@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Configuración WSGI para AEGIS Framework
+Configuración WSGI para AEGIS Open AGI
 Servidor de producción con Gunicorn/Uvicorn
 """
 

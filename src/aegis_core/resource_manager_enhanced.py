@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Gestor de Recursos Mejorado para AEGIS Framework
+Gestor de Recursos Mejorado para AEGIS Open AGI
 Control de memoria, límites de seguridad y optimización de rendimiento
 """
 

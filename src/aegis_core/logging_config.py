@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Configuración de logging optimizada para AEGIS Framework
+Configuración de logging optimizada para AEGIS Open AGI
 Manejo seguro de Unicode y configuración de producción
 """
 

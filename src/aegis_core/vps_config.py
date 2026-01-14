@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Configuración del VPS como Servidor Principal - AEGIS Framework
-Programador Principal: Jose Gómez alias KaseMaster
-Contacto: kasemaster@aegis-framework.com
+Configuración del VPS como Servidor Principal - AEGIS Open AGI
+Desarrollador: José María Gómez García
+Contacto: José María Gómez García@protonmail.com
 Versión: 2.0.0
 Licencia: MIT
 """
@@ -120,7 +120,7 @@ def create_vps_config():
     env_file = config_dir / ".env.production"
     env_content = f"""
 # Configuración de Producción - VPS Principal
-# AEGIS Framework OpenAGI
+# AEGIS Open AGI OpenAGI
 
 # Información del Servidor
 SERVER_IP={VPS_CONFIG['server_info']['ip']}

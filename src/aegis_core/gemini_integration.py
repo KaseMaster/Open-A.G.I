@@ -1,5 +1,5 @@
 """
-AEGIS Framework - Gemini AI Integration Module
+AEGIS Open AGI - Gemini AI Integration Module
 Integración de Google Gemini AI para el framework AEGIS
 """
 

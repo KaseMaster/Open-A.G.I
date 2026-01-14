@@ -287,7 +287,7 @@ Este template incluye:
 
 ## 🆘 Soporte
 
-Para soporte técnico, consulta la [documentación de AEGIS](https://docs.aegis-framework.com) o crea un issue en el repositorio.
+Para soporte técnico, consulta la [documentación de AEGIS](https://docs.protonmail.com) o crea un issue en el repositorio.
 
 ---
 *Template generado automáticamente por AEGIS Framework*

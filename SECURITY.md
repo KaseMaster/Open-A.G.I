@@ -9,8 +9,7 @@ Gracias por ayudar a mantener la seguridad de Open-A.G.I.
 
 ## Reporte de vulnerabilidades
 
-- Usa GitHub Security Advisories para reportar de forma privada.
-- Alternativamente, abre un issue marcado como `security` con información limitada y solicita contacto privado.
+Please report vulnerabilities via email to `kasemaster@protonmail.com`
 - No publiques exploits ni POC sin coordinación previa.
 
 ## Buenas prácticas internas

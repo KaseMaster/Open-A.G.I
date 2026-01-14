@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Dashboard de Monitoreo - AEGIS Framework
+Dashboard de Monitoreo - AEGIS Open AGI
 Sistema de monitoreo y visualización en tiempo real para la infraestructura
 de IA distribuida y colaborativa.
 
-Programador Principal: Jose Gómez alias KaseMaster
-Contacto: kasemaster@aegis-framework.com
+Desarrollador: José María Gómez García
+Contacto: José María Gómez García@protonmail.com
 Versión: 2.0.0
 Licencia: MIT
 
@@ -905,7 +905,7 @@ DASHBOARD_HTML_TEMPLATE = '''
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AEGIS Framework - Dashboard de Monitoreo</title>
+    <title>AEGIS Open AGI - Dashboard de Monitoreo</title>
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -924,7 +924,7 @@ DASHBOARD_HTML_TEMPLATE = '''
     <div class="container mx-auto px-4 py-8">
         <!-- Header -->
         <div class="mb-8">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">🛡️ AEGIS Framework</h1>
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">🛡️ AEGIS Open AGI</h1>
             <p class="text-gray-600">Dashboard de Monitoreo en Tiempo Real</p>
         </div>
 

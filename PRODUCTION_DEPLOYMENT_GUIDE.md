@@ -409,9 +409,9 @@ redis-cli ping
 ## 📞 Soporte y Contacto
 
 Para soporte técnico:
-- 📧 Email: soporte@aegis-framework.com
+- 📧 Email: soporte@protonmail.com
 - 💬 Discord: [AEGIS Community](https://discord.gg/aegis)
-- 📚 Documentación: [docs.aegis-framework.com](https://docs.aegis-framework.com)
+- 📚 Documentación: [docs.protonmail.com](https://docs.protonmail.com)
 - 🐛 Issues: [GitHub Issues](https://github.com/aegis-framework/aegis/issues)
 
 ## 📄 Licencia y Avisos Legales

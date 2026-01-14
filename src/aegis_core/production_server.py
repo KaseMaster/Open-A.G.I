@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script de arranque para AEGIS Framework en producción
+Script de arranque para AEGIS Open AGI en producción
 Inicia el servidor con configuración optimizada
 """
 

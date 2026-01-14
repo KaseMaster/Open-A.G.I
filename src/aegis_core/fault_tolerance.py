@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Sistema de Tolerancia a Fallos y Recuperación de Nodos - AEGIS Framework
+Sistema de Tolerancia a Fallos y Recuperación de Nodos - AEGIS Open AGI
 Implementación robusta para detección, recuperación y mantenimiento de nodos en red P2P distribuida.
 
 Características principales:

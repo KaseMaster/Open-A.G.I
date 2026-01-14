@@ -101,7 +101,7 @@ python main.py
 📚 Learn more:
 - Check the README.md in your project
 - Run: aegis docs api-reference
-- Visit: https://docs.aegis-framework.com
+- Visit: https://docs.protonmail.com
 
 🚀 Try other templates:
 - aegis create edge_computing my_edge_project
@@ -477,7 +477,7 @@ cost_alerts = {
 **API Security:**
 ```python
 # Always use HTTPS in production
-os.environ["AEGIS_API_URL"] = "https://api.aegis-framework.com"
+os.environ["AEGIS_API_URL"] = "https://api.protonmail.com"
 
 # Rotate API keys regularly
 # Use environment variables, never hardcode

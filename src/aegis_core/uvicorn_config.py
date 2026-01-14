@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Configuración avanzada de Uvicorn para AEGIS Framework
+Configuración avanzada de Uvicorn para AEGIS Open AGI
 Servidor ASGI de alto rendimiento con soporte para aplicaciones modernas
 """
 
@@ -97,7 +97,7 @@ SECURITY_HEADERS_CONFIG = {
 }
 
 class AEGISUvicornConfig:
-    """Configuración avanzada de Uvicorn para AEGIS Framework"""
+    """Configuración avanzada de Uvicorn para AEGIS Open AGI"""
     
     def __init__(self):
         self.setup_logging()

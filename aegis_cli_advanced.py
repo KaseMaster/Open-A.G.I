@@ -240,7 +240,7 @@ def quickstart(ctx, use_case):
     if success and ctx.obj['verbose']:
         click.echo(f"\n📚 Learn more about {use_case} development:")
         click.echo("   • Check the generated code and documentation")
-        click.echo("   • Visit: https://docs.aegis-framework.com")
+        click.echo("   • Visit: https://docs.protonmail.com")
         click.echo("   • Join our developer community on Discord")
 
 @aegis_cli.command()
@@ -324,7 +324,7 @@ def docs(ctx, topic):
    pip install -r requirements.txt
    python main.py
 
-For more detailed guides, visit: https://docs.aegis-framework.com/getting-started
+For more detailed guides, visit: https://docs.protonmail.com/getting-started
         """,
         "api-reference": """
 🔧 AEGIS API Reference
@@ -342,7 +342,7 @@ Key Methods:
   • deploy_to_edge(): Deploy to edge devices
   • create_cloud_deployment(): Deploy to cloud
 
-Complete API docs: https://docs.aegis-framework.com/api
+Complete API docs: https://docs.protonmail.com/api
         """,
         "best-practices": """
 💡 AEGIS Development Best Practices
@@ -396,7 +396,7 @@ Common Issues:
    → Verify model compatibility
    → Review network timeouts
 
-For more help: https://docs.aegis-framework.com/troubleshooting
+For more help: https://docs.protonmail.com/troubleshooting
         """
     }
 

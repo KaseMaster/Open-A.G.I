@@ -2,7 +2,7 @@
 FROM python:3.13-slim as base
 
 # Metadata
-LABEL maintainer="KaseMaster <kasemaster@aegis-framework.com>"
+LABEL maintainer="KaseMaster <kasemaster@protonmail.com>"
 LABEL description="AEGIS Framework - Distributed AI Security"
 LABEL version="2.1.0"
 

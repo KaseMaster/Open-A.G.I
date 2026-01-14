@@ -1,4 +1,4 @@
-# 🤖 AEGIS Framework - IA Distribuida y Colaborativa
+# 🤖 AEGIS Open AGI - Inteligencia Artificial Distribuida
 
 <p align="center">
   <a href="https://github.com/KaseMaster/Open-A.G.I/actions/workflows/ci.yml">
@@ -9,8 +9,8 @@
   <img src="https://img.shields.io/badge/license-MIT-orange" alt="License" />
 </p>
 
-**Programador Principal:** Jose Gómez alias KaseMaster  
-**Contacto:** kasemaster@aegis-framework.com  
+**Desarrollador:** José María Gómez García  
+**Email:** kasemaster@protonmail.com  
 **Versión:** 2.1.0  
 **Licencia:** MIT  
 
@@ -199,4 +199,4 @@ Este proyecto está licenciado bajo la **Licencia MIT con Cláusulas de Uso Éti
 
 ---
 
-*Desarrollado por AEGIS - Analista Experto en Gestión de Información y Seguridad*
+*Desarrollado por AEGIS Open AGI - Inteligencia Artificial Distribuida*

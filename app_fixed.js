@@ -1,7 +1,7 @@
 /**
  * OpenAGI Secure Chat+ - Frontend JavaScript Corregido
  * Programador Principal: Jose Gómez alias KaseMaster
- * Contacto: kasemaster@aegis-framework.com
+ * Contacto: kasemaster@protonmail.com
  * Versión: 2.1.0 - AEGIS Security Enhanced
  * Licencia: MIT
  */

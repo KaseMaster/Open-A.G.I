@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Gestor avanzado de servidores WSGI/ASGI para AEGIS Framework
+Gestor avanzado de servidores WSGI/ASGI para AEGIS Open AGI
 Soporte para Gunicorn y Uvicorn con monitoreo y recuperación automática
 """
 

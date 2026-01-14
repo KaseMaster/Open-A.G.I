@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Integración Blockchain - AEGIS Framework
+Integración Blockchain - AEGIS Open AGI
 Sistema blockchain distribuido para garantizar inmutabilidad de datos,
 contratos inteligentes y consenso descentralizado.
 
-Programador Principal: Jose Gómez alias KaseMaster
-Contacto: kasemaster@aegis-framework.com
+Desarrollador: José María Gómez García
+Contacto: José María Gómez García@protonmail.com
 Versión: 2.0.0
 Licencia: MIT
 

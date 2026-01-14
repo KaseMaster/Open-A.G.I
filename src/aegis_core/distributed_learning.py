@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Sistema de Aprendizaje Distribuido - AEGIS Framework
+Sistema de Aprendizaje Distribuido - AEGIS Open AGI
 Implementación avanzada de federated learning con optimizaciones para IA colaborativa.
 
 Características principales:

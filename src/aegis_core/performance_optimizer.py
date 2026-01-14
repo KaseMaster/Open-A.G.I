@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Optimizador de Rendimiento - AEGIS Framework
+Optimizador de Rendimiento - AEGIS Open AGI
 Sistema inteligente para análisis, monitoreo y optimización automática
 del rendimiento en el framework distribuido.
 

@@ -3,16 +3,16 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "open-a-g-i"
+name = "aegis-open-agi"
 version = "2.1.0"
-description = "AEGIS Framework: IA distribuida y colaborativa (P2P + TOR + PBFT + Crypto)"
+description = "AEGIS Open AGI: IA distribuida y colaborativa (P2P + TOR + PBFT + Crypto)"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
-    {name = "Jose Gómez (KaseMaster)", email = "kasemaster@aegis-framework.com"}
+    {name = "José María Gómez García", email = "kasemaster@protonmail.com"}
 ]
-keywords = ["ai", "distributed", "tor", "p2p", "security", "aegis"]
+keywords = ["ai", "distributed", "tor", "p2p", "security", "aegis", "open-agi"]
 dependencies = [
     "cryptography>=41.0.0",
     "pycryptodome>=3.19.0",

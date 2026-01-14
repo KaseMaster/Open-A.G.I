@@ -2,7 +2,7 @@
 /**
  * OpenAGI Secure Chat+ - WebSocket Real con Comunicación Bidireccional
  * Programador Principal: Jose Gómez alias KaseMaster
- * Contacto: kasemaster@aegis-framework.com
+ * Contacto: kasemaster@protonmail.com
  * Versión: 2.1.0 - AEGIS Enhanced WebSocket
  * Licencia: MIT
  */

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Red P2P Distribuida - AEGIS Framework
+Red P2P Distribuida - AEGIS Open AGI
 Implementación de red peer-to-peer con descubrimiento automático de nodos,
 gestión de topología dinámica y comunicación resiliente.
 
-Programador Principal: Jose Gómez alias KaseMaster
-Contacto: kasemaster@aegis-framework.com
+Desarrollador: José María Gómez García
+Contacto: José María Gómez García@protonmail.com
 Versión: 2.0.0
 Licencia: MIT
 

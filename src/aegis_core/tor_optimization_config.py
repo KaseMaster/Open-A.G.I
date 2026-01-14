@@ -72,7 +72,7 @@ class TorOptimizationConfig:
         """Genera configuración torrc optimizada"""
         
         config_lines = [
-            "# Configuración TOR optimizada para AEGIS Framework",
+            "# Configuración TOR optimizada para AEGIS Open AGI",
             f"# Nivel de optimización: {self.optimization_level.value}",
             "",
             "# Configuración básica",

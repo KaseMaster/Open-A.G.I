@@ -3,8 +3,8 @@
 Framework Criptográfico para IA Distribuida y Colaborativa
 AEGIS Security Framework - Uso Ético Únicamente
 
-Programador Principal: Jose Gómez alias KaseMaster
-Contacto: kasemaster@conexiónsecreta.site
+Desarrollador: José María Gómez García
+Contacto: José María Gómez García@conexiónsecreta.site
 Versión: 2.0.0
 Licencia: MIT
 

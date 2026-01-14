@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Protocolos de Seguridad Avanzados - AEGIS Framework
+Protocolos de Seguridad Avanzados - AEGIS Open AGI
 Sistema integral de seguridad para redes P2P distribuidas con IA colaborativa.
 
 Características principales:

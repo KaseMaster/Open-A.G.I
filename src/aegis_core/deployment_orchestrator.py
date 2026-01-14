@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Orquestador de Despliegue - AEGIS Framework
+Orquestador de Despliegue - AEGIS Open AGI
 Sistema automatizado para despliegue y configuración del framework
 distribuido en múltiples entornos y topologías de red.
 
@@ -1437,7 +1437,7 @@ class DeploymentOrchestrator:
 async def main():
     """Función principal de demostración"""
     try:
-        print("🚀 Iniciando Orquestador de Despliegue - AEGIS Framework")
+        print("🚀 Iniciando Orquestador de Despliegue - AEGIS Open AGI")
         
         # Crear orquestador
         orchestrator = DeploymentOrchestrator()

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-AEGIS Framework - Sistema de IA Distribuida y Seguridad Avanzada
-Programador Principal: Jose Gómez alias KaseMaster
-Contacto: kasemaster@aegis-framework.com
-Versión: 2.0.0
+AEGIS Open AGI - Sistema de IA Distribuida y Seguridad Avanzada
+Desarrollador: José María Gómez García
+Contacto: kasemaster@protonmail.com
+Versión: 2.1.0
 Licencia: MIT
 """
 
@@ -181,7 +181,7 @@ def health_summary() -> dict:
 
 async def start_node(dry_run: bool = False, config_path: Optional[str] = None):
     cfg = load_config(config_path)
-    logger.info("Iniciando nodo AEGIS distribuido...")
+    logger.info("Iniciando nodo AEGIS Open AGI distribuido...")
     logger.info(f"Config aplicada: enable={cfg['app']['enable']}")
 
     # Inicializar seguridad si está habilitada
@@ -233,7 +233,7 @@ async def start_node(dry_run: bool = False, config_path: Optional[str] = None):
         module_call(monitor_mod, "start_dashboard", cfg.get("monitoring", {}))
 
     logger.success("Nodo inicializado. Procesos en ejecución (si están disponibles).")
-    logger.info("✅ AEGIS Framework iniciado exitosamente")
+    logger.info("✅ AEGIS Open AGI iniciado exitosamente")
     logger.info(f"📊 Dashboard de monitoreo disponible en: http://127.0.0.1:{cfg['monitoring']['dashboard_port']}")
 
     # Mostrar estado de seguridad si está habilitada
@@ -250,7 +250,7 @@ async def start_node(dry_run: bool = False, config_path: Optional[str] = None):
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        logger.info("🛑 Deteniendo AEGIS Framework...")
+        logger.info("🛑 Deteniendo AEGIS Open AGI...")
 
 
 @click.group()

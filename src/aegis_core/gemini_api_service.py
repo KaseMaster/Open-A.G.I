@@ -1,5 +1,5 @@
 """
-AEGIS Framework - Gemini API Service
+AEGIS Open AGI - Gemini API Service
 Servicio REST API para integración de Gemini AI
 """
 

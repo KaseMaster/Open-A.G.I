@@ -11,7 +11,7 @@ Características:
 - API REST para integración
 
 Programador Principal: Jose Gómez alias KaseMaster
-Contacto: kasemaster@aegis-framework.com
+Contacto: kasemaster@protonmail.com
 Versión: 2.0.0
 Licencia: MIT
 """

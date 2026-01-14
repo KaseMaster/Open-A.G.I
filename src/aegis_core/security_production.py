@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Configuración de Seguridad para AEGIS Framework
+Configuración de Seguridad para AEGIS Open AGI
 Implementa medidas de seguridad para entorno de producción
 """
 
