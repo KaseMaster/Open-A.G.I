@@ -57,3 +57,13 @@ ci_run_*.log
 
 # Local lint logs
 flake8*.txt
+
+# Security Hardening (Added by Janus Protocol)
+keys/
+certs/
+htmlcov/
+*.backup
+Dockerfile.*.temp
+Dockerfile.fixed
+debug_*
+tools/debug_legacy/

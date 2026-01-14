@@ -121,8 +121,37 @@ jobs:
           name: bandit-ubuntu-${{ matrix.python-version }}
           path: bandit.json
 
+  node-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Test Aegis Token
+        working-directory: dapps/aegis-token
+        run: |
+          npm install
+          npm test
+
+      - name: Test Secure Chat
+        working-directory: dapps/secure-chat
+        run: |
+          npm install
+          npm test
+
+      - name: Test Secure Chat UI
+        working-directory: dapps/secure-chat/ui
+        run: |
+          npm install
+          npm test
+
   docker-smoke-test:
-    needs: [lint-and-test, linux-lint-and-test]
+    needs: [lint-and-test, linux-lint-and-test, node-test]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

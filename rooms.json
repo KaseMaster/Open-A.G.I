@@ -1,0 +1,20 @@
+[
+  {
+    "id": "general",
+    "name": "General",
+    "access": "open",
+    "description": "Sala general para todos los usuarios"
+  },
+  {
+    "id": "tech",
+    "name": "Tecnología",
+    "access": "open",
+    "description": "Discusiones sobre tecnología"
+  },
+  {
+    "id": "private",
+    "name": "Privada",
+    "access": "restricted",
+    "description": "Sala privada para usuarios autorizados"
+  }
+]

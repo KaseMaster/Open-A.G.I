@@ -1,0 +1,522 @@
+{
+    "aegis_framework": {
+        "version": "3.0.0",
+        "environment": "production",
+        "debug": false,
+        "security_level": "high",
+        "deployment_type": "vps",
+        "server_id": "aegis-prod-001",
+        "data_center": "primary",
+        
+        "node_configuration": {
+            "node_id": "aegis-node-prod-001",
+            "node_type": "master",
+            "cluster_id": "aegis-cluster-001",
+            "listen_address": "0.0.0.0",
+            "p2p_port": 8001,
+            "api_port": 8000,
+            "max_connections": 1000,
+            "connection_timeout": 30,
+            "heartbeat_interval": 60,
+            "max_peers": 50,
+            "min_peers": 5,
+            "peer_discovery": true,
+            "bootstrap_nodes": [
+                "enode://primary-node-1:8001",
+                "enode://primary-node-2:8001"
+            ],
+            "network_id": "aegis-mainnet-v3",
+            "chain_id": 1337,
+            "genesis_block": "0x0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        
+        "tor_configuration": {
+            "enabled": true,
+            "control_port": 9051,
+            "socks_port": 9050,
+            "hidden_service_dir": "/var/lib/tor/aegis/",
+            "hidden_service_port": 80,
+            "hidden_service_version": 3,
+            "cookie_authentication": true,
+            "max_circuit_dirtiness": 600,
+            "new_circuit_period": 30,
+            "circuit_build_timeout": 60,
+            "bandwidth_rate": "1 MB",
+            "bandwidth_burst": "2 MB",
+            "avoid_disk_writes": true,
+            "disable_debugger_attachment": true
+        },
+        
+        "database_configuration": {
+            "postgresql": {
+                "enabled": true,
+                "host": "localhost",
+                "port": 5432,
+                "database": "aegis_db",
+                "username": "aegis",
+                "password": "${POSTGRES_PASSWORD}",
+                "ssl_mode": "require",
+                "connection_pool_size": 20,
+                "max_overflow": 10,
+                "pool_timeout": 30,
+                "pool_recycle": 3600,
+                "statement_timeout": 30000,
+                "lock_timeout": 10000,
+                "idle_in_transaction_session_timeout": 60000
+            },
+            "redis": {
+                "enabled": true,
+                "host": "localhost",
+                "port": 6379,
+                "database": 0,
+                "password": "${REDIS_PASSWORD}",
+                "ssl": false,
+                "connection_pool_size": 10,
+                "max_connections": 100,
+                "socket_timeout": 30,
+                "socket_connect_timeout": 30,
+                "retry_on_timeout": true,
+                "health_check_interval": 30
+            },
+            "sqlite": {
+                "enabled": false,
+                "database_path": "/var/lib/aegis/aegis.db",
+                "check_same_thread": false,
+                "isolation_level": "IMMEDIATE",
+                "journal_mode": "WAL",
+                "synchronous": "NORMAL",
+                "temp_store": "MEMORY",
+                "mmap_size": 268435456,
+                "cache_size": -16384
+            }
+        },
+        
+        "security_configuration": {
+            "authentication": {
+                "jwt_secret": "${JWT_SECRET}",
+                "jwt_algorithm": "HS256",
+                "jwt_expiration": 3600,
+                "jwt_refresh_expiration": 604800,
+                "password_hash_algorithm": "scrypt",
+                "password_min_length": 12,
+                "password_require_uppercase": true,
+                "password_require_lowercase": true,
+                "password_require_numbers": true,
+                "password_require_symbols": true,
+                "max_login_attempts": 5,
+                "login_lockout_duration": 900,
+                "session_timeout": 1800,
+                "remember_me_duration": 2592000
+            },
+            "rate_limiting": {
+                "enabled": true,
+                "default_limit": 100,
+                "default_window": 3600,
+                "api_limit": 1000,
+                "api_window": 3600,
+                "login_limit": 5,
+                "login_window": 300,
+                "upload_limit": 10,
+                "upload_window": 3600,
+                "key_prefix": "aegis:rate_limit:"
+            },
+            "cors": {
+                "enabled": true,
+                "allowed_origins": [
+                    "https://aegis.local",
+                    "https://dashboard.aegis.local"
+                ],
+                "allowed_methods": [
+                    "GET",
+                    "POST",
+                    "PUT",
+                    "DELETE",
+                    "OPTIONS"
+                ],
+                "allowed_headers": [
+                    "Content-Type",
+                    "Authorization",
+                    "X-Requested-With",
+                    "X-CSRF-Token"
+                ],
+                "allow_credentials": true,
+                "max_age": 86400
+            },
+            "ssl_tls": {
+                "enabled": true,
+                "cert_file": "/etc/ssl/certs/aegis.crt",
+                "key_file": "/etc/ssl/private/aegis.key",
+                "ca_file": "/etc/ssl/certs/ca-certificates.crt",
+                "protocols": ["TLSv1.2", "TLSv1.3"],
+                "ciphers": "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384",
+                "prefer_server_ciphers": false,
+                "session_cache": "shared:SSL:10m",
+                "session_timeout": "10m",
+                "ocsp_stapling": true,
+                "ocsp_stapling_verify": true
+            },
+            "headers": {
+                "x_frame_options": "DENY",
+                "x_content_type_options": "nosniff",
+                "x_xss_protection": "1; mode=block",
+                "strict_transport_security": "max-age=31536000; includeSubDomains",
+                "referrer_policy": "strict-origin-when-cross-origin",
+                "content_security_policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' ws: wss:;",
+                "x_powered_by": "AEGIS Framework v3.0.0",
+                "server": "AEGIS-Server"
+            },
+            "ip_filtering": {
+                "enabled": true,
+                "whitelist": [
+                    "127.0.0.1/32",
+                    "::1/128",
+                    "10.0.0.0/8",
+                    "172.16.0.0/12",
+                    "192.168.0.0/16"
+                ],
+                "blacklist": [],
+                "block_tor_exit_nodes": false,
+                "block_known_vpn": false,
+                "geo_blocking": {
+                    "enabled": false,
+                    "allowed_countries": [],
+                    "blocked_countries": []
+                }
+            },
+            "audit_logging": {
+                "enabled": true,
+                "log_level": "INFO",
+                "log_file": "/var/log/aegis-audit.log",
+                "max_file_size": "100MB",
+                "backup_count": 10,
+                "log_events": [
+                    "authentication",
+                    "authorization",
+                    "data_access",
+                    "configuration_changes",
+                    "security_violations",
+                    "system_events"
+                ],
+                "retention_days": 90
+            }
+        },
+        
+        "logging_configuration": {
+            "level": "INFO",
+            "format": "{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}",
+            "file_rotation": true,
+            "file_retention": "30 days",
+            "compression": "gz",
+            "enqueue": true,
+            "catch": true,
+            "log_files": {
+                "main_log": "/var/log/aegis-node.log",
+                "error_log": "/var/log/aegis-error.log",
+                "access_log": "/var/log/aegis-access.log",
+                "debug_log": "/var/log/aegis-debug.log",
+                "audit_log": "/var/log/aegis-audit.log"
+            },
+            "log_levels": {
+                "main": "INFO",
+                "error": "ERROR",
+                "access": "INFO",
+                "debug": "DEBUG",
+                "audit": "INFO"
+            },
+            "max_file_size": "50MB",
+            "backup_count": 10,
+            "syslog_enabled": true,
+            "syslog_facility": "local0",
+            "syslog_tag": "aegis-framework"
+        },
+        
+        "monitoring_configuration": {
+            "enabled": true,
+            "dashboard_enabled": true,
+            "dashboard_port": 8051,
+            "dashboard_host": "127.0.0.1",
+            "metrics_enabled": true,
+            "metrics_port": 9090,
+            "health_check_interval": 30,
+            "performance_monitoring": true,
+            "resource_monitoring": true,
+            "network_monitoring": true,
+            "security_monitoring": true,
+            "alerting": {
+                "enabled": true,
+                "email_enabled": true,
+                "email_recipients": ["admin@aegis.local"],
+                "smtp_server": "localhost",
+                "smtp_port": 587,
+                "smtp_username": "${SMTP_USERNAME}",
+                "smtp_password": "${SMTP_PASSWORD}",
+                "alert_thresholds": {
+                    "cpu_usage": 80,
+                    "memory_usage": 85,
+                    "disk_usage": 90,
+                    "network_errors": 100,
+                    "failed_logins": 10,
+                    "service_downtime": 300
+                }
+            },
+            "prometheus": {
+                "enabled": true,
+                "port": 9090,
+                "path": "/metrics",
+                "collectors": [
+                    "cpu",
+                    "memory",
+                    "disk",
+                    "network",
+                    "process",
+                    "python",
+                    "aegis_custom"
+                ]
+            },
+            "grafana": {
+                "enabled": true,
+                "port": 3000,
+                "admin_password": "${GRAFANA_PASSWORD}",
+                "dashboards": [
+                    "aegis-overview",
+                    "aegis-performance",
+                    "aegis-security"
+                ]
+            }
+        },
+        
+        "resource_management": {
+            "memory_limits": {
+                "max_memory_usage": "2GB",
+                "memory_warning_threshold": "1.5GB",
+                "memory_critical_threshold": "1.8GB",
+                "memory_cleanup_interval": 300,
+                "enable_memory_monitoring": true
+            },
+            "cpu_limits": {
+                "max_cpu_usage": 80,
+                "cpu_warning_threshold": 70,
+                "cpu_critical_threshold": 80,
+                "cpu_monitoring_interval": 60,
+                "enable_cpu_throttling": true
+            },
+            "disk_limits": {
+                "max_disk_usage": 90,
+                "disk_warning_threshold": 80,
+                "disk_critical_threshold": 90,
+                "disk_cleanup_interval": 3600,
+                "log_retention_days": 30,
+                "temp_file_cleanup": true
+            },
+            "process_limits": {
+                "max_processes": 100,
+                "max_threads": 50,
+                "max_open_files": 65536,
+                "process_monitoring": true,
+                "auto_restart_failed_processes": true
+            },
+            "network_limits": {
+                "max_connections": 1000,
+                "connection_timeout": 30,
+                "keep_alive_timeout": 60,
+                "max_request_size": "16MB",
+                "rate_limiting": true
+            }
+        },
+        
+        "consensus_configuration": {
+            "enabled": true,
+            "algorithm": "proof_of_stake",
+            "block_time": 15,
+            "block_size": 1048576,
+            "difficulty_adjustment": true,
+            "difficulty_target": 600,
+            "reward_per_block": 5.0,
+            "halving_interval": 210000,
+            "max_supply": 21000000,
+            "validator_count": 21,
+            "minimum_stake": 1000,
+            "slashing_enabled": true,
+            "slashing_percentage": 0.1,
+            "finality_threshold": 0.67,
+            "checkpoint_interval": 100,
+            "genesis_timestamp": 1704067200,
+            "genesis_difficulty": 1,
+            "genesis_nonce": 0,
+            "genesis_extra_data": "AEGIS Framework v3.0.0 - Production Genesis Block"
+        },
+        
+        "crypto_configuration": {
+            "wallet_encryption": {
+                "enabled": true,
+                "algorithm": "AES-256-GCM",
+                "key_derivation": "PBKDF2",
+                "iterations": 100000,
+                "salt_length": 32,
+                "iv_length": 16,
+                "tag_length": 16
+            },
+            "key_management": {
+                "master_key_rotation": 2592000,
+                "session_key_timeout": 3600,
+                "key_storage": "hardware_security_module",
+                "backup_keys": true,
+                "backup_encryption": true
+            },
+            "transaction_signing": {
+                "algorithm": "ECDSA",
+                "curve": "secp256k1",
+                "hash_algorithm": "SHA-256",
+                "signature_format": "DER",
+                "replay_protection": true,
+                "timestamp_validation": true
+            },
+            "privacy_features": {
+                "coin_join": true,
+                "stealth_addresses": true,
+                "ring_signatures": false,
+                "zero_knowledge_proofs": false,
+                "homomorphic_encryption": false
+            }
+        },
+        
+        "api_configuration": {
+            "rest_api": {
+                "enabled": true,
+                "host": "127.0.0.1",
+                "port": 8000,
+                "ssl": true,
+                "cors": true,
+                "rate_limiting": true,
+                "authentication": true,
+                "version": "v3.0.0",
+                "documentation": "/docs",
+                "swagger_ui": "/swagger"
+            },
+            "websocket": {
+                "enabled": true,
+                "host": "127.0.0.1",
+                "port": 8001,
+                "ssl": true,
+                "authentication": true,
+                "heartbeat_interval": 30,
+                "max_connections": 1000,
+                "message_size_limit": "1MB"
+            },
+            "grpc": {
+                "enabled": false,
+                "host": "127.0.0.1",
+                "port": 8002,
+                "ssl": true,
+                "authentication": true,
+                "max_message_size": "4MB",
+                "max_concurrent_streams": 100
+            },
+            "graphql": {
+                "enabled": true,
+                "host": "127.0.0.1",
+                "port": 8003,
+                "ssl": true,
+                "authentication": true,
+                "introspection": false,
+                "playground": false,
+                "max_query_depth": 10,
+                "max_complexity": 1000
+            }
+        },
+        
+        "dashboard_configuration": {
+            "web_dashboard": {
+                "enabled": true,
+                "host": "0.0.0.0",
+                "port": 8080,
+                "ssl": true,
+                "authentication": true,
+                "theme": "dark",
+                "language": "es",
+                "refresh_interval": 30,
+                "real_time_updates": true,
+                "mobile_responsive": true
+            },
+            "cli_dashboard": {
+                "enabled": true,
+                "color_output": true,
+                "interactive": true,
+                "auto_refresh": true,
+                "refresh_rate": 5
+            },
+            "mobile_app": {
+                "enabled": false,
+                "api_endpoint": "https://api.aegis.local",
+                "push_notifications": true,
+                "biometric_auth": true,
+                "offline_mode": true
+            }
+        },
+        
+        "backup_configuration": {
+            "enabled": true,
+            "schedule": "0 2 * * *",
+            "retention_days": 30,
+            "compression": true,
+            "encryption": true,
+            "encryption_key": "${BACKUP_ENCRYPTION_KEY}",
+            "backup_locations": [
+                "/var/backups/aegis",
+                "/mnt/backup/aegis"
+            ],
+            "backup_items": {
+                "databases": true,
+                "configuration": true,
+                "logs": true,
+                "wallets": true,
+                "application_data": true
+            },
+            "cloud_backup": {
+                "enabled": false,
+                "provider": "aws_s3",
+                "bucket": "aegis-backups",
+                "region": "us-east-1",
+                "access_key": "${AWS_ACCESS_KEY}",
+                "secret_key": "${AWS_SECRET_KEY}"
+            }
+        },
+        
+        "performance_optimization": {
+            "caching": {
+                "enabled": true,
+                "cache_type": "redis",
+                "default_ttl": 3600,
+                "max_cache_size": "1GB",
+                "cache_prefix": "aegis:cache:"
+            },
+            "connection_pooling": {
+                "enabled": true,
+                "max_pool_size": 100,
+                "min_pool_size": 10,
+                "pool_timeout": 30,
+                "pool_recycle": 3600
+            },
+            "load_balancing": {
+                "enabled": true,
+                "algorithm": "round_robin",
+                "health_check_interval": 30,
+                "max_retries": 3,
+                "timeout": 30
+            },
+            "compression": {
+                "enabled": true,
+                "algorithm": "gzip",
+                "compression_level": 6,
+                "min_size": "1KB"
+            },
+            "database_optimization": {
+                "query_caching": true,
+                "connection_pooling": true,
+                "index_optimization": true,
+                "vacuum_automation": true,
+                "statistics_update": true
+            }
+        }
+    }
+}

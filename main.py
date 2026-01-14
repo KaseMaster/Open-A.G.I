@@ -15,16 +15,24 @@ import os
 import time
 from typing import Optional, Tuple, Dict, Any
 
+# Añadir src al path para importar módulos locales
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+
+# Importar configuración de logging mejorada
 try:
-    from loguru import logger
-except Exception:
-    # Fallback mínimo si loguru no está disponible
-    class _L:
-        def info(self, *a, **k): print(*a)
-        def warning(self, *a, **k): print(*a)
-        def error(self, *a, **k): print(*a)
-        def success(self, *a, **k): print(*a)
-    logger = _L()
+    from aegis_core.logging_config import logger, get_logger
+except ImportError:
+    # Fallback básico si no está disponible logging_config
+    try:
+        from loguru import logger
+    except Exception:
+        # Fallback mínimo si loguru no está disponible
+        class _L:
+            def info(self, *a, **k): print(*a)
+            def warning(self, *a, **k): print(*a)
+            def error(self, *a, **k): print(*a)
+            def success(self, *a, **k): print(*a)
+        logger = _L()
 
 import click
 from dotenv import load_dotenv
@@ -176,12 +184,22 @@ async def start_node(dry_run: bool = False, config_path: Optional[str] = None):
     logger.info("Iniciando nodo AEGIS distribuido...")
     logger.info(f"Config aplicada: enable={cfg['app']['enable']}")
 
-    tor_mod, tor_err = safe_import("tor_integration")
-    p2p_mod, p2p_err = safe_import("p2p_network")
-    crypto_mod, crypto_err = safe_import("crypto_framework")
-    consensus_mod, cons_err = safe_import("consensus_algorithm")
-    monitor_mod, mon_err = safe_import("monitoring_dashboard")
-    resource_mod, res_err = safe_import("resource_manager")
+    # Inicializar seguridad si está habilitada
+    if cfg.get('security', {}).get('enabled', False):
+        try:
+            from aegis_core.security_production import get_security_manager, SecurityConfig
+            security_config = SecurityConfig(**cfg.get('security', {}))
+            security_manager = get_security_manager(security_config)
+            logger.info("🔐 Seguridad de producción inicializada")
+        except ImportError as e:
+            logger.warning(f"⚠️ No se pudo cargar seguridad de producción: {e}")
+
+    tor_mod, tor_err = safe_import("aegis_core.tor_integration")
+    p2p_mod, p2p_err = safe_import("aegis_core.p2p_network")
+    crypto_mod, crypto_err = safe_import("aegis_core.crypto_framework")
+    consensus_mod, cons_err = safe_import("aegis_core.consensus_algorithm")
+    monitor_mod, mon_err = safe_import("aegis_core.monitoring_dashboard")
+    resource_mod, res_err = safe_import("aegis_core.resource_manager")
 
     if tor_err:
         logger.warning(f"TOR no disponible: {tor_err}")
@@ -215,6 +233,24 @@ async def start_node(dry_run: bool = False, config_path: Optional[str] = None):
         module_call(monitor_mod, "start_dashboard", cfg.get("monitoring", {}))
 
     logger.success("Nodo inicializado. Procesos en ejecución (si están disponibles).")
+    logger.info("✅ AEGIS Framework iniciado exitosamente")
+    logger.info(f"📊 Dashboard de monitoreo disponible en: http://127.0.0.1:{cfg['monitoring']['dashboard_port']}")
+
+    # Mostrar estado de seguridad si está habilitada
+    if cfg.get('security', {}).get('enabled', False):
+        try:
+            from aegis_core.security_production import get_security_status
+            security_status = get_security_status()
+            logger.info(f"🔒 Estado de seguridad: {security_status}")
+        except ImportError:
+            pass
+
+    # Mantener el proceso activo
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        logger.info("🛑 Deteniendo AEGIS Framework...")
 
 
 @click.group()
@@ -249,12 +285,12 @@ def health_check(config: Optional[str]):
 def list_modules():
     """Lista el estado de importación de módulos principales."""
     mods = [
-        "tor_integration",
-        "p2p_network",
-        "crypto_framework",
-        "consensus_algorithm",
-        "monitoring_dashboard",
-        "resource_manager",
+        "aegis_core.tor_integration",
+        "aegis_core.p2p_network",
+        "aegis_core.crypto_framework",
+        "aegis_core.consensus_algorithm",
+        "aegis_core.monitoring_dashboard",
+        "aegis_core.resource_manager",
     ]
     for m in mods:
         mod, err = safe_import(m)
@@ -278,7 +314,7 @@ def start_dashboard_cmd(dashboard_type: str, host: Optional[str], port: Optional
     target_port = port or int(cfg.get("monitoring", {}).get("dashboard_port", 8080))
 
     if dashboard_type == "monitoring":
-        mod, err = safe_import("monitoring_dashboard")
+        mod, err = safe_import("aegis_core.monitoring_dashboard")
         if err or not mod:
             logger.error(f"No se pudo importar monitoring_dashboard: {err}")
             sys.exit(1)
@@ -300,7 +336,7 @@ def start_dashboard_cmd(dashboard_type: str, host: Optional[str], port: Optional
         except KeyboardInterrupt:
             logger.info("Detención solicitada por usuario")
     else:
-        mod, err = safe_import("web_dashboard")
+        mod, err = safe_import("aegis_core.web_dashboard")
         if err or not mod:
             logger.error(f"No se pudo importar web_dashboard: {err}")
             sys.exit(1)

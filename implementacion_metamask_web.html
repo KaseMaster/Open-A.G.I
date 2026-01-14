@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Implementación de Correcciones MetaMask - AEGIS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.8;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .section h2 {
+            color: #4CAF50;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section h2::before {
+            content: "🔧";
+            margin-right: 10px;
+        }
+        
+        .code-block {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            position: relative;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .copy-btn:hover {
+            background: #45a049;
+        }
+        
+        .step {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 4px solid #4CAF50;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .step h3 {
+            color: #FFD700;
+            margin-bottom: 10px;
+        }
+        
+        .warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid #FFC107;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .warning::before {
+            content: "⚠️ ";
+            font-weight: bold;
+        }
+        
+        .success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .success::before {
+            content: "✅ ";
+            font-weight: bold;
+        }
+        
+        .url-link {
+            background: rgba(33, 150, 243, 0.2);
+            border: 1px solid #2196F3;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .url-link a {
+            color: #64B5F6;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .url-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .file-content {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 2px solid #4CAF50;
+        }
+        
+        .implementation-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .status-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .status-card.pending {
+            border-color: #FF9800;
+        }
+        
+        .status-card.completed {
+            border-color: #4CAF50;
+        }
+        
+        .status-card.blocked {
+            border-color: #F44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ AEGIS - Implementación MetaMask</h1>
+            <div class="subtitle">Sistema de Corrección de Errores de Conexión MetaMask</div>
+        </div>
+
+        <div class="section">
+            <h2>Estado de Implementación</h2>
+            <div class="implementation-status">
+                <div class="status-card blocked">
+                    <h3>🔒 Conexión SSH</h3>
+                    <p>BLOQUEADA - Timeout de conexión</p>
+                </div>
+                <div class="status-card pending">
+                    <h3>📁 Archivos Preparados</h3>
+                    <p>LISTOS - Esperando implementación</p>
+                </div>
+                <div class="status-card pending">
+                    <h3>🧪 Pruebas</h3>
+                    <p>PENDIENTE - Requiere implementación</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Solución Alternativa - Implementación Manual</h2>
+            
+            <div class="warning">
+                <strong>PROBLEMA DETECTADO:</strong> La conexión SSH al servidor 77.237.235.224 está experimentando timeouts constantes. Implementaremos las correcciones manualmente.
+            </div>
+
+            <div class="step">
+                <h3>Paso 1: Conexión Manual al Servidor</h3>
+                <p>Conecta al servidor usando tu cliente SSH preferido:</p>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyToClipboard(this)">Copiar</button>
+ssh root@77.237.235.224
+# Password: Molamazo2828
+                </div>
+            </div>
+
+            <div class="step">
+                <h3>Paso 2: Navegar al Directorio del Proyecto</h3>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyToClipboard(this)">Copiar</button>
+cd /opt/openagi/web/advanced-chat-php/public
+pwd
+ls -la app_fixed.js
+                </div>
+            </div>
+
+            <div class="step">
+                <h3>Paso 3: Crear Backup del Archivo Actual</h3>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyToClipboard(this)">Copiar</button>
+cp app_fixed.js app_fixed.js.backup.$(date +%Y%m%d_%H%M%S)
+echo "Backup creado exitosamente"
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Archivo 1: JavaScript Simplificado (app_fixed.js)</h2>
+            
+            <div class="success">
+                <strong>CORRECCIÓN PRINCIPAL:</strong> Este archivo contiene la lógica simplificada de MetaMask con logging detallado y manejo de errores específicos.
+            </div>
+
+            <div class="step">
+                <h3>Implementación del JavaScript Corregido</h3>
+                <p>Reemplaza el contenido de <code>app_fixed.js</code> con el siguiente código:</p>
+                
+                <div class="code-block file-content">
+                    <button class="copy-btn" onclick="copyToClipboard(this)">Copiar Todo</button>
+// AEGIS MetaMask Integration - Versión Simplificada con Logging Detallado
+// Implementación corregida para resolver errores de conexión
+
+console.log('🛡️ AEGIS: Iniciando sistema MetaMask simplificado...');
+
+// Configuración global
+const AEGIS_CONFIG = {
+    debug: true,
+    serverUrl: window.location.origin,
+    retryAttempts: 3,
+    retryDelay: 1000
+};
+
+// Sistema de logging mejorado
+function aegisLog(level, message, data = null) {
+    const timestamp = new Date().toISOString();
+    const logMessage = `[${timestamp}] AEGIS-${level.toUpperCase()}: ${message}`;
+    
+    console.log(logMessage);
+    if (data) {
+        console.log('📊 Datos adicionales:', data);
+    }
+    
+    // Mostrar en UI si existe el elemento
+    const logElement = document.getElementById('metamask-status');
+    if (logElement) {
+        logElement.innerHTML += `<div class="log-entry ${level}">${logMessage}</div>`;
+        logElement.scrollTop = logElement.scrollHeight;
+    }
+}
+
+// Verificación de elementos DOM críticos
+function verifyDOMElements() {
+    aegisLog('info', 'Verificando elementos DOM críticos...');
+    
+    const requiredElements = [
+        'connect-wallet-btn',
+        'wallet-address',
+        'disconnect-btn',
+        'metamask-status'
+    ];
+    
+    const missingElements = [];
+    
+    requiredElements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (!element) {
+            missingElements.push(elementId);
+        }
+    });
+    
+    if (missingElements.length > 0) {
+        aegisLog('warning', 'Elementos DOM faltantes:', missingElements);
+        return false;
+    }
+    
+    aegisLog('success', 'Todos los elementos DOM están presentes');
+    return true;
+}
+
+// Verificación de disponibilidad de MetaMask
+function checkMetaMaskAvailability() {
+    aegisLog('info', 'Verificando disponibilidad de MetaMask...');
+    
+    if (typeof window.ethereum === 'undefined') {
+        aegisLog('error', 'MetaMask no detectado - window.ethereum no disponible');
+        updateUI('error', 'MetaMask no está instalado. Por favor, instala MetaMask para continuar.');
+        return false;
+    }
+    
+    if (!window.ethereum.isMetaMask) {
+        aegisLog('warning', 'Proveedor Ethereum detectado pero no es MetaMask');
+        updateUI('warning', 'Se detectó un proveedor Ethereum, pero no es MetaMask oficial.');
+    }
+    
+    aegisLog('success', 'MetaMask detectado correctamente', {
+        isMetaMask: window.ethereum.isMetaMask,
+        networkVersion: window.ethereum.networkVersion,
+        selectedAddress: window.ethereum.selectedAddress
+    });
+    
+    return true;
+}
+
+// Función principal de conexión de cartera
+async function connectWalletLogin() {
+    aegisLog('info', 'Iniciando proceso de conexión de cartera...');
+    
+    try {
+        // Verificar MetaMask
+        if (!checkMetaMaskAvailability()) {
+            return false;
+        }
+        
+        updateUI('info', 'Conectando con MetaMask...');
+        
+        // Solicitar cuentas
+        aegisLog('info', 'Solicitando acceso a cuentas...');
+        const accounts = await window.ethereum.request({
+            method: 'eth_requestAccounts'
+        });
+        
+        if (!accounts || accounts.length === 0) {
+            throw new Error('No se obtuvieron cuentas de MetaMask');
+        }
+        
+        const account = accounts[0];
+        aegisLog('success', 'Cuenta obtenida:', { account });
+        
+        // Crear mensaje para firmar
+        const message = `Iniciar sesión en AEGIS Chat\nDirección: ${account}\nTiempo: ${new Date().toISOString()}`;
+        
+        aegisLog('info', 'Solicitando firma de mensaje...');
+        updateUI('info', 'Por favor, firma el mensaje en MetaMask...');
+        
+        // Firmar mensaje
+        const signature = await window.ethereum.request({
+            method: 'personal_sign',
+            params: [message, account]
+        });
+        
+        aegisLog('success', 'Mensaje firmado correctamente');
+        
+        // Enviar al servidor
+        aegisLog('info', 'Enviando datos al servidor...');
+        updateUI('info', 'Verificando con el servidor...');
+        
+        const loginData = {
+            action: 'metamask_login',
+            address: account,
+            message: message,
+            signature: signature,
+            timestamp: new Date().toISOString()
+        };
+        
+        const response = await fetch('/api_no_auth.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams(loginData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            aegisLog('success', 'Login exitoso', result);
+            updateUI('success', `Conectado exitosamente: ${account}`);
+            
+            // Actualizar UI
+            document.getElementById('wallet-address').textContent = account;
+            document.getElementById('connect-wallet-btn').style.display = 'none';
+            document.getElementById('disconnect-btn').style.display = 'inline-block';
+            
+            // Cargar datos del chat
+            loadRooms();
+            loadMessages();
+            connectWebSocket();
+            
+            return true;
+        } else {
+            throw new Error(result.message || 'Error en el servidor');
+        }
+        
+    } catch (error) {
+        aegisLog('error', 'Error en conexión de cartera:', {
+            message: error.message,
+            code: error.code,
+            stack: error.stack
+        });
+        
+        let errorMessage = 'Error de conexión: ';
+        
+        if (error.code === 4001) {
+            errorMessage += 'Usuario rechazó la conexión';
+        } else if (error.code === -32002) {
+            errorMessage += 'Solicitud pendiente en MetaMask';
+        } else if (error.message.includes('User rejected')) {
+            errorMessage += 'Usuario rechazó la firma';
+        } else {
+            errorMessage += error.message;
+        }
+        
+        updateUI('error', errorMessage);
+        return false;
+    }
+}
+
+// Actualizar interfaz de usuario
+function updateUI(type, message) {
+    const statusElement = document.getElementById('metamask-status');
+    if (statusElement) {
+        const className = type === 'success' ? 'success' : 
+                         type === 'error' ? 'error' : 
+                         type === 'warning' ? 'warning' : 'info';
+        
+        statusElement.innerHTML = `<div class="status-message ${className}">${message}</div>`;
+    }
+}
+
+// Desconectar cartera
+function disconnectWallet() {
+    aegisLog('info', 'Desconectando cartera...');
+    
+    document.getElementById('wallet-address').textContent = '';
+    document.getElementById('connect-wallet-btn').style.display = 'inline-block';
+    document.getElementById('disconnect-btn').style.display = 'none';
+    
+    updateUI('info', 'Cartera desconectada');
+    
+    // Cerrar WebSocket si existe
+    if (window.chatWebSocket) {
+        window.chatWebSocket.close();
+    }
+}
+
+// Cargar salas de chat
+async function loadRooms() {
+    try {
+        aegisLog('info', 'Cargando salas de chat...');
+        
+        const response = await fetch('/api_no_auth.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({ action: 'get_rooms' })
+        });
+        
+        const rooms = await response.json();
+        aegisLog('success', 'Salas cargadas:', rooms);
+        
+        // Actualizar UI de salas
+        const roomsList = document.getElementById('rooms-list');
+        if (roomsList && rooms.length > 0) {
+            roomsList.innerHTML = rooms.map(room => 
+                `<div class="room-item" onclick="selectRoom('${room.id}')">${room.name}</div>`
+            ).join('');
+        }
+        
+    } catch (error) {
+        aegisLog('error', 'Error cargando salas:', error);
+    }
+}
+
+// Cargar mensajes
+async function loadMessages(roomId = 'general') {
+    try {
+        aegisLog('info', 'Cargando mensajes...', { roomId });
+        
+        const response = await fetch('/api_no_auth.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({ 
+                action: 'get_messages',
+                room_id: roomId 
+            })
+        });
+        
+        const messages = await response.json();
+        aegisLog('success', 'Mensajes cargados:', { count: messages.length });
+        
+        // Actualizar UI de mensajes
+        const messagesList = document.getElementById('messages-list');
+        if (messagesList && messages.length > 0) {
+            messagesList.innerHTML = messages.map(msg => 
+                `<div class="message">
+                    <strong>${msg.author}:</strong> ${msg.text}
+                    <small>${msg.timestamp}</small>
+                </div>`
+            ).join('');
+        }
+        
+    } catch (error) {
+        aegisLog('error', 'Error cargando mensajes:', error);
+    }
+}
+
+// Enviar mensaje
+async function sendMessage() {
+    const messageInput = document.getElementById('message-input');
+    const message = messageInput?.value?.trim();
+    
+    if (!message) {
+        aegisLog('warning', 'Intento de enviar mensaje vacío');
+        return;
+    }
+    
+    try {
+        aegisLog('info', 'Enviando mensaje...', { message });
+        
+        const walletAddress = document.getElementById('wallet-address').textContent;
+        
+        const response = await fetch('/api_no_auth.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                action: 'send_message',
+                room_id: 'general',
+                text: message,
+                author: walletAddress || 'Usuario'
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            aegisLog('success', 'Mensaje enviado correctamente');
+            messageInput.value = '';
+            loadMessages(); // Recargar mensajes
+        } else {
+            throw new Error(result.message || 'Error enviando mensaje');
+        }
+        
+    } catch (error) {
+        aegisLog('error', 'Error enviando mensaje:', error);
+    }
+}
+
+// Conectar WebSocket
+function connectWebSocket() {
+    try {
+        aegisLog('info', 'Conectando WebSocket...');
+        
+        const wsUrl = `ws://${window.location.hostname}:8080`;
+        window.chatWebSocket = new WebSocket(wsUrl);
+        
+        window.chatWebSocket.onopen = function() {
+            aegisLog('success', 'WebSocket conectado');
+        };
+        
+        window.chatWebSocket.onmessage = function(event) {
+            aegisLog('info', 'Mensaje WebSocket recibido:', event.data);
+            loadMessages(); // Recargar mensajes cuando llegue uno nuevo
+        };
+        
+        window.chatWebSocket.onerror = function(error) {
+            aegisLog('error', 'Error WebSocket:', error);
+        };
+        
+        window.chatWebSocket.onclose = function() {
+            aegisLog('info', 'WebSocket desconectado');
+        };
+        
+    } catch (error) {
+        aegisLog('error', 'Error conectando WebSocket:', error);
+    }
+}
+
+// Inicialización cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    aegisLog('info', 'DOM cargado, inicializando AEGIS MetaMask...');
+    
+    // Verificar elementos DOM
+    if (!verifyDOMElements()) {
+        aegisLog('error', 'Faltan elementos DOM críticos, algunas funciones pueden no funcionar');
+    }
+    
+    // Configurar event listeners
+    const connectBtn = document.getElementById('connect-wallet-btn');
+    if (connectBtn) {
+        connectBtn.addEventListener('click', connectWalletLogin);
+        aegisLog('info', 'Event listener configurado para botón de conexión');
+    }
+    
+    const disconnectBtn = document.getElementById('disconnect-btn');
+    if (disconnectBtn) {
+        disconnectBtn.addEventListener('click', disconnectWallet);
+        aegisLog('info', 'Event listener configurado para botón de desconexión');
+    }
+    
+    const sendBtn = document.getElementById('send-message-btn');
+    if (sendBtn) {
+        sendBtn.addEventListener('click', sendMessage);
+        aegisLog('info', 'Event listener configurado para envío de mensajes');
+    }
+    
+    // Verificar si MetaMask está disponible
+    checkMetaMaskAvailability();
+    
+    // Verificar si ya hay una cuenta conectada
+    if (window.ethereum && window.ethereum.selectedAddress) {
+        aegisLog('info', 'Cuenta ya conectada detectada:', window.ethereum.selectedAddress);
+        document.getElementById('wallet-address').textContent = window.ethereum.selectedAddress;
+        document.getElementById('connect-wallet-btn').style.display = 'none';
+        document.getElementById('disconnect-btn').style.display = 'inline-block';
+        loadRooms();
+        loadMessages();
+    }
+    
+    aegisLog('success', 'AEGIS MetaMask inicializado correctamente');
+});
+
+// Manejo de eventos de MetaMask
+if (window.ethereum) {
+    window.ethereum.on('accountsChanged', function(accounts) {
+        aegisLog('info', 'Cuentas cambiadas:', accounts);
+        if (accounts.length === 0) {
+            disconnectWallet();
+        } else {
+            document.getElementById('wallet-address').textContent = accounts[0];
+        }
+    });
+    
+    window.ethereum.on('chainChanged', function(chainId) {
+        aegisLog('info', 'Red cambiada:', chainId);
+        // Recargar la página cuando cambie la red
+        window.location.reload();
+    });
+}
+
+aegisLog('success', 'AEGIS MetaMask script cargado completamente');
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Archivo 2: Consola de Debug (debug_console.html)</h2>
+            
+            <div class="success">
+                <strong>HERRAMIENTA DE DIAGNÓSTICO:</strong> Esta consola permite monitorear en tiempo real los eventos de MetaMask y capturar errores específicos.
+            </div>
+
+            <div class="step">
+                <h3>Crear Archivo de Consola de Debug</h3>
+                <p>Crea un nuevo archivo llamado <code>debug_console.html</code> con el siguiente contenido:</p>
+                
+                <div class="code-block file-content">
+                    <button class="copy-btn" onclick="copyToClipboard(this)">Copiar Todo</button>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS - Consola de Debug MetaMask</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .console {
+            background: #1a1a1a;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #00ff00;
+            padding-left: 10px;
+        }
+        
+        .log-entry.error {
+            border-left-color: #ff0000;
+            color: #ff6666;
+        }
+        
+        .log-entry.warning {
+            border-left-color: #ffaa00;
+            color: #ffcc66;
+        }
+        
+        .log-entry.success {
+            border-left-color: #00ff00;
+            color: #66ff66;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            background: #2a2a2a;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        
+        button:hover {
+            background: #00ff00;
+            color: #000;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .status-card {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .status-card h3 {
+            color: #00ff00;
+            margin-top: 0;
+        }
+        
+        .status-value {
+            color: #fff;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛡️ AEGIS - Consola de Debug MetaMask</h1>
+        <p>Monitoreo en tiempo real de eventos y errores</p>
+    </div>
+
+    <div class="controls">
+        <button onclick="checkMetaMaskStatus()">Verificar MetaMask</button>
+        <button onclick="testConnection()">Probar Conexión</button>
+        <button onclick="simulateLogin()">Simular Login</button>
+        <button onclick="clearConsole()">Limpiar Consola</button>
+        <button onclick="exportLogs()">Exportar Logs</button>
+        <button onclick="testMainSystem()">Probar Sistema Principal</button>
+    </div>
+
+    <div class="console" id="debug-console">
+        <div class="log-entry">🛡️ AEGIS Debug Console iniciada...</div>
+    </div>
+
+    <div class="status-grid">
+        <div class="status-card">
+            <h3>Estado MetaMask</h3>
+            <div class="status-value" id="metamask-status">Verificando...</div>
+        </div>
+        <div class="status-card">
+            <h3>Cuenta Conectada</h3>
+            <div class="status-value" id="account-status">No conectada</div>
+        </div>
+        <div class="status-card">
+            <h3>Red Actual</h3>
+            <div class="status-value" id="network-status">Desconocida</div>
+        </div>
+        <div class="status-card">
+            <h3>Último Error</h3>
+            <div class="status-value" id="error-status">Ninguno</div>
+        </div>
+    </div>
+
+    <script>
+        let logs = [];
+        
+        function debugLog(level, message, data = null) {
+            const timestamp = new Date().toISOString();
+            const logEntry = {
+                timestamp,
+                level,
+                message,
+                data
+            };
+            
+            logs.push(logEntry);
+            
+            const console = document.getElementById('debug-console');
+            const logDiv = document.createElement('div');
+            logDiv.className = `log-entry ${level}`;
+            logDiv.innerHTML = `[${timestamp}] ${level.toUpperCase()}: ${message}`;
+            
+            if (data) {
+                logDiv.innerHTML += `<br>📊 ${JSON.stringify(data, null, 2)}`;
+            }
+            
+            console.appendChild(logDiv);
+            console.scrollTop = console.scrollHeight;
+        }
+        
+        async function checkMetaMaskStatus() {
+            debugLog('info', 'Verificando estado de MetaMask...');
+            
+            try {
+                // Verificar window.ethereum
+                if (typeof window.ethereum === 'undefined') {
+                    debugLog('error', 'window.ethereum no está disponible');
+                    document.getElementById('metamask-status').textContent = 'No instalado';
+                    return false;
+                }
+                
+                debugLog('success', 'window.ethereum detectado', {
+                    isMetaMask: window.ethereum.isMetaMask,
+                    networkVersion: window.ethereum.networkVersion,
+                    selectedAddress: window.ethereum.selectedAddress
+                });
+                
+                document.getElementById('metamask-status').textContent = 'Instalado';
+                
+                // Verificar cuentas
+                const accounts = await window.ethereum.request({method: 'eth_accounts'});
+                
+                if (accounts.length > 0) {
+                    debugLog('success', 'Cuentas encontradas', accounts);
+                    document.getElementById('account-status').textContent = accounts[0];
+                } else {
+                    debugLog('info', 'No hay cuentas conectadas');
+                    document.getElementById('account-status').textContent = 'No conectada';
+                }
+                
+                // Verificar red
+                const chainId = await window.ethereum.request({method: 'eth_chainId'});
+                debugLog('info', 'Red detectada', {chainId});
+                document.getElementById('network-status').textContent = chainId;
+                
+                return true;
+                
+            } catch (error) {
+                debugLog('error', 'Error verificando MetaMask', {
+                    message: error.message,
+                    code: error.code
+                });
+                document.getElementById('error-status').textContent = error.message;
+                return false;
+            }
+        }
+        
+        async function testConnection() {
+            debugLog('info', 'Probando conexión a MetaMask...');
+            
+            try {
+                const accounts = await window.ethereum.request({
+                    method: 'eth_requestAccounts'
+                });
+                
+                debugLog('success', 'Conexión exitosa', {accounts});
+                document.getElementById('account-status').textContent = accounts[0];
+                
+            } catch (error) {
+                debugLog('error', 'Error en conexión', {
+                    message: error.message,
+                    code: error.code
+                });
+                document.getElementById('error-status').textContent = error.message;
+            }
+        }
+        
+        async function simulateLogin() {
+            debugLog('info', 'Simulando proceso de login completo...');
+            
+            try {
+                // Paso 1: Verificar MetaMask
+                if (!await checkMetaMaskStatus()) {
+                    throw new Error('MetaMask no disponible');
+                }
+                
+                // Paso 2: Solicitar cuentas
+                debugLog('info', 'Solicitando acceso a cuentas...');
+                const accounts = await window.ethereum.request({
+                    method: 'eth_requestAccounts'
+                });
+                
+                if (accounts.length === 0) {
+                    throw new Error('No se obtuvieron cuentas');
+                }
+                
+                const account = accounts[0];
+                debugLog('success', 'Cuenta obtenida', {account});
+                
+                // Paso 3: Crear mensaje
+                const message = `Login AEGIS Test\nAddress: ${account}\nTime: ${new Date().toISOString()}`;
+                debugLog('info', 'Mensaje creado para firma', {message});
+                
+                // Paso 4: Firmar mensaje
+                debugLog('info', 'Solicitando firma...');
+                const signature = await window.ethereum.request({
+                    method: 'personal_sign',
+                    params: [message, account]
+                });
+                
+                debugLog('success', 'Mensaje firmado', {signature});
+                
+                // Paso 5: Simular envío al servidor
+                debugLog('info', 'Simulando envío al servidor...');
+                
+                const loginData = {
+                    action: 'metamask_login',
+                    address: account,
+                    message: message,
+                    signature: signature
+                };
+                
+                debugLog('success', 'Proceso de login simulado completado', loginData);
+                
+            } catch (error) {
+                debugLog('error', 'Error en simulación de login', {
+                    message: error.message,
+                    code: error.code,
+                    stack: error.stack
+                });
+                document.getElementById('error-status').textContent = error.message;
+            }
+        }
+        
+        async function testMainSystem() {
+            debugLog('info', 'Probando integración con sistema principal...');
+            
+            try {
+                // Verificar si existe la función del sistema principal
+                if (typeof connectWalletLogin === 'function') {
+                    debugLog('info', 'Función connectWalletLogin encontrada, ejecutando...');
+                    const result = await connectWalletLogin();
+                    debugLog('success', 'Sistema principal ejecutado', {result});
+                } else {
+                    debugLog('warning', 'Función connectWalletLogin no encontrada');
+                    
+                    // Intentar cargar el script principal
+                    debugLog('info', 'Intentando cargar script principal...');
+                    
+                    const script = document.createElement('script');
+                    script.src = '/app_fixed.js';
+                    script.onload = () => {
+                        debugLog('success', 'Script principal cargado');
+                    };
+                    script.onerror = (error) => {
+                        debugLog('error', 'Error cargando script principal', error);
+                    };
+                    
+                    document.head.appendChild(script);
+                }
+                
+            } catch (error) {
+                debugLog('error', 'Error probando sistema principal', {
+                    message: error.message,
+                    code: error.code
+                });
+            }
+        }
+        
+        function clearConsole() {
+            document.getElementById('debug-console').innerHTML = 
+                '<div class="log-entry">🛡️ Consola limpiada...</div>';
+            logs = [];
+        }
+        
+        function exportLogs() {
+            const logData = {
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                url: window.location.href,
+                logs: logs
+            };
+            
+            const blob = new Blob([JSON.stringify(logData, null, 2)], {
+                type: 'application/json'
+            });
+            
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `aegis-debug-logs-${Date.now()}.json`;
+            a.click();
+            
+            debugLog('success', 'Logs exportados correctamente');
+        }
+        
+        // Capturar errores globales
+        window.addEventListener('error', function(event) {
+            debugLog('error', 'Error JavaScript capturado', {
+                message: event.message,
+                filename: event.filename,
+                lineno: event.lineno,
+                colno: event.colno,
+                error: event.error
+            });
+        });
+        
+        // Capturar promesas rechazadas
+        window.addEventListener('unhandledrejection', function(event) {
+            debugLog('error', 'Promesa rechazada capturada', {
+                reason: event.reason,
+                promise: event.promise
+            });
+        });
+        
+        // Monitorear eventos de MetaMask
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', function(accounts) {
+                debugLog('info', 'Cuentas cambiadas', {accounts});
+                document.getElementById('account-status').textContent = 
+                    accounts.length > 0 ? accounts[0] : 'No conectada';
+            });
+            
+            window.ethereum.on('chainChanged', function(chainId) {
+                debugLog('info', 'Red cambiada', {chainId});
+                document.getElementById('network-status').textContent = chainId;
+            });
+            
+            window.ethereum.on('connect', function(connectInfo) {
+                debugLog('success', 'MetaMask conectado', connectInfo);
+            });
+            
+            window.ethereum.on('disconnect', function(error) {
+                debugLog('warning', 'MetaMask desconectado', error);
+            });
+        }
+        
+        // Inicialización automática
+        document.addEventListener('DOMContentLoaded', function() {
+            debugLog('success', 'Consola de debug inicializada');
+            checkMetaMaskStatus();
+        });
+    </script>
+</body>
+</html>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Instrucciones de Implementación</h2>
+            
+            <div class="step">
+                <h3>Paso 4: Implementar el JavaScript Corregido</h3>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyToClipboard(this)">Copiar</button>
+nano app_fixed.js
+# Pegar el contenido del JavaScript simplificado
+# Guardar con Ctrl+X, Y, Enter
+                </div>
+            </div>
+
+            <div class="step">
+                <h3>Paso 5: Crear la Consola de Debug</h3>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyToClipboard(this)">Copiar</button>
+nano debug_console.html
+# Pegar el contenido de la consola de debug
+# Guardar con Ctrl+X, Y, Enter
+                </div>
+            </div>
+
+            <div class="step">
+                <h3>Paso 6: Verificar Permisos</h3>
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyToClipboard(this)">Copiar</button>
+chmod 644 app_fixed.js debug_console.html
+chown www-data:www-data app_fixed.js debug_console.html
+ls -la app_fixed.js debug_console.html
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>URLs de Prueba</h2>
+            
+            <div class="url-link">
+                <h3>🌐 Sistema Principal</h3>
+                <a href="http://77.237.235.224:8087/" target="_blank">
+                    http://77.237.235.224:8087/
+                </a>
+            </div>
+            
+            <div class="url-link">
+                <h3>🔧 Consola de Debug</h3>
+                <a href="http://77.237.235.224:8087/debug_console.html" target="_blank">
+                    http://77.237.235.224:8087/debug_console.html
+                </a>
+            </div>
+            
+            <div class="url-link">
+                <h3>🧪 Página de Diagnóstico Original</h3>
+                <a href="http://77.237.235.224:8087/metamask_debug.html" target="_blank">
+                    http://77.237.235.224:8087/metamask_debug.html
+                </a>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Proceso de Validación</h2>
+            
+            <div class="step">
+                <h3>1. Probar la Consola de Debug</h3>
+                <p>Accede a la consola de debug y ejecuta todas las pruebas para identificar errores específicos.</p>
+            </div>
+            
+            <div class="step">
+                <h3>2. Probar el Sistema Principal</h3>
+                <p>Accede al sistema principal y prueba la conexión con MetaMask usando el JavaScript corregido.</p>
+            </div>
+            
+            <div class="step">
+                <h3>3. Comparar Comportamientos</h3>
+                <p>Compara el comportamiento entre la página de diagnóstico (que funciona) y el sistema principal (corregido).</p>
+            </div>
+            
+            <div class="step">
+                <h3>4. Exportar Logs</h3>
+                <p>Si persisten errores, usa la función "Exportar Logs" de la consola de debug para obtener información detallada.</p>
+            </div>
+        </div>
+
+        <div class="warning">
+            <strong>NOTA IMPORTANTE:</strong> Si los problemas de conectividad SSH persisten, puedes usar herramientas como FileZilla, WinSCP, o cualquier cliente SFTP para subir los archivos manualmente al servidor.
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(button) {
+            const codeBlock = button.parentElement;
+            const code = codeBlock.textContent.replace('Copiar', '').replace('Copiar Todo', '').trim();
+            
+            navigator.clipboard.writeText(code).then(function() {
+                button.textContent = '✅ Copiado';
+                setTimeout(() => {
+                    button.textContent = button.textContent.includes('Todo') ? 'Copiar Todo' : 'Copiar';
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Error copiando al portapapeles: ', err);
+                button.textContent = '❌ Error';
+                setTimeout(() => {
+                    button.textContent = button.textContent.includes('Todo') ? 'Copiar Todo' : 'Copiar';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

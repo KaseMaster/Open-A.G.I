@@ -16,6 +16,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>OpenAGI Secure Chat+</title>
     <link rel="stylesheet" href="/assets/css/app.css" />
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/ens-integration.js"></script>
   </head>
   <body>
     <header class="app-header">

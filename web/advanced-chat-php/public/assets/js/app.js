@@ -159,7 +159,7 @@
     async openagiStatus() {
       // Primero intenta FastAPI en 8182; si falla, usa PHP
       try {
-        const res = await fetch('http://localhost:8182/status');
+        const res = await fetch(`${window.ENDPOINTS.OPENAGI_API}/status`);
         if (res.ok) return res.json();
       } catch {}
       const res2 = await fetch('/openagi.php?action=status');
@@ -170,7 +170,7 @@
   // Cliente hacia FastAPI para cifrado/descifrado
   const apiFast = {
     async encrypt(payload, room_id) {
-      const res = await fetch('http://localhost:8182/crypto/encrypt', {
+      const res = await fetch(`${window.ENDPOINTS.OPENAGI_API}/crypto/encrypt`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ payload, room_id })
@@ -178,7 +178,7 @@
       return res.json();
     },
     async decrypt(payload, room_id) {
-      const res = await fetch('http://localhost:8182/crypto/decrypt', {
+      const res = await fetch(`${window.ENDPOINTS.OPENAGI_API}/crypto/decrypt`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ payload, room_id })
@@ -186,7 +186,7 @@
       return res.json();
     },
     async ipfsUpload(content) {
-      const res = await fetch('http://localhost:8182/ipfs/upload', {
+      const res = await fetch(`${window.ENDPOINTS.OPENAGI_API}/ipfs/upload`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content })
@@ -194,11 +194,11 @@
       return res.json();
     },
     async authChallenge(address) {
-      const res = await fetch(`http://localhost:8182/auth/challenge?address=${encodeURIComponent(address)}`);
+      const res = await fetch(`${window.ENDPOINTS.OPENAGI_API}/auth/challenge?address=${encodeURIComponent(address)}`);
       return res.json();
     },
     async authVerify(address, signature, message) {
-      const res = await fetch('http://localhost:8182/auth/verify', {
+      const res = await fetch(`${window.ENDPOINTS.OPENAGI_API}/auth/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ address, signature, message })
@@ -206,7 +206,7 @@
       return res.json();
     },
     async publishMessage(room_id, message) {
-      const res = await fetch('http://localhost:8182/events/message', {
+      const res = await fetch(`${window.ENDPOINTS.OPENAGI_API}/events/message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ room_id, message })
@@ -275,11 +275,14 @@
   }
 
   async function logout() {
-    try {
-      if (sessionToken) {
-        await fetch(`http://localhost:8182/auth/logout?token=${encodeURIComponent(sessionToken)}`, { method: 'POST' });
+    if (sessionToken) {
+      try {
+        await fetch(`${window.ENDPOINTS.OPENAGI_API}/auth/logout?token=${encodeURIComponent(sessionToken)}`, { method: 'POST' });
+      } catch (e) {
+        console.warn('Error al cerrar sesión:', e);
       }
-    } catch {}
+    }
+
     sessionToken = null;
     userAddress = null;
     localStorage.removeItem('openagi_session_token');
@@ -403,7 +406,7 @@
       return;
     }
     try { if (ws) ws.close(); } catch {}
-    const url = `ws://localhost:8182/ws/${encodeURIComponent(roomId)}${sessionToken ? `?token=${encodeURIComponent(sessionToken)}` : ''}`;
+    const url = `${window.ENDPOINTS.WEBSOCKET}/${encodeURIComponent(currentRoomId)}${sessionToken ? `?token=${encodeURIComponent(sessionToken)}` : ''}`;
     ws = new WebSocket(url);
     ws.onopen = () => {
       wsRetries = 0;
@@ -1063,7 +1066,7 @@
         }
         const up = await apiFast.ipfsUpload(base64);
         if (up.ok && up.cid) {
-          const ipfs_uri = `http://localhost:8182/ipfs/get?cid=${up.cid}`;
+          const ipfs_uri = `${window.ENDPOINTS.IPFS_GATEWAY}/get?cid=${up.cid}`;
           const form = new FormData();
           form.append('action', 'send_message');
           form.append('room_id', currentRoomId);
@@ -1146,7 +1149,7 @@
         openagiStatusEl.textContent = `Estado: ${st.state ?? 'N/A'}`;
         // métricas básicas (si FastAPI activo)
         try {
-          const mres = await fetch('http://localhost:8182/stats/chat');
+          const mres = await fetch(`${window.ENDPOINTS.OPENAGI_API}/stats/chat`);
           if (mres.ok) {
             const mjson = await mres.json();
             if (mjson.ok && mjson.stats) {
@@ -1179,3 +1182,53 @@
     if (btnLogoutEl) btnLogoutEl.style.display = 'none';
   }
 })();
+
+
+const openagi = {
+  async status() {
+    const res = await fetch(`${window.ENDPOINTS.OPENAGI_API}/status`);
+    return res.json();
+  },
+  async encrypt(text) {
+    const res = await fetch(`${window.ENDPOINTS.OPENAGI_API}/crypto/encrypt`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    return res.json();
+  },
+  async decrypt(encryptedText) {
+    const res = await fetch(`${window.ENDPOINTS.OPENAGI_API}/crypto/decrypt`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ encrypted_text: encryptedText })
+    });
+    return res.json();
+  },
+  async uploadToIPFS(file) {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch(`${window.ENDPOINTS.OPENAGI_API}/ipfs/upload`, { method: 'POST', body: form });
+    return res.json();
+  },
+  async getChallenge(address) {
+    const res = await fetch(`${window.ENDPOINTS.OPENAGI_API}/auth/challenge?address=${encodeURIComponent(address)}`);
+    return res.json();
+  },
+  async verifySignature(address, signature, message) {
+    const res = await fetch(`${window.ENDPOINTS.OPENAGI_API}/auth/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address, signature, message })
+    });
+    return res.json();
+  },
+  async publishEvent(type, data) {
+    const res = await fetch(`${window.ENDPOINTS.OPENAGI_API}/events/message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, data })
+    });
+    return res.json();
+  }
+};

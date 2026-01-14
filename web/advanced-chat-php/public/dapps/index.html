@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AEGIS DApps - Conexión Secreta</title>
+    <link rel="stylesheet" href="/assets/css/app.css">
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.10.0/dist/ethers.umd.min.js"></script>
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/ens-integration.js"></script>
+    <style>
+        .dapps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .dapp-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 2rem;
+            color: white;
+            text-decoration: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .dapp-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        
+        .dapp-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+        
+        .dapp-card:hover::before {
+            transform: translateX(100%);
+        }
+        
+        .dapp-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+        
+        .dapp-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .dapp-description {
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .domain-info {
+            background: rgba(255,255,255,0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 2rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4CAF50;
+            margin-right: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛡️ AEGIS DApps</h1>
+        <p>Plataforma descentralizada de aplicaciones Web3 - Conexión Secreta</p>
+        
+        <div class="domain-info">
+            <div>
+                <span class="status-indicator"></span>
+                <strong>Dominio Principal:</strong> xn--conexinsecreta-qob.site
+            </div>
+            <div style="margin-top: 0.5rem;">
+                <span class="status-indicator"></span>
+                <strong>Dominio ENS:</strong> aegis-openagi.eth
+            </div>
+        </div>
+    </div>
+
+    <div class="dapps-grid">
+        <a href="/chat" class="dapp-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <span class="dapp-icon">💬</span>
+            <div class="dapp-title">SecureChat+</div>
+            <div class="dapp-description">
+                Chat descentralizado con cifrado end-to-end, integración Web3 y almacenamiento IPFS.
+            </div>
+        </a>
+
+        <a href="/wallet" class="dapp-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <span class="dapp-icon">👛</span>
+            <div class="dapp-title">AEGIS Wallet</div>
+            <div class="dapp-description">
+                Wallet multi-cadena con soporte para Ethereum, Bitcoin y tokens personalizados.
+            </div>
+        </a>
+
+        <a href="/defi" class="dapp-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <span class="dapp-icon">📈</span>
+            <div class="dapp-title">DeFi Hub</div>
+            <div class="dapp-description">
+                Plataforma DeFi completa: staking, yield farming, préstamos y intercambios.
+            </div>
+        </a>
+
+        <a href="/nft" class="dapp-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+            <span class="dapp-icon">🎨</span>
+            <div class="dapp-title">NFT Marketplace</div>
+            <div class="dapp-description">
+                Mercado de NFTs con creación, compra, venta y subastas de tokens únicos.
+            </div>
+        </a>
+
+        <a href="/dao" class="dapp-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+            <span class="dapp-icon">🏛️</span>
+            <div class="dapp-title">DAO Governance</div>
+            <div class="dapp-description">
+                Sistema de gobernanza descentralizada para votaciones y propuestas comunitarias.
+            </div>
+        </a>
+
+        <a href="/marketplace" class="dapp-card" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
+            <span class="dapp-icon">🛒</span>
+            <div class="dapp-title">P2P Marketplace</div>
+            <div class="dapp-description">
+                Mercado peer-to-peer para intercambio de bienes y servicios con pagos crypto.
+            </div>
+        </a>
+    </div>
+
+    <script>
+        // Inicializar información de dominios
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 AEGIS DApps Platform iniciada');
+            console.log('🌐 Dominio principal:', window.ENDPOINTS.PRIMARY_DOMAIN);
+            console.log('🔗 Dominio ENS:', window.ENS_CONFIG.domain);
+            
+            // Verificar conectividad ENS si está disponible
+            if (window.ensIntegration && !window.isDevelopment()) {
+                try {
+                    const ensStatus = await window.ensIntegration.verifyDomain();
+                    console.log('✅ Estado ENS verificado:', ensStatus);
+                } catch (error) {
+                    console.warn('⚠️ No se pudo verificar ENS:', error);
+                }
+            }
+        });
+
+        // Función para abrir DApp en nueva ventana
+        function openDApp(url) {
+            window.open(url, '_blank', 'width=1200,height=800');
+        }
+
+        // Agregar eventos de click para las tarjetas
+        document.querySelectorAll('.dapp-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                e.preventDefault();
+                const url = card.getAttribute('href');
+                
+                // Si es desarrollo, abrir en la misma ventana
+                if (window.isDevelopment()) {
+                    window.location.href = url;
+                } else {
+                    // En producción, abrir en nueva ventana
+                    openDApp(window.ENDPOINTS.PRIMARY_DOMAIN + url);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

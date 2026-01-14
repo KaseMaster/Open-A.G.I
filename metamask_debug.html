@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico MetaMask - OpenAGI</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #1a1a1a; color: #fff; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-section { background: #2a2a2a; padding: 20px; margin: 10px 0; border-radius: 8px; }
+        .button { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        .button:hover { background: #45a049; }
+        .error { color: #ff4444; }
+        .success { color: #44ff44; }
+        .info { color: #4444ff; }
+        .log { background: #000; padding: 10px; border-radius: 4px; font-family: monospace; margin: 10px 0; max-height: 200px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Diagnóstico MetaMask - OpenAGI Secure Chat+</h1>
+        
+        <div class="test-section">
+            <h2>1. Detección de MetaMask</h2>
+            <button class="button" onclick="checkMetaMask()">Verificar MetaMask</button>
+            <div id="metamask-status"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. Conexión de Cuentas</h2>
+            <button class="button" onclick="connectAccounts()">Conectar Cuentas</button>
+            <div id="accounts-status"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>3. Firma de Mensaje</h2>
+            <button class="button" onclick="signMessage()">Firmar Mensaje</button>
+            <div id="signature-status"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>4. Prueba de Login Completo</h2>
+            <button class="button" onclick="fullLoginTest()">Prueba Completa</button>
+            <div id="login-status"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 Log de Eventos</h2>
+            <button class="button" onclick="clearLog()">Limpiar Log</button>
+            <div id="debug-log" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('debug-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            logDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function clearLog() {
+            document.getElementById('debug-log').innerHTML = '';
+        }
+
+        async function checkMetaMask() {
+            const statusDiv = document.getElementById('metamask-status');
+            
+            try {
+                if (typeof window.ethereum !== 'undefined') {
+                    log('✅ MetaMask detectado', 'success');
+                    statusDiv.innerHTML = '<span class="success">✅ MetaMask está instalado</span>';
+                    
+                    // Verificar si es MetaMask específicamente
+                    if (window.ethereum.isMetaMask) {
+                        log('✅ Confirmado: Es MetaMask oficial', 'success');
+                        statusDiv.innerHTML += '<br><span class="success">✅ MetaMask oficial confirmado</span>';
+                    } else {
+                        log('⚠️ Wallet detectado pero no es MetaMask oficial', 'error');
+                        statusDiv.innerHTML += '<br><span class="error">⚠️ No es MetaMask oficial</span>';
+                    }
+                    
+                    // Verificar red
+                    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                    log(`🌐 Red actual: ${chainId}`, 'info');
+                    statusDiv.innerHTML += `<br><span class="info">🌐 Red: ${chainId}</span>`;
+                    
+                } else {
+                    log('❌ MetaMask NO detectado', 'error');
+                    statusDiv.innerHTML = '<span class="error">❌ MetaMask no está instalado o no está disponible</span>';
+                }
+            } catch (error) {
+                log(`❌ Error verificando MetaMask: ${error.message}`, 'error');
+                statusDiv.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+
+        async function connectAccounts() {
+            const statusDiv = document.getElementById('accounts-status');
+            
+            try {
+                if (!window.ethereum) {
+                    throw new Error('MetaMask no detectado');
+                }
+
+                log('🔄 Solicitando acceso a cuentas...', 'info');
+                statusDiv.innerHTML = '<span class="info">🔄 Solicitando permisos...</span>';
+
+                const accounts = await window.ethereum.request({
+                    method: 'eth_requestAccounts'
+                });
+
+                if (accounts && accounts.length > 0) {
+                    log(`✅ Cuentas conectadas: ${accounts.length}`, 'success');
+                    log(`📍 Cuenta principal: ${accounts[0]}`, 'success');
+                    statusDiv.innerHTML = `<span class="success">✅ Conectado: ${accounts[0]}</span>`;
+                } else {
+                    log('❌ No se obtuvieron cuentas', 'error');
+                    statusDiv.innerHTML = '<span class="error">❌ No se obtuvieron cuentas</span>';
+                }
+
+            } catch (error) {
+                log(`❌ Error conectando cuentas: ${error.message}`, 'error');
+                statusDiv.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+
+        async function signMessage() {
+            const statusDiv = document.getElementById('signature-status');
+            
+            try {
+                if (!window.ethereum) {
+                    throw new Error('MetaMask no detectado');
+                }
+
+                // Primero obtener cuentas
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                if (!accounts || accounts.length === 0) {
+                    throw new Error('No hay cuentas conectadas. Conecta primero.');
+                }
+
+                const walletAddress = accounts[0];
+                const message = `OpenAGI Secure Chat+ Login\nAddress: ${walletAddress}\nTimestamp: ${Date.now()}`;
+
+                log('🔄 Solicitando firma de mensaje...', 'info');
+                statusDiv.innerHTML = '<span class="info">🔄 Solicitando firma...</span>';
+
+                const signature = await window.ethereum.request({
+                    method: 'personal_sign',
+                    params: [message, walletAddress]
+                });
+
+                log('✅ Mensaje firmado exitosamente', 'success');
+                log(`📝 Firma: ${signature.substring(0, 20)}...`, 'success');
+                statusDiv.innerHTML = `<span class="success">✅ Firmado: ${signature.substring(0, 20)}...</span>`;
+
+            } catch (error) {
+                log(`❌ Error firmando mensaje: ${error.message}`, 'error');
+                statusDiv.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+
+        async function fullLoginTest() {
+            const statusDiv = document.getElementById('login-status');
+            
+            try {
+                statusDiv.innerHTML = '<span class="info">🔄 Iniciando prueba completa...</span>';
+                
+                // Paso 1: Verificar MetaMask
+                if (!window.ethereum) {
+                    throw new Error('MetaMask no detectado');
+                }
+                log('✅ Paso 1: MetaMask detectado', 'success');
+
+                // Paso 2: Conectar cuentas
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                if (!accounts || accounts.length === 0) {
+                    throw new Error('No se obtuvieron cuentas');
+                }
+                log(`✅ Paso 2: Cuenta conectada: ${accounts[0]}`, 'success');
+
+                // Paso 3: Firmar mensaje
+                const walletAddress = accounts[0];
+                const message = `OpenAGI Secure Chat+ Login\nAddress: ${walletAddress}\nTimestamp: ${Date.now()}`;
+                
+                const signature = await window.ethereum.request({
+                    method: 'personal_sign',
+                    params: [message, walletAddress]
+                });
+                log('✅ Paso 3: Mensaje firmado', 'success');
+
+                // Paso 4: Enviar al servidor
+                log('🔄 Paso 4: Enviando al servidor...', 'info');
+                
+                const response = await fetch('/api_secure.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        action: 'wallet_login',
+                        wallet_address: walletAddress,
+                        signature: signature,
+                        message: message
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.ok) {
+                    log('✅ Paso 4: Login exitoso en servidor', 'success');
+                    log(`🎉 Sesión creada: ${result.session.session_id.substring(0, 10)}...`, 'success');
+                    statusDiv.innerHTML = '<span class="success">🎉 ¡LOGIN COMPLETO EXITOSO!</span>';
+                } else {
+                    log(`❌ Paso 4: Error del servidor: ${result.message}`, 'error');
+                    statusDiv.innerHTML = `<span class="error">❌ Error servidor: ${result.message}</span>`;
+                }
+
+            } catch (error) {
+                log(`❌ Error en prueba completa: ${error.message}`, 'error');
+                statusDiv.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
+            }
+        }
+
+        // Auto-ejecutar verificación inicial
+        window.addEventListener('load', function() {
+            log('🚀 Página de diagnóstico cargada', 'info');
+            checkMetaMask();
+        });
+    </script>
+</body>
+</html>
