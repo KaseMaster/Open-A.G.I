@@ -281,7 +281,7 @@ jobs:
           done <<< "${{ steps.meta.outputs.tags }}"
 
       - name: Download SBOM artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: sbom-spdx
           path: .
