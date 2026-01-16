@@ -6,6 +6,8 @@ Implementación segura de comunicaciones anónimas P2P
 AEGIS Security Framework - Uso Ético Únicamente
 """
 
+from __future__ import annotations
+
 import asyncio
 import hashlib
 import secrets
@@ -22,9 +24,16 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519, x25519
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-import stem
-from stem.control import Controller
-from stem import Signal
+try:
+    import stem  # type: ignore
+    from stem.control import Controller  # type: ignore
+    from stem import Signal  # type: ignore
+    HAS_STEM = True
+except Exception:
+    stem = None  # type: ignore
+    Controller = None  # type: ignore
+    Signal = None  # type: ignore
+    HAS_STEM = False
 
 # Configuración de logging seguro
 logging.basicConfig(
@@ -117,6 +126,9 @@ class TorGateway:
         
     async def initialize(self) -> bool:
         """Inicializa la conexión con TOR"""
+        if not HAS_STEM:
+            logger.warning("Dependencia 'stem' no disponible; TOR Gateway deshabilitado.")
+            return False
         try:
             self.controller = Controller.from_port(port=self.control_port)
             self.controller.authenticate()

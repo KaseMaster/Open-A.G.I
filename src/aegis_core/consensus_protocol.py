@@ -17,7 +17,6 @@ from typing import Dict, List, Optional, Any, Callable
 import logging
 from collections import defaultdict
 from cryptography.hazmat.primitives.asymmetric import ed25519
-from openagi.harmonic_validation import recursive_validate, HarmonicSnapshot, HarmonicProofBundle
 
 # Configuración de logging temprana
 logging.basicConfig(level=logging.INFO)
