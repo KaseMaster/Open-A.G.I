@@ -290,7 +290,10 @@ jobs:
           echo "${{ steps.meta.outputs.tags }}"
           while IFS= read -r tag; do
             echo "Verifying $tag"
-            cosign verify "$tag" || exit 1
+            cosign verify \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+              --certificate-identity-regexp "https://github.com/${{ github.repository }}/.github/workflows/ci\\.yml@refs/(heads/main|tags/.*)" \
+              "$tag" || exit 1
           done <<< "${{ steps.meta.outputs.tags }}"
 
       - name: Download SBOM artifact
