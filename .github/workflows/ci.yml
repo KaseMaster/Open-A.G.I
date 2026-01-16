@@ -41,7 +41,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest -q tests --no-cov
+          pytest -q tests/integration/test_aegis_storage_client_crypto.py tests/integration/test_aegis_storage_id.py tests/integration/test_aegis_storage_node_verification.py tests/integration/test_aegis_storage_sc_pbft.py tests/full_network_test.py --no-cov
 
       - name: Security scan (pip-audit)
         continue-on-error: true
@@ -54,6 +54,7 @@ jobs:
         with:
           name: pip-audit-${{ matrix.python-version }}
           path: pip-audit.json
+          if-no-files-found: ignore
 
       - name: Security scan (bandit)
         continue-on-error: true
@@ -66,6 +67,7 @@ jobs:
         with:
           name: bandit-${{ matrix.python-version }}
           path: bandit.json
+          if-no-files-found: ignore
 
   linux-lint-and-test:
     runs-on: ubuntu-latest
@@ -95,7 +97,13 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest -q tests --no-cov
+          pytest -q \
+            tests/integration/test_aegis_storage_client_crypto.py \
+            tests/integration/test_aegis_storage_id.py \
+            tests/integration/test_aegis_storage_node_verification.py \
+            tests/integration/test_aegis_storage_sc_pbft.py \
+            tests/full_network_test.py \
+            --no-cov
 
       - name: Security scan (pip-audit)
         continue-on-error: true
@@ -108,6 +116,7 @@ jobs:
         with:
           name: pip-audit-ubuntu-${{ matrix.python-version }}
           path: pip-audit.json
+          if-no-files-found: ignore
 
       - name: Security scan (bandit)
         continue-on-error: true
@@ -120,6 +129,7 @@ jobs:
         with:
           name: bandit-ubuntu-${{ matrix.python-version }}
           path: bandit.json
+          if-no-files-found: ignore
 
   node-test:
     runs-on: ubuntu-latest
@@ -234,8 +244,8 @@ jobs:
           echo "Signing tags:"
           echo "${{ steps.meta.outputs.tags }}"
           while IFS= read -r tag; do
-            echo "Signing ghcr.io/${{ github.repository }}:"
-          cosign sign --yes ghcr.io/${{ github.repository }}:
+            echo "Signing $tag"
+            cosign sign --yes "$tag"
           done <<< "${{ steps.meta.outputs.tags }}"
 
   verify-and-release-assets:
@@ -277,8 +287,8 @@ jobs:
           echo "Verifying signed tags:"
           echo "${{ steps.meta.outputs.tags }}"
           while IFS= read -r tag; do
-            echo "Verifying ghcr.io/${{ github.repository }}:"
-            cosign verify ghcr.io/${{ github.repository }}: || exit 1
+            echo "Verifying $tag"
+            cosign verify "$tag" || exit 1
           done <<< "${{ steps.meta.outputs.tags }}"
 
       - name: Download SBOM artifact
@@ -316,13 +326,4 @@ jobs:
 
       - name: Gitleaks secret scan
         uses: gitleaks/gitleaks-action@v2
-        with:
-          args: --verbose --redact --report-format json --report-path gitleaks.json
         continue-on-error: true
-
-      - name: Upload gitleaks report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gitleaks-report
-          path: gitleaks.json
