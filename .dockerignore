@@ -24,6 +24,10 @@ venv
 Thumbs.db
 *.md
 *.txt
+!requirements.txt
+!requirements-test.txt
+!requirements-dev.txt
+!requirements-rest.txt
 *.pdf
 *.doc
 *.docx
