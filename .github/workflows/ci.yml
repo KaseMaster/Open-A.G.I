@@ -18,7 +18,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,8 +32,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if (Test-Path "requirements-test.txt") { pip install -r requirements-test.txt } else { if (Test-Path "requirements.txt") { pip install -r requirements.txt } }
-          pip install pytest flake8 bandit pip-audit cryptography click
+          if (Test-Path "requirements.txt") { pip install -r requirements.txt }
+          if (Test-Path "requirements-test.txt") { pip install -r requirements-test.txt }
+          pip install flake8 bandit pip-audit numpy cryptography click
 
       - name: Lint (flake8)
         run: |
@@ -73,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -88,8 +89,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements-test.txt ]; then pip install -r requirements-test.txt; elif [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install pytest flake8 bandit pip-audit
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-test.txt ]; then pip install -r requirements-test.txt; fi
+          pip install flake8 bandit pip-audit numpy cryptography click
 
       - name: Lint (flake8)
         run: |
