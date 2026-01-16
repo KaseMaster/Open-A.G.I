@@ -72,3 +72,6 @@ Dockerfile.*.temp
 Dockerfile.fixed
 debug_*
 tools/debug_legacy/
+
+# Trae IDE docs
+.trae/documents/

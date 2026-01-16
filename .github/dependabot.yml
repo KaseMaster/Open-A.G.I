@@ -5,27 +5,77 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    groups:
+      python-deps:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "pip"
+    directory: "/market-pulse-agi/backend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      python-deps:
+        patterns:
+          - "*"
 
   - package-ecosystem: "npm"
     directory: "/dapps/aegis-token"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    groups:
+      npm-deps:
+        patterns:
+          - "*"
 
   - package-ecosystem: "npm"
     directory: "/dapps/secure-chat"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    groups:
+      npm-deps:
+        patterns:
+          - "*"
 
   - package-ecosystem: "npm"
     directory: "/dapps/secure-chat/ui"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    groups:
+      npm-deps:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "npm"
+    directory: "/dashboard"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      npm-deps:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "npm"
+    directory: "/market-pulse-agi/frontend"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    groups:
+      npm-deps:
+        patterns:
+          - "*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    groups:
+      github-actions:
+        patterns:
+          - "*"
