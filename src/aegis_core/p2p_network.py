@@ -58,6 +58,22 @@ except Exception:
     HAS_ZEROCONF = False
     logger.warning("zeroconf no disponible; descubrimiento mDNS se omitirá en este entorno.")
 
+if not HAS_ZEROCONF:
+    class ServiceListener:  # type: ignore
+        pass
+
+    class Zeroconf:  # type: ignore
+        def __init__(self, *_: Any, **__: Any):
+            raise RuntimeError("zeroconf no está disponible en este entorno")
+
+    class ServiceInfo:  # type: ignore
+        def __init__(self, *_: Any, **__: Any):
+            raise RuntimeError("zeroconf no está disponible en este entorno")
+
+    class ServiceBrowser:  # type: ignore
+        def __init__(self, *_: Any, **__: Any):
+            raise RuntimeError("zeroconf no está disponible en este entorno")
+
 try:
     import netifaces  # type: ignore
     HAS_NETIFACES = True
