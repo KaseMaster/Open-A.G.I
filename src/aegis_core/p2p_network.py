@@ -70,22 +70,29 @@ except Exception:
 
 # Integración criptográfica opcional
 try:
-    from crypto_framework import CryptoEngine, SecureMessage, initialize_crypto, create_crypto_engine  # type: ignore
+    from .crypto_framework import CryptoEngine, SecureMessage, initialize_crypto, create_crypto_engine  # type: ignore
 except Exception:
-    CryptoEngine = None  # type: ignore
-    SecureMessage = None  # type: ignore
-    initialize_crypto = None  # type: ignore
-    create_crypto_engine = None  # type: ignore
-    logger.warning("crypto_framework no disponible; los canales seguros estarán deshabilitados.")
+    try:
+        from aegis_core.crypto_framework import CryptoEngine, SecureMessage, initialize_crypto, create_crypto_engine  # type: ignore
+    except Exception:
+        CryptoEngine = None  # type: ignore
+        SecureMessage = None  # type: ignore
+        initialize_crypto = None  # type: ignore
+        create_crypto_engine = None  # type: ignore
+        logger.warning("crypto_framework no disponible; los canales seguros estarán deshabilitados.")
 
 # Integración consenso opcional
 try:
-    from consensus_protocol import HybridConsensus  # type: ignore
+    from .consensus_protocol import HybridConsensus  # type: ignore
     HAS_CONSENSUS = True
 except Exception:
-    HybridConsensus = None  # type: ignore
-    HAS_CONSENSUS = False
-    logger.warning("consensus_protocol no disponible; consenso estará deshabilitado.")
+    try:
+        from aegis_core.consensus_protocol import HybridConsensus  # type: ignore
+        HAS_CONSENSUS = True
+    except Exception:
+        HybridConsensus = None  # type: ignore
+        HAS_CONSENSUS = False
+        logger.warning("consensus_protocol no disponible; consenso estará deshabilitado.")
 
 
 class NodeType(Enum):
