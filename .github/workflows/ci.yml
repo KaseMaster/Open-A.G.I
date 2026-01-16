@@ -204,9 +204,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Smoke test in container (python main.py --dry-run)
+      - name: Smoke test in container (main.py start-node --dry-run)
         run: |
-          docker run --rm aegis-ci:local python main.py --dry-run
+          docker run --rm aegis-ci:local python main.py start-node --dry-run
 
       - name: Build and push to GHCR (main or release)
         if: github.event_name == 'release' || (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
