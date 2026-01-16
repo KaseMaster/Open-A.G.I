@@ -1,24 +1,18 @@
-## Descripción
+## Resumen
 
-Describe los cambios introducidos y el problema que solucionan. Incluye referencias a issues (close #ID).
+Describe el objetivo del cambio en 1–3 frases.
 
-## Checklist
+## Cambios principales
 
-- [ ] Lint pasa en Windows y Ubuntu
-- [ ] Tests unitarios y de integración pasan
-- [ ] Smoke test Docker pasa
-- [ ] Escaneo de seguridad (bandit/pip-audit) pasa
-- [ ] Documentación actualizada (README/ARQUITECTURA)
-- [ ] Etiquetas correctas para release (si aplica)
+- 
 
-## Tipo de cambio
+## Riesgos / Compatibilidad
 
-- [ ] Bugfix
-- [ ] Feature
-- [ ] Refactor
-- [ ] Docs
-- [ ] CI/CD
+- 
 
-## Notas adicionales
+## Verificación
 
-Contexto, decisiones de diseño, riesgos y mitigaciones.
+- [ ] `python -m pytest -q` (o subset relevante)
+- [ ] `npm audit --audit-level=high` (paquetes tocados)
+- [ ] `npm run build` (frontends tocados)
+
