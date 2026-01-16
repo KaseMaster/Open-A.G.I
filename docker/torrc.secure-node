@@ -1,0 +1,9 @@
+RunAsDaemon 0
+SocksPort 9050
+ControlPort 9051
+CookieAuthentication 1
+DataDirectory /var/lib/tor
+
+HiddenServiceDir /var/lib/tor/aegis_storage
+HiddenServicePort 8088 127.0.0.1:8088
+

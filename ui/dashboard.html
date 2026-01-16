@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AEGIS Audit Dashboard</title>
+    <style>
+      :root{--bg:#020617;--panel:#0f172a;--border:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--ok:#34d399;--bad:#fb7185;--accent:#22d3ee}
+      body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial}
+      header{position:sticky;top:0;background:rgba(2,6,23,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+      .wrap{max-width:1200px;margin:0 auto;padding:16px}
+      .row{display:grid;grid-template-columns:1.4fr .6fr;gap:16px}
+      @media (max-width:1024px){.row{grid-template-columns:1fr}}
+      .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px}
+      .muted{color:var(--muted)}
+      .btn{border:1px solid var(--border);background:transparent;color:var(--text);padding:8px 10px;border-radius:10px;cursor:pointer}
+      .btn:hover{border-color:var(--accent)}
+      input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:#0b1220;color:var(--text)}
+      table{width:100%;border-collapse:separate;border-spacing:0 8px}
+      td{padding:10px 10px;background:#0b1220;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+      td:first-child{border-left:1px solid var(--border);border-top-left-radius:12px;border-bottom-left-radius:12px}
+      td:last-child{border-right:1px solid var(--border);border-top-right-radius:12px;border-bottom-right-radius:12px}
+      .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+      .badge{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--border);font-size:12px}
+      .ok{color:var(--ok);border-color:rgba(52,211,153,.35)}
+      .bad{color:var(--bad);border-color:rgba(251,113,133,.35)}
+      a{color:var(--accent);text-decoration:none}
+      a:hover{text-decoration:underline}
+      .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      @media (max-width:1024px){.grid2{grid-template-columns:1fr}}
+      pre{margin:0;white-space:pre-wrap;word-break:break-word;background:#0b1220;border:1px solid var(--border);border-radius:12px;padding:10px}
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div>
+          <div style="font-weight:700">AEGIS Audit Dashboard</div>
+          <div class="muted" style="font-size:13px">Merkle log verificable</div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn" id="refresh">Actualizar</button>
+        </div>
+      </div>
+    </header>
+    <div class="wrap">
+      <div class="row">
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <div>
+              <div style="font-weight:650">Eventos</div>
+              <div class="muted" style="font-size:13px">Busca por id/hash/tipo</div>
+            </div>
+            <div style="width:320px;max-width:50%"><input id="q" placeholder="Buscar..." /></div>
+          </div>
+          <div style="margin-top:10px">
+            <table id="tbl"></table>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-weight:650">Estado</div>
+          <div class="muted" style="font-size:13px;margin-top:4px">Raíz Merkle actual</div>
+          <div class="mono" id="root" style="margin-top:8px"></div>
+          <div style="margin-top:10px" class="grid2">
+            <div class="card" style="padding:10px">
+              <div class="muted" style="font-size:12px">Eventos</div>
+              <div id="count" style="font-size:22px;font-weight:700"></div>
+            </div>
+            <div class="card" style="padding:10px">
+              <div class="muted" style="font-size:12px">Verificación</div>
+              <div id="verifyBadge" class="badge">-</div>
+            </div>
+          </div>
+          <div style="margin-top:12px">
+            <div class="muted" style="font-size:13px">Detalle / prueba</div>
+            <pre id="detail" class="mono" style="margin-top:8px">Selecciona un evento</pre>
+            <div style="display:flex;gap:10px;margin-top:10px">
+              <button class="btn" id="btnProof" disabled>Ver prueba</button>
+              <button class="btn" id="btnVerify" disabled>Verificar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="/dashboard.js"></script>
+  </body>
+</html>
+

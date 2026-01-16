@@ -16,6 +16,7 @@ from enum import Enum
 from typing import Dict, List, Optional, Any, Callable
 import logging
 from collections import defaultdict
+from cryptography.hazmat.primitives.asymmetric import ed25519
 from openagi.harmonic_validation import recursive_validate, HarmonicSnapshot, HarmonicProofBundle
 
 # Configuración de logging temprana
@@ -355,7 +356,7 @@ class PBFTConsensus:
         # Registrar handler de red si hay network_manager disponible
         try:
             if self.network_manager is not None:
-                from p2p_network import MessageType as NetMessageType  # import local para evitar dependencia circular
+                from aegis_core.p2p_network import MessageType as NetMessageType
                 # Asegurar que nos conocemos a nosotros mismos como nodo conocido
                 self.add_node(self.node_id, self.public_key)
                 # Registrar callback para mensajes CONSENSUS entrantes
@@ -374,7 +375,7 @@ class PBFTConsensus:
                 return
             # Asegurar que conocemos nuestra propia clave pública
             self.add_node(self.node_id, self.public_key)
-            from p2p_network import MessageType as NetMessageType  # local import para evitar dependencia circular
+            from aegis_core.p2p_network import MessageType as NetMessageType
             self.network_manager.register_handler(NetMessageType.CONSENSUS, self._on_consensus_network_message)
         except Exception as e:
             logger.warning(f"⚠️ No se pudo asignar network_manager o registrar handler CONSENSUS: {e}")
@@ -453,7 +454,7 @@ class PBFTConsensus:
             logger.warning("Consenso ya en progreso")
             return False
 
-        self.state = ConsensusState.PROPOSING
+        self.state = ConsensusState.PREPARING
         self.sequence_number += 1
 
         proposal_message = ConsensusMessage(
@@ -473,6 +474,18 @@ class PBFTConsensus:
 
         # Broadcast a todos los nodos
         await self._broadcast_message(proposal_message)
+
+        # El líder también participa en PREPARE (PBFT) para evitar estancamiento
+        prepare_message = ConsensusMessage(
+            message_type=MessageType.PREPARE,
+            sender_id=self.node_id,
+            view_number=self.view_number,
+            sequence_number=self.sequence_number,
+            payload={"proposal_hash": self._hash_message(proposal_message)},
+            timestamp=time.time(),
+        )
+        prepare_message.signature = self.sign_message(prepare_message)
+        await self._broadcast_message(prepare_message)
 
         logger.info(f"Propuesta enviada: seq={self.sequence_number}")
         return True
@@ -725,7 +738,7 @@ class PBFTConsensus:
         # Si hay capa de red disponible, usarla para enviar por canal seguro (CONSENSUS)
         if self.network_manager is not None:
             try:
-                from p2p_network import MessageType  # import local para evitar dependencia circular al cargar
+                from aegis_core.p2p_network import MessageType
                 # Asegurar firma antes de enviar
                 if message.signature is None:
                     try:

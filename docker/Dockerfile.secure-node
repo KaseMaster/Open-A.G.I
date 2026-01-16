@@ -1,0 +1,26 @@
+FROM python:3.13-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends tor ca-certificates && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY pyproject.toml /app/pyproject.toml
+COPY src /app/src
+COPY main.py /app/main.py
+COPY docker/torrc.secure-node /etc/tor/torrc
+COPY docker/entrypoint_secure_node.sh /entrypoint.sh
+
+RUN chmod 755 /entrypoint.sh
+
+RUN python -m pip install --no-cache-dir --upgrade pip && python -m pip install --no-cache-dir .
+
+RUN useradd -m -u 10001 -s /usr/sbin/nologin aegis && mkdir -p /data /var/lib/tor/aegis_storage && chown -R aegis:aegis /data /var/lib/tor
+
+USER aegis
+EXPOSE 8088
+VOLUME ["/data"]
+
+ENTRYPOINT ["/entrypoint.sh"]
+

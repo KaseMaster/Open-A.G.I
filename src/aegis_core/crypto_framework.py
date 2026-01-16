@@ -296,19 +296,26 @@ class CryptoEngine:
                 info=b"root_key"
             ).derive(shared_secret)
             
-            chain_key_send = HKDF(
+            chain_key_a = HKDF(
                 algorithm=hashes.SHA256(),
                 length=32,
                 salt=None,
-                info=b"chain_send"
+                info=b"chain_a"
             ).derive(shared_secret)
-            
-            chain_key_recv = HKDF(
+
+            chain_key_b = HKDF(
                 algorithm=hashes.SHA256(),
                 length=32,
                 salt=None,
-                info=b"chain_recv"
+                info=b"chain_b"
             ).derive(shared_secret)
+
+            if self.identity.node_id < peer_id:
+                chain_key_send = chain_key_a
+                chain_key_recv = chain_key_b
+            else:
+                chain_key_send = chain_key_b
+                chain_key_recv = chain_key_a
             
             # Inicializar estado del ratchet
             self.ratchet_states[peer_id] = RatchetState(
@@ -460,7 +467,11 @@ class CryptoEngine:
                     # Reestablecer canal seguro
                     self.establish_secure_channel(peer_id)
         
-        task = asyncio.create_task(rotate_keys())
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            return
+        task = loop.create_task(rotate_keys())
         self.key_rotation_tasks[peer_id] = task
     
     def get_security_metrics(self) -> Dict[str, Any]:
@@ -598,7 +609,7 @@ def initialize_crypto(config: Dict[str, Any]) -> CryptoEngine:
         engine = create_crypto_engine(level)
         node_id = config.get("node_id", None)
         engine.generate_node_identity(node_id)
-        logger.info(f"🔐 CryptoEngine iniciado (security_level={level.value}, node_id={engine.identity.node_id})")
+        logger.info(f"CryptoEngine iniciado (security_level={level.value}, node_id={engine.identity.node_id})")
         return engine
     except Exception as e:
         logger.error(f"❌ No se pudo inicializar CryptoEngine: {e}")

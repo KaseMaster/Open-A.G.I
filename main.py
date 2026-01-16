@@ -9,6 +9,7 @@ Licencia: MIT
 
 import sys
 import importlib
+import importlib.util
 import asyncio
 import json
 import os
@@ -99,7 +100,63 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "rate_limit_per_minute": 120,
         "validate_peer_input": True,
     },
+    "dapps": {
+        "enabled": [],
+    },
 }
+
+
+def _load_dapps(cfg: Dict[str, Any], ctx: Dict[str, Any]) -> Dict[str, Any]:
+    enabled = cfg.get("dapps", {}).get("enabled") or []
+    if not isinstance(enabled, list) or not enabled:
+        return {}
+
+    results: Dict[str, Any] = {}
+    for dapp_name in enabled:
+        try:
+            dapp_dir = os.path.join(os.path.dirname(__file__), "dapps", str(dapp_name))
+            src_dir = os.path.join(dapp_dir, "src")
+            entry = os.path.join(src_dir, "dapp.py")
+            if not os.path.exists(entry):
+                logger.warning(f"DApp no encontrada o sin entrypoint: {dapp_name}")
+                continue
+
+            if src_dir not in sys.path:
+                sys.path.insert(0, src_dir)
+
+            mod_name = "aegis_dapp_" + "".join(
+                c if c.isalnum() else "_" for c in str(dapp_name)
+            ).lower()
+            spec = importlib.util.spec_from_file_location(mod_name, entry)
+            if spec is None or spec.loader is None:
+                logger.warning(f"No se pudo cargar spec de DApp: {dapp_name}")
+                continue
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+
+            init_fn = getattr(mod, "initialize_dapp", None) or getattr(mod, "initialize", None)
+            if not callable(init_fn):
+                logger.warning(f"DApp sin función initialize: {dapp_name}")
+                continue
+
+            node_id = (
+                cfg.get("p2p", {}).get("node_id")
+                or cfg.get("crypto", {}).get("node_id")
+                or cfg.get("consensus", {}).get("node_id")
+                or "node_local"
+            )
+            security_level = cfg.get("crypto", {}).get("security_level", "HIGH")
+            dapp_cfg = {"node_id": node_id, "security_level": security_level}
+            results[str(dapp_name)] = init_fn(
+                crypto_engine=ctx.get("crypto"),
+                p2p_manager=ctx.get("p2p"),
+                config=dapp_cfg,
+            )
+            logger.success(f"DApp cargada: {dapp_name}")
+        except Exception as e:
+            logger.warning(f"Fallo cargando DApp {dapp_name}: {e}")
+
+    return results
 
 
 def load_config(config_path: Optional[str]) -> Dict[str, Any]:
@@ -219,18 +276,21 @@ async def start_node(dry_run: bool = False, config_path: Optional[str] = None):
         return
 
     # Inicializaciones seguras (solo si existen)
+    ctx: Dict[str, Any] = {}
     if cfg["app"]["enable"].get("tor"):
-        module_call(tor_mod, "start_gateway", cfg.get("tor", {}))
+        ctx["tor"] = module_call(tor_mod, "start_gateway", cfg.get("tor", {}))
     if cfg["app"]["enable"].get("resource_manager"):
-        module_call(resource_mod, "init_pool", cfg.get("p2p", {}))
+        ctx["resource_manager"] = module_call(resource_mod, "init_pool", cfg.get("p2p", {}))
     if cfg["app"]["enable"].get("crypto"):
-        module_call(crypto_mod, "initialize_crypto", cfg.get("crypto", {}))
+        ctx["crypto"] = module_call(crypto_mod, "initialize_crypto", cfg.get("crypto", {}))
     if cfg["app"]["enable"].get("p2p"):
-        module_call(p2p_mod, "start_network", cfg.get("p2p", {}))
+        ctx["p2p"] = module_call(p2p_mod, "start_network", cfg.get("p2p", {}))
     if cfg["app"]["enable"].get("consensus"):
-        module_call(consensus_mod, "start_consensus_loop", cfg.get("consensus", {}))
+        ctx["consensus"] = module_call(consensus_mod, "start_consensus_loop", cfg.get("consensus", {}))
     if cfg["app"]["enable"].get("monitoring"):
-        module_call(monitor_mod, "start_dashboard", cfg.get("monitoring", {}))
+        ctx["monitoring"] = module_call(monitor_mod, "start_dashboard", cfg.get("monitoring", {}))
+
+    ctx["dapps"] = _load_dapps(cfg, ctx)
 
     logger.success("Nodo inicializado. Procesos en ejecución (si están disponibles).")
     logger.info("✅ AEGIS Open AGI iniciado exitosamente")

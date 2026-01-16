@@ -61,10 +61,12 @@ dev = [
 
 [project.scripts]
 aegis-node = "main:main"
+aegis-storage = "aegis_storage_client.cli:main"
+aegis-storage-node = "aegis_storage_node.run_node:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
-packages = ["aegis_core"]
+packages = ["aegis_core", "aegis_storage_client", "aegis_storage_node"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
