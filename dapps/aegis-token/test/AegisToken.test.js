@@ -1,5 +1,5 @@
-import { expect } from "chai";
-import { ethers } from "hardhat";
+const { expect } = require("chai");
+const { ethers } = require("hardhat");
 
 describe("AEGISToken", function () {
   it("Should deploy the token with correct name and symbol", async function () {
@@ -35,3 +35,4 @@ describe("AEGISToken", function () {
     expect(balance).to.equal(mintAmount);
   });
 });
+
