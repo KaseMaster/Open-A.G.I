@@ -1,4 +1,5 @@
-# 🤖 AEGIS Open AGI - Inteligencia Artificial Distribuida
+# <img width="1200" height="1181" alt="5 2" src="https://github.com/user-attachments/assets/7fb01d0f-85e9-403f-94a0-a57f0d715e98" />
+🤖 AEGIS Open AGI - Inteligencia Artificial Distribuida
 
 <p align="center">
   <a href="https://github.com/KaseMaster/Open-A.G.I/actions/workflows/ci.yml">
