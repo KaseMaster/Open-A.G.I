@@ -31,7 +31,8 @@ transformers>=4.35.0
 # Base de Datos y Almacenamiento
 aiosqlite>=0.19.0
 redis>=5.0.0
-leveldb>=0.201; platform_system!="Windows"
+# leveldb no es compatible con Python 3.12+ y no se usa en el código actual
+# leveldb>=0.201; platform_system!="Windows" and python_version<"3.12"
 
 # Monitoreo y Logging
 loguru>=0.7.2
