@@ -5,12 +5,13 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Copy requirements first to leverage Docker cache
-COPY requirements.txt requirements-test.txt ./
+COPY requirements.txt ./
+COPY requirements-test.txt* ./
 
 # Install dependencies
 RUN python -m pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir -r requirements-test.txt
+RUN if [ -f requirements-test.txt ]; then pip install --no-cache-dir -r requirements-test.txt; fi
 
 # Copy project files
 COPY . .
@@ -22,4 +23,4 @@ RUN mkdir -p openagi
 EXPOSE 8080
 
 # Default command
-CMD ["python", "scripts/demo_emulation.py"]
+CMD ["python", "main.py", "start-node"]
