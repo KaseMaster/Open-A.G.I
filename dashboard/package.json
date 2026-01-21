@@ -11,9 +11,9 @@
     "test": "echo \"No tests specified\""
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "web-vitals": "^2.1.4"
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "web-vitals": "^5.1.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.1.2",
