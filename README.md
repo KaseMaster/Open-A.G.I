@@ -1,4 +1,7 @@
-# 🛡️ AEGIS Framework - Sistema de Seguridad para IA Distribuida
+# AEGIS Framework - Sistema de Seguridad para IA Distribuida
+
+![5](https://github.com/user-attachments/assets/b44c7736-8462-4e92-bbd5-f58e3beff1a4)
+
 
 > **Framework Enterprise de Inteligencia Artificial Distribuida con Seguridad Avanzada**  
 > Desarrollado por Jose María Gómez García (KaseMaster) | [blackshadowbrokers.org](https://blackshadowbrokers.org)
