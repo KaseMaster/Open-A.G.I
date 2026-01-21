@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### [3.1.3] - 2026-01-21
+
+### Fixed
+- **CI/CD**: Corregidos errores en workflows de GitHub Actions
+  - Rutas corregidas para flake8 y bandit (src/, tests/)
+  - Comando dry-run corregido en Docker smoke test
+  - Bucle cosign mejorado con validación de tags
+  - create-release actualizado de deprecado a softprops/action-gh-release
+  - requirements-test.txt ahora opcional en Dockerfile
+  - CMD en Dockerfile corregido a main.py start-node
+- **Documentación**: Eliminados archivos de documentación obsoletos
+- **Dependencias**: Actualización automática de dependencias npm
+
+### Changed
+- **Versión**: Sincronización de versiones en todos los archivos del proyecto
+
 ### [2.1.0] - 2026-01-14
 
 ### Added
