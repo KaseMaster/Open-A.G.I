@@ -23,7 +23,7 @@ import json
 import socket
 import logging
 import base64
-from typing import Dict, List, Set, Any, Optional, Tuple
+from typing import Dict, List, Set, Any, Optional, Tuple, Callable
 from dataclasses import dataclass, asdict
 from enum import Enum
 from collections import defaultdict, deque
@@ -1584,9 +1584,12 @@ class NetworkTopologyManager:
                     visited.add(neighbor)
 
         return routes
+
+
+class P2PNetworkManager:
     """Gestor principal de la red P2P"""
 
-    def __init__(self, node_id: str, node_type: NodeType = NodeType.FULL, port: int = 8080, ids: Optional['IntrusionDetectionSystem'] = None):
+    def __init__(self, node_id: str, node_type: NodeType = NodeType.FULL, port: int = 8080, ids: Optional[Any] = None):
         self.node_id = node_id
         self.node_type = node_type
         self.port = port
@@ -1618,15 +1621,7 @@ class NetworkTopologyManager:
 
         except Exception as e:
             logger.warning(f"⚠️ No se pudo inicializar CryptoEngine con configuración avanzada: {e}")
-            # Fallback a inicialización básica
-            try:
-                if initialize_crypto:
-                    self.crypto_engine = initialize_crypto({"security_level": "high"})
-                elif create_crypto_engine:
-                    self.crypto_engine = create_crypto_engine()
-            except Exception as e2:
-                logger.warning(f"⚠️ Tampoco se pudo inicializar con fallback básico: {e2}")
-                self.crypto_engine = None
+            self.crypto_engine = None
 
         self.connection_manager = ConnectionManager(node_id, port, self.crypto_engine)
         self.topology_manager = NetworkTopologyManager(node_id)

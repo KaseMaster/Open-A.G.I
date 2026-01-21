@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if (Test-Path -Path "requirements-test.txt") { pip install -r requirements.txt
+          if (Test-Path -Path "requirements-test.txt") { pip install -r requirements-test.txt } else { pip install -r requirements.txt }
           pip install pytest flake8 bandit pip-audit cryptography click
 
       - name: Lint (flake8)
