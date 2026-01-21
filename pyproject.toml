@@ -80,8 +80,10 @@ Repository = "https://github.com/KaseMaster/Open-A.G.I"
 Issues = "https://github.com/KaseMaster/Open-A.G.I/issues"
 Documentation = "https://github.com/KaseMaster/Open-A.G.I/docs"
 
-[tool.setuptools]
-packages = ["."]
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["*"]
+exclude = ["tests*", "docs*"]
 
 [tool.setuptools.package-data]
 "*" = ["*.txt", "*.md", "*.json", "*.conf", "*.torrc"]
