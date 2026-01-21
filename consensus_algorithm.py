@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Algoritmo de Consenso Distribuido - AEGIS Open AGI
+Algoritmo de Consenso Distribuido - AEGIS Framework
 Implementación híbrida de consenso bizantino tolerante a fallos con optimizaciones para IA distribuida.
 
-Desarrollador: José María Gómez García
-Contacto: José María Gómez García@protonmail.com
+Programador Principal: Jose Gómez alias KaseMaster
+Contacto: kasemaster@aegis-framework.com
 Versión: 2.0.0
 Licencia: MIT
 

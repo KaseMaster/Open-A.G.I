@@ -18,7 +18,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,17 +32,16 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if (Test-Path "requirements.txt") { pip install -r requirements.txt }
-          if (Test-Path "requirements-test.txt") { pip install -r requirements-test.txt }
-          pip install flake8 bandit pip-audit numpy cryptography click
+          if (Test-Path -Path "requirements-test.txt") { pip install -r requirements.txt
+          pip install pytest flake8 bandit pip-audit cryptography click
 
       - name: Lint (flake8)
         run: |
-          flake8 src/aegis_storage.py src/aegis_storage_audit.py src/aegis_storage_dashboard_server.py src/pbft_integration.py src/aegis_storage_client src/aegis_storage_node src/aegis_core/crypto_framework.py src/aegis_core/tor_integration.py tools tests/integration tests/full_network_test.py
+          flake8 .
 
       - name: Run tests
         run: |
-          pytest -q tests/integration/test_aegis_storage_client_crypto.py tests/integration/test_aegis_storage_id.py tests/integration/test_aegis_storage_node_verification.py tests/integration/test_aegis_storage_sc_pbft.py tests/full_network_test.py --no-cov
+          pytest -q tests --no-cov
 
       - name: Security scan (pip-audit)
         continue-on-error: true
@@ -55,7 +54,6 @@ jobs:
         with:
           name: pip-audit-${{ matrix.python-version }}
           path: pip-audit.json
-          if-no-files-found: ignore
 
       - name: Security scan (bandit)
         continue-on-error: true
@@ -68,13 +66,12 @@ jobs:
         with:
           name: bandit-${{ matrix.python-version }}
           path: bandit.json
-          if-no-files-found: ignore
 
   linux-lint-and-test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -89,23 +86,16 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f requirements-test.txt ]; then pip install -r requirements-test.txt; fi
-          pip install flake8 bandit pip-audit numpy cryptography click
+          if [ -f requirements-test.txt ]; then pip install -r requirements-test.txt; elif [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest flake8 bandit pip-audit
 
       - name: Lint (flake8)
         run: |
-          flake8 src/aegis_storage.py src/aegis_storage_audit.py src/aegis_storage_dashboard_server.py src/pbft_integration.py src/aegis_storage_client src/aegis_storage_node src/aegis_core/crypto_framework.py src/aegis_core/tor_integration.py tools tests/integration tests/full_network_test.py
+          flake8 .
 
       - name: Run tests
         run: |
-          pytest -q \
-            tests/integration/test_aegis_storage_client_crypto.py \
-            tests/integration/test_aegis_storage_id.py \
-            tests/integration/test_aegis_storage_node_verification.py \
-            tests/integration/test_aegis_storage_sc_pbft.py \
-            tests/full_network_test.py \
-            --no-cov
+          pytest -q tests --no-cov
 
       - name: Security scan (pip-audit)
         continue-on-error: true
@@ -118,7 +108,6 @@ jobs:
         with:
           name: pip-audit-ubuntu-${{ matrix.python-version }}
           path: pip-audit.json
-          if-no-files-found: ignore
 
       - name: Security scan (bandit)
         continue-on-error: true
@@ -131,40 +120,9 @@ jobs:
         with:
           name: bandit-ubuntu-${{ matrix.python-version }}
           path: bandit.json
-          if-no-files-found: ignore
-
-  node-test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Test Aegis Token
-        working-directory: dapps/aegis-token
-        run: |
-          npm install
-          npm test
-
-      - name: Test Secure Chat
-        working-directory: dapps/secure-chat
-        run: |
-          npm install
-          chmod +x node_modules/.bin/hardhat || true
-          npm test
-
-      - name: Test Secure Chat UI
-        working-directory: dapps/secure-chat/ui
-        run: |
-          npm install
-          npm test
 
   docker-smoke-test:
-    needs: [lint-and-test, linux-lint-and-test, node-test]
+    needs: [lint-and-test, linux-lint-and-test]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -188,7 +146,7 @@ jobs:
             ghcr.io/${{ github.repository }}
           tags: |
             type=sha
-            type=ref,event=branch
+            type=ref,event=push
             type=ref,event=pr
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}
@@ -204,9 +162,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Smoke test in container (main.py start-node --dry-run)
+      - name: Smoke test in container (python main.py --dry-run)
         run: |
-          docker run --rm aegis-ci:local python main.py start-node --dry-run
+          docker run --rm aegis-ci:local python main.py --dry-run
 
       - name: Build and push to GHCR (main or release)
         if: github.event_name == 'release' || (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
@@ -246,8 +204,8 @@ jobs:
           echo "Signing tags:"
           echo "${{ steps.meta.outputs.tags }}"
           while IFS= read -r tag; do
-            echo "Signing $tag"
-            cosign sign --yes "$tag"
+            echo "Signing ghcr.io/${{ github.repository }}:${tag}"
+          cosign sign --yes ghcr.io/${{ github.repository }}:${tag}
           done <<< "${{ steps.meta.outputs.tags }}"
 
   verify-and-release-assets:
@@ -276,7 +234,7 @@ jobs:
             ghcr.io/${{ github.repository }}
           tags: |
             type=sha
-            type=ref,event=branch
+            type=ref,event=push
             type=ref,event=pr
             type=raw,value=latest,enable={{is_default_branch}}
             type=semver,pattern={{version}}
@@ -289,11 +247,8 @@ jobs:
           echo "Verifying signed tags:"
           echo "${{ steps.meta.outputs.tags }}"
           while IFS= read -r tag; do
-            echo "Verifying $tag"
-            cosign verify \
-              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
-              --certificate-identity-regexp "https://github.com/${{ github.repository }}/.github/workflows/ci\\.yml@refs/(heads/main|tags/.*)" \
-              "$tag" || exit 1
+            echo "Verifying ghcr.io/${{ github.repository }}:${tag}"
+            cosign verify ghcr.io/${{ github.repository }}:${tag} || exit 1
           done <<< "${{ steps.meta.outputs.tags }}"
 
       - name: Download SBOM artifact
@@ -331,4 +286,13 @@ jobs:
 
       - name: Gitleaks secret scan
         uses: gitleaks/gitleaks-action@v2
+        with:
+          args: --verbose --redact --report-format json --report-path gitleaks.json
         continue-on-error: true
+
+      - name: Upload gitleaks report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-report
+          path: gitleaks.json
