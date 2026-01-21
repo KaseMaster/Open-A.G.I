@@ -1,9 +1,21 @@
 # 🛡️ AEGIS Framework - Sistema de Seguridad para IA Distribuida
 
-**Programador Principal:** Jose Gómez alias KaseMaster
-**Contacto:** kasemaster@protonmail.com
-**Versión:** 3.1.3 - Enterprise Multimodal AI Platform
+> **Framework Enterprise de Inteligencia Artificial Distribuida con Seguridad Avanzada**  
+> Desarrollado por Jose María Gómez García (KaseMaster) | [blackshadowbrokers.org](https://blackshadowbrokers.org)
+
+**Desarrollador Principal:** Jose María Gómez García (alias KaseMaster)  
+**Contacto:** kasemaster@protonmail.com  
+**Versión:** 3.1.3 - Enterprise Multimodal AI Platform  
 **Licencia:** MIT con Cláusulas de Seguridad
+
+### 💰 Contribuciones y Donaciones
+
+¿Te gusta este proyecto? ¡Considera hacer una contribución para apoyar el desarrollo continuo!
+
+**PayPal:** [damepaz@protonmail.com](https://www.paypal.com/paypalme/damepaz)  
+**Email para donaciones:** damepaz@protonmail.com
+
+Todas las contribuciones son bienvenidas y ayudan a mantener y mejorar el proyecto. ¡Gracias por tu apoyo! 🙏
 
 <!-- GitHub Badges -->
 [![GitHub stars](https://img.shields.io/github/stars/KaseMaster/Open-A.G.I?style=for-the-badge&logo=github)](https://github.com/KaseMaster/Open-A.G.I/stargazers)
@@ -46,6 +58,21 @@
 [![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)](https://openai.com/)
 [![Hugging Face](https://img.shields.io/badge/%F0%9F%A4%97-Hugging%20Face-yellow?style=for-the-badge)](https://huggingface.co/)
+[![Scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
+[![NumPy](https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white)](https://numpy.org/)
+
+<!-- Additional Badges -->
+[![Maintained](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=for-the-badge)](https://github.com/KaseMaster/Open-A.G.I/graphs/commit-activity)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge)](http://makeapullrequest.com)
+[![Documentation](https://img.shields.io/badge/docs-available-brightgreen?style=for-the-badge)](https://github.com/KaseMaster/Open-A.G.I/tree/main/docs)
+[![Discussions](https://img.shields.io/badge/discussions-active-blue?style=for-the-badge)](https://github.com/KaseMaster/Open-A.G.I/discussions)
+[![Releases](https://img.shields.io/github/v/release/KaseMaster/Open-A.G.I?style=for-the-badge)](https://github.com/KaseMaster/Open-A.G.I/releases)
+[![Downloads](https://img.shields.io/github/downloads/KaseMaster/Open-A.G.I/total?style=for-the-badge)](https://github.com/KaseMaster/Open-A.G.I/releases)
+[![Activity](https://img.shields.io/github/commit-activity/m/KaseMaster/Open-A.G.I?style=for-the-badge)](https://github.com/KaseMaster/Open-A.G.I)
+[![Languages](https://img.shields.io/github/languages/count/KaseMaster/Open-A.G.I?style=for-the-badge)](https://github.com/KaseMaster/Open-A.G.I)
+[![Top Language](https://img.shields.io/github/languages/top/KaseMaster/Open-A.G.I?style=for-the-badge)](https://github.com/KaseMaster/Open-A.G.I)
+[![Repo Size](https://img.shields.io/github/repo-size/KaseMaster/Open-A.G.I?style=for-the-badge)](https://github.com/KaseMaster/Open-A.G.I)
+[![Lines of Code](https://img.shields.io/tokei/lines/github/KaseMaster/Open-A.G.I?style=for-the-badge)](https://github.com/KaseMaster/Open-A.G.I)
 
 <!-- Cloud Platforms -->
 [![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
@@ -160,6 +187,16 @@
 - **🤖 Automation**: Key Rotation, Security Scanning, Automated Deployment
 - **📊 Monitoring**: Métricas en tiempo real, Alertas de seguridad, Compliance Reporting
 - **🏗️ DevSecOps**: CI/CD Pipeline, Security Gates, Automated Testing
+
+---
+
+## 🔗 Enlaces Importantes y SEO
+
+- **🌐 Black Shadow Brokers:** [blackshadowbrokers.org](https://blackshadowbrokers.org) - Recursos avanzados de ciberseguridad, hacking ético y seguridad informática
+- **📖 Documentación Técnica:** [Documentación completa](https://github.com/KaseMaster/Open-A.G.I/tree/main/docs) - Guías detalladas y arquitectura
+- **🔒 Seguridad y Hacking Ético:** [blackshadowbrokers.org](https://blackshadowbrokers.org) - Herramientas y técnicas de seguridad
+- **💻 Repositorio GitHub:** [github.com/KaseMaster/Open-A.G.I](https://github.com/KaseMaster/Open-A.G.I)
+- **📊 Estado del Proyecto:** [GitHub Insights](https://github.com/KaseMaster/Open-A.G.I/pulse)
 
 ---
 
@@ -486,13 +523,39 @@ bash scripts/rollback.sh production
 
 ---
 
-## 🙏 Reconocimientos
+## 🙏 Reconocimientos y Créditos
+
+### 👨‍💻 Desarrollador Principal
+
+**Jose María Gómez García** (alias KaseMaster)  
+- Arquitecto y desarrollador principal del AEGIS Framework
+- Especialista en sistemas distribuidos, ciberseguridad y IA
+- Contacto: kasemaster@protonmail.com
+
+### 🤝 Contribuciones y Donaciones
+
+Este proyecto es desarrollado y mantenido de forma independiente. Si encuentras útil este framework, considera hacer una contribución:
+
+- **💳 PayPal:** [damepaz@protonmail.com](https://www.paypal.com/paypalme/damepaz)
+- **📧 Email para donaciones:** damepaz@protonmail.com
+
+Todas las contribuciones son bienvenidas y ayudan a mantener y mejorar el proyecto. ¡Gracias por tu apoyo! 🙏
+
+### 🌐 Enlaces y Recursos
+
+- **🔗 Black Shadow Brokers:** [blackshadowbrokers.org](https://blackshadowbrokers.org) - Recursos de ciberseguridad y hacking ético
+- **📚 Documentación:** [Documentación completa del proyecto](https://github.com/KaseMaster/Open-A.G.I/tree/main/docs)
+- **💬 Discusiones:** [GitHub Discussions](https://github.com/KaseMaster/Open-A.G.I/discussions)
+- **🐛 Reportar Issues:** [GitHub Issues](https://github.com/KaseMaster/Open-A.G.I/issues)
+
+### 🙏 Agradecimientos
 
 - **Cryptography.io** - Primitivas criptográficas seguras
 - **TOR Project** - Infraestructura de anonimato
 - **OWASP** - Mejores prácticas de seguridad
 - **NIST** - Estándares criptográficos
-- **Comunidad de Ciberseguridad** - Contribuciones abiertas
+- **Black Shadow Brokers** - Recursos de ciberseguridad y hacking ético
+- **Comunidad de Ciberseguridad** - Contribuciones abiertas y feedback
 
 ---
 
@@ -514,5 +577,24 @@ bash scripts/rollback.sh production
 
 ---
 
-*Desarrollado por AEGIS Framework - Enterprise Multimodal AI Platform*
-*Versión 3.1.3 - Sprint 5.1: Integration & Production Complete* 🚀
+---
+
+## 📞 Contacto y Soporte
+
+**Desarrollador Principal:** Jose María Gómez García (alias KaseMaster)  
+**Email:** kasemaster@protonmail.com  
+**Donaciones PayPal:** [damepaz@protonmail.com](https://www.paypal.com/paypalme/damepaz)
+
+### 🌐 Recursos Adicionales
+
+- **🔗 Black Shadow Brokers:** [blackshadowbrokers.org](https://blackshadowbrokers.org) - Plataforma de ciberseguridad y hacking ético
+- **📚 Documentación:** [Documentación del proyecto](https://github.com/KaseMaster/Open-A.G.I/tree/main/docs)
+- **💬 Comunidad:** [GitHub Discussions](https://github.com/KaseMaster/Open-A.G.I/discussions)
+- **🐛 Issues:** [Reportar problemas](https://github.com/KaseMaster/Open-A.G.I/issues)
+
+---
+
+*Desarrollado por Jose María Gómez García (KaseMaster) - AEGIS Framework*  
+*Enterprise Multimodal AI Platform | Versión 3.1.3*  
+*Sprint 5.1: Integration & Production Complete* 🚀  
+*Recursos de seguridad: [blackshadowbrokers.org](https://blackshadowbrokers.org)*
