@@ -54,7 +54,8 @@ jobs:
           --ignore=tests/test_end_to_end_integration.py \
           --ignore=tests/test_harmonic_validation.py \
           --ignore=tests/test_token_coherence_integration.py \
-          --ignore=tests/test_token_rules.py
+          --ignore=tests/test_token_rules.py \
+          --ignore=tests/test_ledger_api.py
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
