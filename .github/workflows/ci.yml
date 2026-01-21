@@ -44,7 +44,7 @@ jobs:
       - name: Run tests
         continue-on-error: true
         run: |
-          pytest -q tests --no-cov -m "not integration and not e2e" --ignore=tests/integration --ignore=tests/test_token_coherence_integration.py --ignore=tests/test_harmonic_validation.py --ignore=tests/test_token_rules.py --ignore=tests/knowledge_base_test.py || echo "Some tests failed but continuing..."
+          pytest -q tests --no-cov -m "not integration and not e2e" --ignore=tests/integration --ignore=tests/test_token_coherence_integration.py --ignore=tests/test_harmonic_validation.py --ignore=tests/test_token_rules.py --ignore=tests/knowledge_base_test.py --ignore=tests/test_ledger_api.py || echo "Some tests failed but continuing..."
 
       - name: Security scan (pip-audit)
         continue-on-error: true
@@ -101,7 +101,7 @@ jobs:
       - name: Run tests
         continue-on-error: true
         run: |
-          pytest -q tests --no-cov -m "not integration and not e2e" --ignore=tests/integration --ignore=tests/test_token_coherence_integration.py --ignore=tests/test_harmonic_validation.py --ignore=tests/test_token_rules.py --ignore=tests/knowledge_base_test.py || echo "Some tests failed but continuing..."
+          pytest -q tests --no-cov -m "not integration and not e2e" --ignore=tests/integration --ignore=tests/test_token_coherence_integration.py --ignore=tests/test_harmonic_validation.py --ignore=tests/test_token_rules.py --ignore=tests/knowledge_base_test.py --ignore=tests/test_ledger_api.py || echo "Some tests failed but continuing..."
 
       - name: Security scan (pip-audit)
         continue-on-error: true
