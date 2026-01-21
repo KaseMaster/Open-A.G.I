@@ -2,7 +2,7 @@
 # AEGIS Security Framework - Uso Ético Únicamente
 # Programador Principal: Jose Gómez alias KaseMaster
 # Contacto: kasemaster@aegis-framework.com
-# Versión: 2.0.0
+# Versión: 3.1.3
 # Licencia: MIT
 
 # Criptografía y Seguridad
@@ -13,7 +13,7 @@ pyotp>=2.9.0
 # Red TOR
 stem>=1.8.2
 pysocks>=1.7.1
-aiohttp>=3.9.0
+aiohttp>=3.10.0
 aiohttp-socks>=0.8.4
 
 # Computación Distribuida y P2P

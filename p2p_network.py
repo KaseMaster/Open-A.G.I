@@ -53,8 +53,16 @@ try:
     from zeroconf import ServiceInfo, Zeroconf, ServiceBrowser, ServiceListener  # type: ignore
     HAS_ZEROCONF = True
 except Exception:
-    ServiceInfo = Zeroconf = ServiceBrowser = ServiceListener = None  # type: ignore
+    ServiceInfo = Zeroconf = ServiceBrowser = None  # type: ignore
     HAS_ZEROCONF = False
+    # Create a dummy ServiceListener class to avoid NoneType errors
+    class ServiceListener:  # type: ignore
+        def add_service(self, zeroconf, service_type, name):
+            pass
+        def remove_service(self, zeroconf, service_type, name):
+            pass
+        def update_service(self, zeroconf, service_type, name):
+            pass
     logger.warning("zeroconf no disponible; descubrimiento mDNS se omitirá en este entorno.")
 
 try:
