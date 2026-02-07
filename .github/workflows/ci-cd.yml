@@ -282,7 +282,7 @@ jobs:
 
     - name: Configure AWS credentials
       if: steps.check-aws.outputs.skip != 'true'
-      uses: aws-actions/configure-aws-credentials@v5
+      uses: aws-actions/configure-aws-credentials@v6
       continue-on-error: true
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
