@@ -15,7 +15,7 @@
     "ethers": "^6.8.0",
     "tweetnacl": "^1.0.3",
     "chart.js": "^4.4.0",
-    "axios": "^1.6.0"
+    "axios": "^1.13.5"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.1.2",
