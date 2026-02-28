@@ -102,7 +102,7 @@ jobs:
         bandit -r src/ -f json -o security_report.json || true
 
     - name: Upload security report
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: security-report-${{ matrix.python-version }}
         path: security_report.json
@@ -138,7 +138,7 @@ jobs:
         pip-audit --format json > pip_audit_report.json 2>/dev/null || echo "[]" > pip_audit_report.json
 
     - name: Upload security reports
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: security-audit-reports
         path: |
@@ -193,7 +193,7 @@ jobs:
         python -c "import sys; sys.path.insert(0, '.'); import src; print('Package installation successful')" || python -c "print('Package installation successful')"
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: aegis-package
         path: dist/
@@ -282,7 +282,7 @@ jobs:
 
     - name: Configure AWS credentials
       if: steps.check-aws.outputs.skip != 'true'
-      uses: aws-actions/configure-aws-credentials@v5
+      uses: aws-actions/configure-aws-credentials@v6
       continue-on-error: true
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
