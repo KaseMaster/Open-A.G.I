@@ -10,18 +10,18 @@
     "test": "jest"
   },
   "dependencies": {
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "ethers": "^6.8.0",
     "tweetnacl": "^1.0.3",
     "chart.js": "^4.4.0",
-    "axios": "^1.6.0"
+    "axios": "^1.13.6"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^5.1.2",
-    "vite": "^7.3.1",
-    "jest": "^30.2.0",
-    "@testing-library/react": "^16.3.1",
+    "@vitejs/plugin-react": "^6.0.1",
+    "vite": "^8.0.0",
+    "jest": "^30.3.0",
+    "@testing-library/react": "^16.3.2",
     "@testing-library/jest-dom": "^6.1.4"
   },
   "keywords": [
